@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>CHAMPIONSHIP 2026 - 덧셈초급</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@900&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+
+
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="dog.png">
+    <script>
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('sw.js');
+      }
+    </script>
+
+
+
+    <style>
+        :root { --bg: #000; --purple: #c084fc; --green: #4ade80; --red: #f87171; --bead: #4ade80; --bar-top: 100px; --gold: #fbbf24; }
+        body { margin: 0; background: var(--bg); color: #fff; font-family: 'Noto Sans KR', sans-serif; display: flex; height: 100vh; width: 100vw; overflow: hidden; touch-action: none; -webkit-user-select: none; user-select: none; flex-direction: row; }
+        
+        #left-panel { width: 130px; background: #0a0a0a; border-right: 1px solid #222; flex-shrink: 0; display: flex; flex-direction: column; padding: 8px; font-size: 0.8rem; position: relative; }
+        
+        /* 과정 표시 스타일: 초급 파란색 */
+        #course-title {
+            background: #4ea8de; 
+            color: #fff;
+            font-weight: 900;
+            text-align: center;
+            padding: 5px;
+            border-radius: 5px;
+            margin-bottom: 5px;
+            font-size: 0.85rem;
+        }
+
+        #timer-display { font-family: 'Orbitron', sans-serif; font-size: 1.1rem; color: var(--red); text-align: center; margin-bottom: 8px; border: 1px solid var(--red); padding: 4px; border-radius: 5px; background: rgba(248, 113, 113, 0.05); }
+        #reversal-notice { background: var(--purple); color: white; padding: 4px 8px; border-radius: 10px; font-size: 0.65rem; font-weight: 900; text-align: center; margin-bottom: 8px; display: none; box-shadow: 0 0 10px var(--purple); }
+        #step-info { color: var(--purple); font-family: 'Orbitron'; text-align: center; margin-bottom: 10px; font-weight: 900; }
+        .log-btn { width: 100%; background: #1a1a1a; color: var(--gold); border: 1px solid var(--gold); padding: 8px; font-size: 0.75rem; border-radius: 6px; font-weight: 900; cursor: pointer; margin-bottom: 10px; transition: all 0.2s; }
+        .log-btn:hover { background: var(--gold); color: #000; }
+
+        #hall-of-fame { flex: 1; overflow-y: auto; margin-bottom: 8px; scrollbar-width: none; }
+        #hall-of-fame::-webkit-scrollbar { width: 4px; }
+        #hall-of-fame::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
+
+        .rank-item { display: flex; justify-content: space-between; align-items: center; padding: 4px 6px; margin-bottom: 3px; border-radius: 3px; font-size: 0.65rem; font-weight: 900; color: #000; transition: all 0.3s; position: relative; }
+        .color-1 { background: #ffd700; } .color-2 { background: #ff85a2; } .color-3 { background: #4ea8de; } .color-4 { background: #9d4edd; } .color-5 { background: #ff9100; } .color-other { background: var(--green); }
+        
+        /* 화려한 무지개 반짝이 효과 (중급과 동일) */
+        .is-playing { 
+            animation: rainbow-super-shine 0.6s infinite alternate; 
+            position: relative;
+            border: 2px solid #fff !important;
+            transform: scale(1.05); 
+            z-index: 5;
+        }
+        .is-playing::after { 
+            content: "⚡"; 
+            position: absolute; 
+            right: 20px; 
+            font-size: 1rem; 
+            text-shadow: 0 0 5px white;
+            animation: thunder-bolt 0.3s infinite alternate; 
+        }
+
+        @keyframes rainbow-super-shine { 
+            0% { box-shadow: 0 0 5px #ff0000, inset 0 0 5px #ff0000; filter: brightness(1.2); } 
+            33% { box-shadow: 0 0 7px #00e1ff, inset 0 0 5px #00e1ff; filter: brightness(1.3); }
+            66% { box-shadow: 0 0 10px #ffea00, inset 0 0 5px #ffea00; filter: brightness(1.4); }
+            100% { box-shadow: 0 0 13px #ff00ff, inset 0 0 5px #ff00ff; filter: brightness(1.5); } 
+        }
+
+        @keyframes thunder-bolt { from { transform: scale(1); opacity: 0.7; } to { transform: scale(1.3); opacity: 1; } }
+        @keyframes trophy-bounce { from { transform: translateY(0); } to { transform: translateY(-3px); } }
+        /* 역전 알림이 부드럽게 나타났다 사라지는 효과 */
+        @keyframes fade-up { 0% { opacity: 0; transform: translateY(5px); } 20% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-5px); } }
+
+        .my-record { border: 3px solid #ff0000 !important; box-shadow: 0 0 15px #ff0000; z-index: 10; }
+
+        .crown-icon { display: inline-block; margin-left: 5px; font-size: 1rem; filter: drop-shadow(0 0 2px rgba(0,0,0,0.8)); animation: trophy-bounce 0.8s infinite alternate; vertical-align: middle; }
+
+
+        #center-game { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; overflow: hidden; }
+
+        #display-main { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; z-index: 10; flex-direction: column; font-size: 5.0rem; font-weight: 900; position: relative; }
+        
+        /* 게시암산 크기 및 간격 복구 */
+        .board-list { line-height: 1.1; color: var(--green); text-align: center; letter-spacing: 2px; display: flex; flex-direction: column; align-items: center; width: 100%; }
+        .board-rows-234 { font-size: 3.0rem; }
+        .board-rows-5 { font-size: 2.8rem; }
+        .board-rows-7 { font-size: 2.7rem; }
+        
+        .rolling-num { position: absolute; font-weight: 900; font-size: 3.2rem; color: var(--green); animation: continuousRoll var(--roll-dur, 2000ms) linear forwards; }
+        @keyframes continuousRoll { 0% { transform: translateY(40vh); opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { transform: translateY(-40vh); opacity: 0; } }
+        
+        #feedback-area { position: absolute; left: 8%; top: 50%; transform: translateY(-50%); z-index: 2000; pointer-events: none; }
+        #feedback-icon { font-size: 5rem; font-weight: 900; display: none; }
+        .correct { color: #4ade80 !important; text-shadow: 0 0 25px #4ade80; }
+        .wrong { color: #f87171 !important; text-shadow: 0 0 20px #f87171; }
+        
+        .abacus-frame { display: flex; gap: 4px; position: relative; padding: 10px 15px; border: 8px solid #3d2b1f; border-radius: 8px; background: #000; height: 280px; }
+        .master-divider { position: absolute; top: var(--bar-top); left: 0; width: 100%; height: 10px; background: #ddd; z-index: 15; }
+        .column { position: relative; width: 46px; height: 100%; display: flex; flex-direction: column; align-items: center; }
+        .rod { width: 4px; height: 100%; background: #444; position: absolute; left: 50%; transform: translateX(-50%); }
+        .bead { width: 46px; height: 32px; background: radial-gradient(circle at 50% 30%, #66ef96 0%, #4ade80 40%, #2d8a50 100%); border-radius: 40% / 50%; border: 1px solid #1a5c34; position: absolute; z-index: 10; }
+        
+        #right-keypad { width: 280px; background: #0d0d0d; border-left: 1px solid #222; padding: 15px; display: flex; flex-direction: column; gap: 10px; }
+        #display-answer { background: #fff; height: 60px; border-radius: 8px; color: #000; font-size: 2.5rem; display: flex; align-items: center; justify-content: center; font-weight: 900; border: 4px solid var(--purple); margin-bottom: 5px; }
+        .key { background: #2a2a2a; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; border-radius: 10px; cursor: pointer; box-shadow: 0 4px #000; font-weight: 900; }
+        
+        #schulte-overlay { position: fixed; inset: 0; background: #000; z-index: 15000; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 10px; box-sizing: border-box; }
+        .game-header { display: flex; flex-direction: column; align-items: center; gap: 5px; margin-bottom: 5px; margin-top: -30px; width: 100%; z-index: 17000; }
+        #game-target-msg { color: var(--gold); font-size: 1.1rem; font-weight: 900; background: rgba(0,0,0,0.8); padding: 4px 15px; border-radius: 20px; border: 1px solid var(--gold); margin-bottom: 5px; }
+        #schulte-timer-container { width: 220px; height: 12px; background: #333; border-radius: 6px; overflow: hidden; border: 1px solid #555; }
+        #schulte-timer-bar { width: 100%; height: 100%; background: var(--purple); }
+        .schulte-grid { display: grid; gap: 8px; width: 90vw; max-width: 380px; max-height: 60vh; aspect-ratio: 1 / 1; }
+        .schulte-cell { background: #1a1a1a; border: 2px solid #444; color: #fff; display: flex; align-items: center; justify-content: center; font-size: clamp(1.2rem, 6vw, 2.2rem); font-weight: 900; border-radius: 10px; cursor: pointer; }
+        
+        #block-container { position: absolute; inset: 0; display: none; background: #000; overflow: hidden; z-index: 16000; }
+        .block { position: absolute; width: 60px; height: 60px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; font-weight: 900; color: #fff; cursor: pointer; z-index: 16500; border: 1px solid rgba(255,255,255,0.3); transition: top 1.2s ease-in; }
+
+        #schulte-msg { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; z-index: 18000; background: #000; }
+        .result-card { background: rgba(15, 15, 15, 0.98); border-radius: 20px; border: 3px solid var(--purple); text-align: center; padding: 20px; box-shadow: 0 0 40px rgba(192, 132, 252, 0.4); width: 90%; max-width: 450px; margin: auto; }
+        
+         /* 연습기록 항목을 촘촘하고 예쁘게 수정 */
+.history-item { 
+    display: grid; 
+    grid-template-columns: 1.2fr 0.8fr 0.8fr 0.5fr; /* 날짜 / 연습시간 / 소요시간 / 점수 */
+    align-items: center; 
+    background: #1a1a1a; 
+    padding: 4px 8px; /* 간격을 좁게 조정 */
+    margin-bottom: 2px; /* 항목 사이 틈을 최소화 */
+    border-radius: 4px; 
+    font-size: 0.65rem; 
+    border-left: 3px solid var(--gold); 
+    border-bottom: 1px solid #222;
+}
+
+.history-item .log-date { color: #888; }
+.history-item .log-time { color: #aaa; text-align: center; }
+.history-item .log-duration { color: var(--purple); text-align: center; }
+.history-item .log-score { color: var(--gold); font-weight: 900; text-align: right; font-size: 0.75rem; }
+        
+#history-popup { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 25000; display: none; align-items: center; justify-content: center; backdrop-filter: blur(5px); }
+        .close-x:hover { color: var(--red); }
+
+@media (orientation: portrait) { 
+    body { flex-direction: column; } 
+    #left-panel { display: none !important; } 
+    #right-keypad { 
+        width: 100% !important; 
+        height: 42% !important; /* 다시 기존 수치로 복구하여 찌부된 모양을 해결합니다 */
+        border-top: 1px solid #222; 
+        padding: 10px !important; 
+        box-sizing: border-box; 
+    } 
+    #center-game { flex: 1; width: 100%; height: auto; } 
+    #display-answer { 
+        width: 90% !important; 
+        /* 답안 칸이 작아졌다면 height 수치를 다시 확인해 주세요 (기본은 flex에 의해 결정되거나 약 60px) */
+        height: 60px !important; 
+        margin: 0 auto 10px auto !important; 
+    } 
+    .abacus-frame { transform: scale(0.75) !important; }
+}
+
+@media (orientation: landscape) {
+    /* 가로 모드에서 키보드의 세로 높이가 무식하게 길어지는 걸 방지 */
+    #right-keypad { 
+        height: 100% !important; 
+        max-height: 350px !important; /* 이 숫자를 줄이면 키보드의 위아래 높이가 작아집니다 */
+        margin: auto 0; /* 키보드를 화면 세로 중앙에 배치 */
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+    .abacus-frame { transform: scale(0.75) !important; }
+    .result-card { max-height: 90vh !important; width: 460px !important; padding: 15px !important; }
+    .history-list { max-height: 120px !important; }
+    #display-answer { height: 50px !important; font-size: 2rem !important; }
+}
+    </style>
+</head>
+<body oncontextmenu="return false" onclick="handleAutoFullscreen()">
+
+    <div id="fs-trigger" style="position:fixed; inset:0; background:#000; z-index:20000; display:flex; flex-direction:column; align-items:center; justify-content:center; cursor:pointer;">
+        <h1 style="color:var(--purple); font-family:'Orbitron'; letter-spacing: 5px;">ENTER CHAMPIONSHIP</h1>
+        <input type="text" id="user-name" placeholder="이름을 입력하세요" onclick="event.stopPropagation()" style="margin-top:20px; padding:12px; font-size:1.4rem; text-align:center; border-radius:10px; border:none; width:220px;">
+        <button onclick="goFullScreen()" style="margin-top:20px; padding:15px 40px; background:var(--purple); color:white; border:none; border-radius:10px; font-size:1.2rem; font-weight:900; cursor:pointer;">시작하기</button>
+    </div>
+    
+    <div id="time-over-screen" style="position:fixed; inset:0; background:#000; z-index:21000; display:none; align-items:center; justify-content:center; font-size:5rem; font-weight:900; color:var(--red); font-family:'Orbitron';">TIME OVER</div>
+
+    <div id="left-panel">
+        <div id="timer-display">08:00</div>
+        <div id="course-title">덧셈초급</div>
+        <div id="reversal-notice">⚡ 역전 성공! ⚡</div>
+        <div id="step-info">STEP 1/90</div>
+        <button class="log-btn" onclick="showPracticeLogs()">📜 연습기록</button>
+        <div id="hall-of-fame"></div>
+    </div>
+
+    <div id="center-game">
+        <div id="feedback-area"><div id="feedback-icon"></div></div>
+        <div id="display-main"></div>
+        <div id="rolling-stage" style="position:absolute; inset:0; pointer-events:none; display:flex; justify-content:center; align-items:center;"></div>
+        <div id="hint-text" style="font-size:1.2rem; color:rgba(255,255,255,0.15); font-weight:400; text-align:center; display:none; position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); width:100%; z-index:11;">답을 입력하세요!!</div>
+    </div>
+
+    <div id="right-keypad">
+        <div id="display-answer"></div>
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; flex: 1;">
+            <div class="key" onpointerdown="fnIn('1')">1</div><div class="key" onpointerdown="fnIn('2')">2</div><div class="key" onpointerdown="fnIn('3')">3</div>
+            <div class="key" style="grid-column: 4; grid-row: 1 / 5; background: var(--green); color: #000; writing-mode: vertical-rl; text-orientation: upright; font-size: 1.4rem; letter-spacing: 4px;" onpointerdown="fnOk()">확인</div>
+            <div class="key" onpointerdown="fnIn('4')">4</div><div class="key" onpointerdown="fnIn('5')">5</div><div class="key" onpointerdown="fnIn('6')">6</div>
+            <div class="key" onpointerdown="fnIn('7')">7</div><div class="key" onpointerdown="fnIn('8')">8</div><div class="key" onpointerdown="fnIn('9')">9</div>
+            <div class="key" style="background:#333;" onpointerdown="fnIn('AC')">AC</div><div class="key" onpointerdown="fnIn('0')">0</div><div class="key" onpointerdown="fnIn('back')">←</div>
+        </div>
+    </div>
+
+    <div id="history-popup">
+        <div style="background: rgba(10, 10, 10, 0.95); padding: 25px 20px; border-radius: 20px; border: 2px solid var(--gold); width: 340px; max-height: 80vh; position: relative; box-shadow: 0 0 30px rgba(0,0,0,0.8);">
+            <div class="close-x" onclick="document.getElementById('history-popup').style.display='none'">&times;</div>
+            <h3 style="color:var(--gold); text-align:center; margin-top:0; font-size:1.3rem; letter-spacing: -1px; margin-bottom: 20px;">🏆 내 연습 기록 <span style="font-size:0.8rem; color:#666; font-weight:normal;">(최근순)</span></h3>
+            <div id="my-log-list" style="max-height: 50vh; overflow-y: auto; padding-right: 5px;"></div>
+            <button onclick="document.getElementById('history-popup').style.display='none'" style="width:100%; margin-top:20px; padding:12px; background: #222; color: #aaa; border: 1px solid #444; border-radius: 10px; font-weight: bold; cursor: pointer;">닫기</button>
+        </div>
+    </div>
+
+    <div id="schulte-overlay">
+        <div class="game-header" id="mini-game-header">
+            <div id="game-target-msg">미션 준비중...</div>
+            <div id="schulte-timer-container"><div id="schulte-timer-bar"></div></div>
+        </div>
+        <div id="schulte-table" class="schulte-grid"></div>
+        <div id="block-container"></div>
+        <div id="schulte-msg"></div>
+    </div>
+
+    <script>
+        // 초급용 문제 데이터
+        const problems = { 
+1:{type:'board',row:3,dig:1},
+2:{type:'board',row:3,dig:1},
+3:{type:'board',row:3,dig:1},
+4:{type:'board',row:4,dig:1},
+5:{type:'board',row:4,dig:1},
+
+6:{type:'flash',row:3,speed:700,dig:1},
+7:{type:'flash',row:3,speed:700,dig:1},
+8:{type:'flash',row:3,speed:700,dig:1},
+9:{type:'flash',row:4,speed:700,dig:1},
+10:{type:'flash',row:4,speed:700,dig:1},
+
+11:{type:'rolling',row:3,speed:1000,dig:1},
+12:{type:'rolling',row:3,speed:1000,dig:1},
+13:{type:'rolling',row:4,speed:1200,dig:1},
+14:{type:'rolling',row:4,speed:1200,dig:1},
+15:{type:'rolling',row:4,speed:1200,dig:1},
+
+16:{type:'abacus',dig:2,speed:1500},
+17:{type:'abacus',dig:2,speed:1500},
+18:{type:'abacus',dig:2,speed:1500},
+19:{type:'abacus',dig:3,speed:1500},
+20:{type:'abacus',dig:3,speed:1500},
+21:{type:'abacus',dig:3,speed:1500},
+22:{type:'abacus',dig:4,speed:1500},
+23:{type:'abacus',dig:4,speed:1500},
+24:{type:'abacus',dig:5,speed:1500},
+25:{type:'abacus',dig:5,speed:1500},
+
+26:{type:'board',row:5,dig:1},
+27:{type:'board',row:5,dig:1},
+28:{type:'board',row:7,dig:1},
+29:{type:'board',row:7,dig:1},
+30:{type:'board',row:2,dig:2},
+31:{type:'board',row:3,dig:2},
+
+32:{type:'flash',row:5,speed:700,dig:1},
+33:{type:'flash',row:5,speed:700,dig:1},
+34:{type:'flash',row:7,speed:700,dig:1},
+35:{type:'flash',row:2,speed:700,dig:2},
+36:{type:'flash',row:2,speed:700,dig:2},
+37:{type:'flash',row:3,speed:700,dig:2},
+38:{type:'flash',row:3,speed:700,dig:2},
+
+39:{type:'rolling',row:5,speed:1200,dig:1},
+40:{type:'rolling',row:5,speed:1200,dig:1},
+41:{type:'rolling',row:7,speed:1200,dig:1},
+42:{type:'rolling',row:7,speed:1200,dig:1},
+43:{type:'rolling',row:2,speed:1200,dig:2},
+44:{type:'rolling',row:2,speed:1300,dig:2},
+45:{type:'rolling',row:3,speed:1300,dig:2},
+
+46:{type:'numread',dig:2,speed:1500},
+47:{type:'numread',dig:2,speed:1500},
+48:{type:'numread',dig:3,speed:1500},
+49:{type:'numread',dig:3,speed:1500},
+50:{type:'numread',dig:4,speed:2000},
+51:{type:'numread',dig:4,speed:2000},
+52:{type:'numread',dig:4,speed:2000},
+53:{type:'numread',dig:5,speed:2000},
+54:{type:'numread',dig:5,speed:2000},
+55:{type:'numread',dig:5,speed:2000},
+
+56:{type:'board',row:3,dig:2},
+57:{type:'board',row:3,dig:2},
+58:{type:'board',row:3,dig:2},
+59:{type:'board',row:4,dig:2},
+60:{type:'board',row:4,dig:2},
+61:{type:'board',row:5,dig:2},
+
+62:{type:'flash',row:5,speed:600,dig:1},
+63:{type:'flash',row:7,speed:600,dig:1},
+64:{type:'flash',row:7,speed:600,dig:1},
+65:{type:'flash',row:2,speed:700,dig:2},
+66:{type:'flash',row:2,speed:700,dig:2},
+67:{type:'flash',row:3,speed:700,dig:2},
+68:{type:'flash',row:3,speed:700,dig:2},
+
+69:{type:'rolling',row:7,speed:1200,dig:1},
+70:{type:'rolling',row:7,speed:1200,dig:1},
+71:{type:'rolling',row:9,speed:1200,dig:1},
+72:{type:'rolling',row:9,speed:1200,dig:1},
+73:{type:'rolling',row:3,speed:1200,dig:2},
+74:{type:'rolling',row:3,speed:1300,dig:2},
+75:{type:'rolling',row:4,speed:1300,dig:2},
+
+76:{type:'board',row:5,dig:2},
+77:{type:'board',row:5,dig:2},
+78:{type:'board',row:5,dig:2},
+
+79:{type:'flash',row:5,speed:500,dig:1},
+80:{type:'flash',row:7,speed:500,dig:1},
+81:{type:'flash',row:3,speed:500,dig:2},
+82:{type:'flash',row:3,speed:500,dig:2},
+83:{type:'flash',row:4,speed:600,dig:2},
+84:{type:'flash',row:5,speed:700,dig:2},
+
+85:{type:'rolling',row:10,speed:1300,dig:1},
+86:{type:'rolling',row:10,speed:1300,dig:1},
+
+87:{type:'board',row:5,dig:2},
+88:{type:'board',row:5,dig:2},
+
+89:{type:'rolling',row:5,speed:1300,dig:2},
+90:{type:'rolling',row:5,speed:1300,dig:2} };
+        const titles = {board:'게시암산',flash:'플래쉬암산',rolling:'롤링암산',abacus:'주판읽기',numread:'숫자읽기'};
+        let cur=1, userAns="", ans=0, busy=false, audioCtx, lastType="", isGaming=false, schulteIdx=1, totalScore=0, timeLeft=480, mainTimer, playerName="", isTimeUp=false, blockGameCount=0, lastTopPlayer="";
+
+        function initAudio() { if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+        function playSfx(type) { if(!audioCtx) return; if(audioCtx.state==='suspended') audioCtx.resume(); const now = audioCtx.currentTime; if(type==='magic' || type==='bonus'){ [880, 1318].forEach((f, i) => { const osc = audioCtx.createOscillator(), gain = audioCtx.createGain(); osc.type = 'sine'; osc.connect(gain); gain.connect(audioCtx.destination); osc.frequency.setValueAtTime(f, now + i*0.05); gain.gain.setValueAtTime(0, now + i*0.05); gain.gain.linearRampToValueAtTime(0.06, now + i*0.05 + 0.02); gain.gain.exponentialRampToValueAtTime(0.001, now + i*0.05 + 0.3); osc.start(now + i*0.05); osc.stop(now + i*0.05 + 0.4); }); } else if(type==='click'){ const o=audioCtx.createOscillator(), g=audioCtx.createGain(); o.connect(g); g.connect(audioCtx.destination); o.frequency.setValueAtTime(1000,now); g.gain.setValueAtTime(0.05,now); o.start(); o.stop(now+0.05); } else if(type==='correct'){ const o=audioCtx.createOscillator(), g=audioCtx.createGain(); o.connect(g); g.connect(audioCtx.destination); o.frequency.setValueAtTime(600,now); g.gain.setValueAtTime(0.1,now); o.start(); o.stop(now+0.2); } else if(type==='wrong'){ const o=audioCtx.createOscillator(), g=audioCtx.createGain(); o.connect(g); g.connect(audioCtx.destination); o.frequency.setValueAtTime(220,now); g.gain.setValueAtTime(0.05,now); o.start(); o.stop(now+0.15); if(window.navigator.vibrate) window.navigator.vibrate(200); } else if(type==='typechange'){ [880, 1109, 1318].forEach((f, i) => { const o=audioCtx.createOscillator(), g=audioCtx.createGain(); o.connect(g); g.connect(audioCtx.destination); o.frequency.setValueAtTime(f, now+i*0.1); g.gain.setValueAtTime(0.02, now+i*0.1); o.start(now+i*0.1); o.stop(now+i*0.1+0.3); }); } else if(type==='finish'){ [440, 554, 659, 880].forEach((f, i) => { const o=audioCtx.createOscillator(), g=audioCtx.createGain(); o.connect(g); g.connect(audioCtx.destination); o.type='sine'; o.frequency.setValueAtTime(f, now+i*0.15); g.gain.setValueAtTime(0.1, now+i*0.15); o.start(now+i*0.15); o.stop(now+i*0.15+0.8); }); } }
+        function handleAutoFullscreen() { if(!document.fullscreenElement && mainTimer) document.documentElement.requestFullscreen().catch(()=>{}); }
+        function goFullScreen() { const nameIn = document.getElementById('user-name').value.trim(); playerName = nameIn || "게스트"; initAudio(); document.documentElement.requestFullscreen().catch(()=>{}); document.getElementById('fs-trigger').style.display='none'; if(!mainTimer) { startTimer(); updateHallOfFame(); showSchulte(3, 15000); } }
+        function startTimer() { mainTimer = setInterval(() => { if(isTimeUp) return; timeLeft--; let m = Math.floor(timeLeft/60), s = timeLeft%60; document.getElementById('timer-display').innerText = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`; saveRecord(false); if(timeLeft <= 0) { isTimeUp = true; clearInterval(mainTimer); showTimeOver(); } }, 1000); }
+        function getFormattedDate() { const now = new Date(); return `${String(now.getFullYear()).slice(-2)}.${String(now.getMonth()+1).padStart(2,'0')}.${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`; }
+
+        function saveRecord(finished) { 
+            let ranks = JSON.parse(localStorage.getItem('championship_ranks_v11') || "[]"); 
+            let idx = ranks.findIndex(r => r.name === playerName); 
+            let record = { name: playerName, realName: playerName.replace(/[0-9]/g, ''), score: totalScore, lastActive: Date.now(), isPlaying: !finished, fullDate: getFormattedDate(), timeLeft: timeLeft }; 
+            if(idx === -1) ranks.push(record); else ranks[idx] = record; 
+            localStorage.setItem('championship_ranks_v11', JSON.stringify(ranks)); 
+            if(finished) { localStorage.setItem('userGems', (parseInt(localStorage.getItem('userGems')||0)) + totalScore); localStorage.setItem('userCoins', (parseInt(localStorage.getItem('userCoins')||0)) + 100); }
+            updateHallOfFame(); 
+        }
+
+        function updateHallOfFame() { 
+            let ranks = JSON.parse(localStorage.getItem('championship_ranks_v11') || "[]"); 
+            const now = Date.now();
+            ranks.forEach(r => { if(now - r.lastActive > 180000) r.isPlaying = false; }); 
+
+            // 점수 높은 순 -> 시간 짧은 순 정렬
+            ranks.sort((a, b) => b.score - a.score || (b.timeLeft - a.timeLeft));
+
+            // 순위가 바뀌었을 때 애니메이션을 실행하는 부분
+            if (ranks.length > 0) {
+                let currentTopPlayer = ranks[0].name;
+                if (lastTopPlayer !== "" && lastTopPlayer !== currentTopPlayer) {
+                    playSfx('bonus');
+                    const notice = document.getElementById('reversal-notice');
+                    if(notice) {
+                        notice.style.display = 'block';
+                        notice.style.animation = 'none';
+                        notice.offsetHeight;
+                        notice.style.animation = 'fade-up 2s forwards';
+                        setTimeout(() => { notice.style.display = 'none'; }, 2000);
+                    }
+                }
+                lastTopPlayer = currentTopPlayer;
+            }
+
+            let html = ""; const medals = ["🥇", "🥈", "🥉", "🏅", "🎖️"]; 
+           for(let i = 0; i < ranks.length; i++) { 
+                let r = ranks[i]; 
+                let isMeClass = (r.name === playerName) ? 'my-record' : '';
+                let playingClass = r.isPlaying ? 'is-playing' : '';
+                let firstClass = (i === 0) ? 'first-place' : ''; 
+                let crownHtml = (i === 0) ? `<span class="crown-icon">🏆</span>` : '';
+
+                html += `<div class="rank-item color-${i<5?i+1:'other'} ${playingClass} ${isMeClass} ${firstClass}"><span>${i<5?medals[i]:''}${i+1}.${r.name}${crownHtml}</span><span style="font-family:'Orbitron'; font-weight:900;">${r.score}</span></div>`; 
+            } 
+            document.getElementById('hall-of-fame').innerHTML = html; 
+        }
+
+
+
+        function showPracticeLogs() { 
+    const list = document.getElementById('my-log-list'); 
+    const title = document.getElementById('course-title').innerText; 
+    let ranks = JSON.parse(localStorage.getItem('championship_ranks_v11') || "[]"); 
+    let myLogs = ranks.filter(r => r.realName === playerName.replace(/[0-9]/g, '')).sort((a,b)=>b.lastActive - a.lastActive);
+    
+    // 헤더 추가 및 리스트 출력
+    list.innerHTML = `
+        <div style="display:grid; grid-template-columns: 1.2fr 1fr 0.6fr; padding: 5px 8px; font-size: 0.6rem; color: #555; border-bottom: 1px solid #333;">
+            <span>연습일시(${title})</span><span style="text-align:center;">소요시간</span><span style="text-align:right;">점수</span>
+        </div>
+    `;
+
+    list.innerHTML += myLogs.map(l => {
+        const spent = 480 - (l.timeLeft || 0); 
+        const m = Math.floor(spent/60);
+        const s = spent%60;
+        // 8분(480초) 꽉 채웠거나 초과 시 회색 8:00, 이내 완료 시 보라색 소요시간
+        const isTimeOver = spent >= 480;
+        const durationColor = isTimeOver ? "#888" : "var(--purple)";
+        const durationText = isTimeOver ? "08:00" : `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+
+        return `
+        <div class="history-item" style="grid-template-columns: 1.2fr 1fr 0.6fr;">
+            <span class="log-date">${l.fullDate}</span>
+            <span class="log-duration" style="color:${durationColor}; text-align:center; font-weight:bold;">${durationText}</span>
+            <span class="log-score">${l.score}</span>
+        </div>`;
+    }).join(''); 
+    document.getElementById('history-popup').style.display = 'flex'; 
+}
+
+        function fnIn(k) { if(busy || isTimeUp) return; playSfx('click'); if(k==='AC') userAns=""; else if(k==='back') userAns=userAns.slice(0,-1); else if(userAns.length<8) userAns+=k; document.getElementById('display-answer').innerText=userAns; }
+        function fnOk() { if(busy || userAns === "" || isTimeUp) return; busy = true; const icon = document.getElementById('feedback-icon'); icon.style.display = 'block'; if(parseInt(userAns) === ans){ playSfx('correct'); icon.innerText = "✓"; icon.className = "correct"; totalScore++; } else { playSfx('wrong'); icon.innerText = "✕"; icon.className = "wrong"; } setTimeout(() => { icon.style.display = 'none'; cur++; saveRecord(false); initGame(); }, 800); }
+
+        function initGame() { 
+            if(isTimeUp) return; if(isGaming) return; 
+            if(cur===26&&schulteIdx===1){schulteIdx=2; showSchulte(4,25000); return;} 
+            if(cur===56&&schulteIdx===2){schulteIdx=3; startBlockGame(); return;} 
+            if(cur===76&&schulteIdx===3){schulteIdx=4; startBlockGame(); return;} 
+            if(cur>90 && schulteIdx===4){ schulteIdx=5; showSchulte(5,35000); return; }
+            if(cur>90 && schulteIdx===5){ showFinalResult(); return; } 
+            const p=problems[cur]; userAns=""; document.getElementById('display-answer').innerText=""; 
+            document.getElementById('step-info').innerText=`STEP ${cur}/90`; document.getElementById('hint-text').style.display='none'; 
+            const main=document.getElementById('display-main'); main.innerHTML = ""; busy=false; 
+            if(p.type!==lastType){ playSfx('typechange'); main.innerHTML=`<div style="font-size:2rem; color:var(--purple);">[ ${titles[p.type]} ]</div>`; lastType=p.type; setTimeout(()=>runProblem(p),1200); } 
+            else runProblem(p); 
+        }
+
+        function runProblem(p) {
+            const main = document.getElementById('display-main'), stage = document.getElementById('rolling-stage');
+            main.innerHTML = ""; stage.innerHTML = ""; let nums = [], ansVal = 0;
+            if (p.type === 'abacus' || p.type === 'numread') {
+                let s = ""; for (let i = 0; i < p.dig; i++) s += (i === 0) ? Math.floor(Math.random() * 9) + 1 : Math.floor(Math.random() * 10);
+                ans = parseInt(s);
+                if (p.type === 'abacus') { 
+                    main.innerHTML = (function(num){
+                        let h=`<div class="abacus-frame"><div class="master-divider"></div>`;
+                        num.toString().split('').forEach(d=>{ const v=parseInt(d); h+=`<div class="column"><div class="rod"></div>`; if(v>=5) h+=`<div class="bead upper-bead" style="top:55px;"></div>`; for(let j=1; j<=(v%5); j++) h+=`<div class="bead" style="top:${101 + (j-1)*34}px; position:absolute;"></div>`; h+=`</div>`; });
+                        return h+`</div>`;
+                    })(s);
+                } else main.innerText = s;
+                setTimeout(() => { if(!isTimeUp) { main.innerHTML = ""; document.getElementById('hint-text').style.display = 'block'; } }, 1500); 
+            } else {
+                for (let i = 0; i < p.row; i++) { let min = Math.pow(10, p.dig - 1), max = Math.pow(10, p.dig) - 1; let n = Math.floor(Math.random() * (max - min + 1)) + min; nums.push(n); ansVal += n; }
+                ans = ansVal;
+
+
+                if (p.type === 'board') {
+               let bHtml = `<div class="board-list ${p.row === 5 ? 'board-rows-5' : p.row >= 7 ? 'board-rows-7' : 'board-rows-234'}" style="line-height:1.1; color:var(--green); text-align:center; letter-spacing:2px; display:flex; flex-direction:column; align-items:center; width:100%;">`;
+
+
+                    nums.forEach(n => bHtml += `<div>${n}</div>`);
+                    main.innerHTML = bHtml + `<div style="width:200px; border-bottom:4px solid rgba(255,255,255,0.4); margin:12px auto;"></div><div style="font-size:1.1rem; color:rgba(255,255,255,0.15);">답을 입력하세요!!</div></div>`;
+                } else if (p.type === 'flash') {
+                    let idx = 0; let iv = setInterval(() => { if(isTimeUp){clearInterval(iv); return;} playSfx('click'); main.innerText = nums[idx++]; setTimeout(() => { main.innerText = ""; if (idx >= nums.length && !isTimeUp) document.getElementById('hint-text').style.display = 'block'; }, p.speed - 100); if (idx >= nums.length) clearInterval(iv); }, p.speed);
+                } else if (p.type === 'rolling') { 
+                    let idx = 0; let iv = setInterval(() => { if(isTimeUp){clearInterval(iv); return;} if (idx === 0) playSfx('click'); const d = document.createElement('div'); d.className = 'rolling-num'; d.innerText = nums[idx++]; d.style.setProperty('--roll-dur', (p.speed + 800) + 'ms'); stage.appendChild(d); if (idx >= nums.length) { clearInterval(iv); setTimeout(() => { if(!isTimeUp) document.getElementById('hint-text').style.display = 'block'; }, p.speed + 400); } }, 350); 
+                }
+            }
+        }
+
+function showSchulte(size, timeLimit) {
+    if(isTimeUp) return; isGaming=true; busy=true; 
+    
+    const overlay=document.getElementById('schulte-overlay');
+    const table=document.getElementById('schulte-table');
+    const bar=document.getElementById('schulte-timer-bar');
+    const msgArea=document.getElementById('schulte-msg');
+    const header=document.getElementById('mini-game-header');
+
+    overlay.style.display='flex'; table.innerHTML=''; table.style.display='grid'; 
+    msgArea.style.display='none'; header.style.display='flex';
+
+    // 슐테표 제목 위치: -80pxsms 위로 붙음
+    // 기본 위치 설정 (3x3, 4x4 용)
+    header.style.position = "relative";
+    header.style.top = "-10px"; 
+    table.style.marginTop = "0px";
+
+    // 마지막 5x5 슐테표만 특별히 더 위로 올리기
+    if (size === 5) {
+        header.style.top = "-40px";  // 제목을 더 위로 바짝 올림
+        table.style.marginTop = "-40px"; // 표 자체도 위로 끌어올림
+    }
+
+            document.getElementById('block-container').style.display='none'; document.getElementById('game-target-msg').innerText = `[슐테표 : 1부터 차례대로 누르기]`;
+            table.style.gridTemplateColumns=`repeat(${size}, 1fr)`;
+            let next=1, max=size*size, nums=Array.from({length:max},(_,i)=>i+1).sort(()=>Math.random()-0.5);
+            nums.forEach(n=>{ const cell=document.createElement('div'); cell.className='schulte-cell'; cell.innerText=n; cell.onpointerdown=(e)=>{ e.preventDefault(); if(n===next){ playSfx('click'); cell.style.visibility='hidden'; next++; if(next>max) finishSchulte(true); } }; table.appendChild(cell); });
+            let start=Date.now(); let si=setInterval(()=>{ let rem=Math.max(0,timeLimit-(Date.now()-start)); bar.style.width=(rem/timeLimit*100)+"%"; if(rem<=0||!isGaming||isTimeUp){ clearInterval(si); if(rem<=0&&isGaming&&!isTimeUp) finishSchulte(false); } },50);
+        }
+
+        function finishSchulte(success) { 
+            isGaming = false; const msg=document.getElementById('schulte-msg'), table=document.getElementById('schulte-table'), header=document.getElementById('mini-game-header'); 
+            table.style.display='none'; header.style.display='none'; msg.style.display='flex'; 
+            if(success) { totalScore+=2; playSfx('bonus'); msg.innerHTML=`<div style="color:var(--green); font-size:2.5rem; font-weight:900;">성공 ! 보너스 +2점</div>`; }
+            else msg.innerHTML=`<div style="color:var(--red); font-size:2rem; font-weight:900;">시간 초과</div>`;
+            setTimeout(()=>{ document.getElementById('schulte-overlay').style.display='none'; msg.style.display='none'; busy=false; initGame(); },1500); 
+        }
+
+        function startBlockGame() {
+            if(isTimeUp) return; isGaming=true; busy=true; blockGameCount++;
+            const header=document.getElementById('mini-game-header'), area=document.getElementById('block-container'), bar=document.getElementById('schulte-timer-bar'), msgArea=document.getElementById('schulte-msg');
+            header.style.display='flex'; header.style.position = "absolute"; header.style.top = "40px"; header.style.zIndex = "17000";
+            document.getElementById('schulte-overlay').style.display='flex'; area.style.display='block'; area.innerHTML=""; document.getElementById('schulte-table').style.display='none';
+            let targetSum = (blockGameCount===1)?10:20; document.getElementById('game-target-msg').innerText = `[${targetSum} 만들기]`;
+            let bScore=0, bTime=30.0, sel=null, stackedBlocks=[]; const B_SIZE=60, cols = Math.floor(window.innerWidth / 70);
+            function spawnGroup() { 
+                if(!isGaming||isTimeUp) return; let count = 4 + Math.floor(Math.random()*2);
+                for(let i=0; i<count; i++) {
+                    let val = Math.floor(Math.random()*(targetSum-1))+1, col = Math.floor(Math.random()*cols); 
+                    const b=document.createElement('div'); b.className='block'; b.innerText=val; b.style.left=(col*70 + 10)+"px"; b.style.top="-80px"; 
+                    b.style.background=`linear-gradient(135deg, hsl(${Math.random()*360},70%,50%), hsl(${Math.random()*360},70%,30%))`; 
+                    b.onpointerdown=(e)=>{ e.preventDefault(); if(sel===b){ sel=null; b.style.border="none"; } else if(!sel){ sel=b; b.style.border="4px solid #fff"; } else { if(parseInt(sel.innerText)+parseInt(b.innerText)===targetSum){ playSfx('magic'); const s=sel; stackedBlocks=stackedBlocks.filter(x=>x!==s && x!==b); s.remove(); b.remove(); bScore++; sel=null; setTimeout(applyGravity, 50); } else { playSfx('click'); sel.style.border="none"; sel=b; b.style.border="4px solid #fff"; } } }; 
+                    area.appendChild(b); stackedBlocks.push(b); setTimeout(()=>updateBlockPos(b), 50);
+                }
+                if(isGaming) setTimeout(spawnGroup, 1200); 
+            }
+            function updateBlockPos(b) { if(!b.parentElement) return; let colX = parseInt(b.style.left), targetY = area.clientHeight - B_SIZE - 5; stackedBlocks.forEach(other => { if(other !== b && Math.abs(parseInt(other.style.left) - colX) < 10) { let otherY = parseInt(other.style.top); if(otherY > b.offsetTop) targetY = Math.min(targetY, otherY - B_SIZE - 2); } }); b.style.top = targetY + "px"; }
+            function applyGravity() { stackedBlocks.sort((a,b)=>b.offsetTop-a.offsetTop).forEach(b=>updateBlockPos(b)); }
+            function finishBlock(){ isGaming=false; area.style.display='none'; header.style.display='none'; let bonus = (bScore>=10)?2:(bScore>=5)?1:0; totalScore+=bonus; if(bonus>0) playSfx('bonus'); msgArea.style.display='flex'; msgArea.innerHTML=`<div style="font-size:2rem; font-weight:900; color:var(--gold); text-align:center;">맞춘 개수: ${bScore}개<br><span style="color:var(--green);">보너스 +${bonus}점</span></div>`; setTimeout(()=>{document.getElementById('schulte-overlay').style.display='none'; msgArea.style.display='none'; busy=false; initGame();},2500); } 
+            spawnGroup(); let ti=setInterval(()=>{ if(isTimeUp||!isGaming){clearInterval(ti); return;} bTime-=0.1; bar.style.width=(bTime/30*100)+"%"; if(bTime<=0){clearInterval(ti); finishBlock();} },100);
+        }
+
+        function showTimeOver() { isTimeUp = true; const tos = document.getElementById('time-over-screen'); tos.style.display = 'flex'; playSfx('finish'); setTimeout(() => { tos.style.display = 'none'; showFinalResult(); }, 2000); }
+        function showFinalResult() { 
+            saveRecord(true); const msgArea = document.getElementById('schulte-msg'), spent = 480 - timeLeft;
+            const timeDisplay = (spent >= 480) ? "08:00 (Time Over)" : `${Math.floor(spent/60)}:${String(spent%60).padStart(2,'0')}`;
+            let allRanks = JSON.parse(localStorage.getItem('championship_ranks_v11') || "[]").sort((a,b)=>b.score - a.score || (b.timeLeft - a.timeLeft));
+            let myRank = allRanks.findIndex(r => r.name === playerName) + 1;
+            const realNameOnly = playerName.replace(/[0-9]/g, ''); 
+            let bestRecords = {}; allRanks.forEach(r => { if(!bestRecords[r.realName] || bestRecords[r.realName].score < r.score) bestRecords[r.realName] = r; });
+            let sortedBests = Object.values(bestRecords).sort((a,b)=>b.score - a.score);
+            msgArea.innerHTML = `
+                <div class="result-card">
+                    <h2 style="color:var(--green); margin:0 0 5px 0; font-size:1.1rem;">${realNameOnly}님 결과</h2>
+                    <div style="font-size:1.2rem; color:var(--gold); font-weight:900;">현재 순위: ${myRank}위</div>
+                    <h1 style="font-size:3rem; margin:5px 0; color:white; text-shadow:0 0 10px var(--purple);">${totalScore}점</h1>
+                    <div style="background:rgba(74, 222, 128, 0.1); padding:8px; border-radius:10px; margin-bottom:10px; border:1px solid var(--green);"><span style="font-size:0.75rem; color:var(--green);">이번 게임 보상:</span><span style="font-weight:900; margin-left:10px;">💎 ${totalScore}  🪙 100</span></div>
+                    <div style="background:rgba(255,255,255,0.08); padding:10px; border-radius:12px; margin-bottom:12px; display:flex; justify-content:space-around; align-items:center;">
+                        <div><div style="color:var(--gold); font-size:0.7rem;">누적 보석</div><div style="font-size:1.2rem; font-weight:900;">💎 ${parseInt(localStorage.getItem('userGems')||0)}</div></div>
+                        <div style="width:1px; height:25px; background:#444;"></div>
+                        <div><div style="color:var(--purple); font-size:0.7rem;">누적 코인</div><div style="font-size:1.2rem; font-weight:900;">🪙 ${parseInt(localStorage.getItem('userCoins')||0)}</div></div>
+                    </div>
+                    <div style="font-weight:900; color:var(--gold); font-size:0.8rem; margin-bottom:8px; border-bottom:1px solid #333; padding-bottom:5px;">🏆 명예의 전당 🏆</div>
+                    <div class="history-list">${sortedBests.map((r, i) => `<div class="history-item"><span style="color:var(--gold); font-weight:900;">${i<5?["🏆 1위", "🥈 2위", "🥉 3위", "🏅 4위", "🎖️ 5위"][i]:(i+1)+'.'}</span><span style="color:#fff; font-weight:700;">${r.realName}</span><span style="color:#888; font-size:0.55rem; text-align:center;">${r.fullDate}</span><span style="text-align:right; font-weight:900; color:var(--green);">${r.score}</span></div>`).join('')}</div>
+                    <div style="display:flex; gap:10px; margin-top:15px;"><button onclick="location.reload()" style="flex:1; padding:12px; background:var(--green); border:none; font-weight:900; border-radius:10px; cursor:pointer;">다시 시작</button><button onclick="location.reload()" style="flex:1; padding:12px; background:var(--purple); color:white; border:none; font-weight:900; border-radius:10px; cursor:pointer; font-size:1.1rem; box-shadow:0 4px #7c3aed;">다시 도전하기!</button></div>
+                </div>`; 
+            document.getElementById('schulte-overlay').style.display='flex'; document.getElementById('mini-game-header').style.display='none'; document.getElementById('schulte-table').style.display='none'; document.getElementById('block-container').style.display='none'; msgArea.style.display='flex';
+        }
+
+        window.addEventListener('keydown', (e) => { if(busy || isTimeUp) return; if(e.key >= '0' && e.key <= '9') fnIn(e.key); else if(e.key === 'Enter') fnOk(); else if(e.key === 'Backspace') fnIn('back'); else if(e.key === 'Escape') fnIn('AC'); });
+        setInterval(updateHallOfFame, 3000);
+    </script>
+</body>
+</html>

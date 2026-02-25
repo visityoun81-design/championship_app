@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CHAMPIONSHIP - 통합 관리 시스템</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Noto+Sans+KR:wght@300;500;700&display=swap" rel="stylesheet">
+
+
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="dog.png">
+    <script>
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('sw.js');
+      }
+    </script>
+
+
+
+    <style>
+        :root {
+            --bg: #0f172a; --panel: #1e293b; --purple: #c084fc;
+            --gold: #facc15; --green: #4ade80; --red: #f87171; --blue: #3b82f6;
+            --glass: rgba(255, 255, 255, 0.05);
+        }
+        body { margin: 0; background: var(--bg); color: #fff; font-family: 'Noto Sans KR', sans-serif; padding: 20px; overflow-x: hidden; }
+        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; border-bottom: 2px solid var(--purple); padding-bottom: 15px; }
+        h1 { font-family: 'Orbitron', sans-serif; margin: 0; color: var(--purple); letter-spacing: 2px; font-size: 1.5rem; }
+        
+        .role-badge { padding: 5px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: bold; text-transform: uppercase; }
+        .badge-admin { background: var(--red); color: white; box-shadow: 0 0 10px var(--red); }
+        .badge-teacher { background: var(--blue); color: white; box-shadow: 0 0 10px var(--blue); }
+
+        section { background: var(--panel); padding: 20px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); margin-bottom: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        h2 { font-size: 1.1rem; color: var(--purple); margin-top: 0; display: flex; align-items: center; gap: 10px; border-left: 4px solid var(--purple); padding-left: 10px; }
+
+        .table-wrapper { overflow-x: auto; }
+        .admin-table { width: 100%; border-collapse: collapse; margin-top: 10px; min-width: 1000px; }
+        .admin-table th { background: rgba(0,0,0,0.3); padding: 15px; text-align: left; font-size: 0.85rem; color: #94a3b8; border-bottom: 2px solid var(--purple); }
+        .admin-table td { padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.9rem; }
+        .admin-table tr:hover { background: rgba(255,255,255,0.02); }
+
+        .btn { border: none; padding: 8px 14px; border-radius: 8px; cursor: pointer; font-weight: 600; transition: 0.3s; color: white; }
+        .btn:active { transform: scale(0.95); }
+        .btn-approve { background: var(--green); color: #000; }
+        .btn-delete { background: var(--red); }
+        .btn-blue { background: var(--blue); }
+        .btn-reset { background: #334155; width: 100%; margin-top: 5px; font-size: 0.8rem; }
+        .btn-reset:hover { background: var(--red); }
+
+        #modal-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); backdrop-filter: blur(10px); z-index: 10000;
+            justify-content: center; align-items: center;
+        }
+        .modal-content {
+            background: linear-gradient(145deg, #1e293b, #0f172a);
+            width: 90%; max-width: 500px; border-radius: 24px; padding: 30px;
+            border: 2px solid var(--purple); box-shadow: 0 0 50px rgba(168, 85, 247, 0.3);
+            position: relative; animation: modalPop 0.3s cubic-bezier(0.17, 0.89, 0.32, 1.49);
+        }
+        @keyframes modalPop { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+        .record-item {
+            background: rgba(255,255,255,0.05); padding: 15px; border-radius: 12px;
+            margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;
+            border-left: 4px solid var(--blue);
+        }
+        .record-date { font-size: 0.75rem; color: #94a3b8; }
+        .record-score { font-family: 'Orbitron'; color: var(--gold); font-size: 1.2rem; }
+
+        input, select { background: #020617; border: 1px solid #334155; color: white; padding: 10px; border-radius: 8px; outline: none; }
+        input:focus { border-color: var(--purple); }
+
+        .grid-4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
+    </style>
+</head>
+<body>
+
+<header>
+    <div>
+        <h1 id="page-title">SYSTEM CONTROL</h1>
+        <span id="user-role-badge" class="role-badge">불러오는 중...</span>
+    </div>
+    <button class="btn" style="background:#444;" onclick="location.href='mainpage.html'">◀ 로비로 돌아가기</button>
+</header>
+
+<div id="admin-only-top" style="display: none;">
+    <section style="border: 2px solid var(--red);">
+        <h2 style="color:var(--red)">📩 신규 가입 및 선생님 등록</h2>
+        <div class="grid-4">
+            <div style="grid-column: span 2;">
+                <h4 style="margin:0 0 10px 0;">[가입 요청 내역]</h4>
+                <div id="request-list" style="font-size: 0.85rem; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 10px;">
+                    현재 대기중인 가입 요청이 없습니다.
+                </div>
+            </div>
+            <div style="grid-column: span 2;">
+                <h4 style="margin:0 0 10px 0;">[선생님 직접 등록]</h4>
+                <div style="display: flex; gap: 5px; flex-wrap: wrap;">
+                    <input type="text" id="t-name" placeholder="선생님 성함" style="flex:1">
+                    <input type="text" id="t-id" placeholder="아이디" style="flex:1">
+                    <input type="password" id="t-pw" placeholder="비번" style="flex:1">
+                    <button class="btn btn-approve" onclick="alert('등록완료')">등록</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section>
+        <h2>🏆 챔피언십 컨트롤러</h2>
+        <div style="display: flex; gap: 10px; align-items: center;">
+            <button class="btn btn-approve" style="padding: 15px 30px; font-size: 1rem;" onclick="alert('대회 시작!')">대회 시작 알림 송출</button>
+            <button class="btn btn-delete" style="padding: 15px 30px;">대회 종료</button>
+            <button class="btn btn-blue" style="padding: 15px 30px;" onclick="alert('전광판 모드 실행')">🖥️ 실시간 전광판 보기</button>
+        </div>
+    </section>
+</div>
+
+<section>
+    <h2>➕ 학생 직접 등록</h2>
+    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+        <select id="reg-teacher-select">
+            <option value="">담당 선생님 선택</option>
+            <option value="김철수">김철수 선생님</option>
+            <option value="이영희">이영희 선생님</option>
+        </select>
+        <input type="text" id="reg-name" placeholder="학생 이름">
+        <input type="text" id="reg-id" placeholder="학생 아이디">
+        <input type="password" id="reg-pw" placeholder="비밀번호">
+        <button class="btn btn-approve" onclick="alert('학생이 등록되었습니다.')">즉시 등록</button>
+    </div>
+</section>
+
+<section>
+    <h2>👤 학생 관리 및 기록 확인</h2>
+    
+    <div style="margin-bottom: 20px; display: flex; gap: 10px; flex-wrap: wrap; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 12px;">
+        <div style="display: flex; flex-direction: column; gap: 5px;">
+            <label style="font-size: 0.75rem; color: var(--purple);">선생님 필터</label>
+            <select id="filter-teacher" onchange="filterStudents()" style="min-width: 150px;">
+                <option value="all">전체 선생님 보기</option>
+                <option value="김철수">김철수 선생님</option>
+                <option value="이영희">이영희 선생님</option>
+                <option value="박지성">박지성 선생님</option>
+            </select>
+        </div>
+        
+        <div style="display: flex; flex-direction: column; gap: 5px; flex: 1;">
+            <label style="font-size: 0.75rem; color: var(--purple);">이름/ID 검색</label>
+            <input type="text" id="search-input" onkeyup="filterStudents()" placeholder="학생 이름 또는 아이디 입력...">
+        </div>
+    </div>
+
+    <div class="table-wrapper">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>이름(ID)</th>
+                    <th>담당선생님</th>
+                    <th>상태</th>
+                    <th>상세기록</th>
+                    <th>레벨</th>
+                    <th>아이템</th>
+                    <th>보석</th>
+                    <th>코인</th>
+                    <th>관리</th>
+                </tr>
+            </thead>
+            <tbody id="student-list">
+                <tr data-teacher="김철수">
+                    <td>김챔피언 (champ)</td>
+                    <td class="t-name">김철수</td>
+                    <td><span style="color:var(--green)">활동중</span></td>
+                    <td><button class="btn btn-blue btn-sm" onclick="showRecords('김챔피언')">기록보기</button></td>
+                    <td>Lv.35</td>
+                    <td>🐱 마법모자</td>
+                    <td style="color:var(--blue)">💎 1,250</td>
+                    <td style="color:var(--gold)">🪙 5,000</td>
+                    <td><button class="btn btn-delete btn-sm">회원삭제</button></td>
+                </tr>
+                <tr data-teacher="이영희">
+                    <td>이연습 (test1)</td>
+                    <td class="t-name">이영희</td>
+                    <td><span style="color:var(--green)">활동중</span></td>
+                    <td><button class="btn btn-blue btn-sm" onclick="showRecords('이연습')">기록보기</button></td>
+                    <td>Lv.12</td>
+                    <td>🛡️ 동방패</td>
+                    <td style="color:var(--blue)">💎 120</td>
+                    <td style="color:var(--gold)">🪙 800</td>
+                    <td><button class="btn btn-delete btn-sm">회원삭제</button></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<section id="reset-section" style="display: none;">
+    <h2 style="color:var(--red)">🚨 실시간 순위 리셋 (연습 기록은 유지됨)</h2>
+    <div class="grid-4">
+        <div>
+            <h4>덧셈/뺄셈</h4>
+            <button class="btn btn-reset" onclick="resetRank('덧셈 초급')">초급 순위 리셋</button>
+            <button class="btn btn-reset" onclick="resetRank('덧셈 중급')">중급 순위 리셋</button>
+            <button class="btn btn-reset" onclick="resetRank('덧셈 고급')">고급 순위 리셋</button>
+        </div>
+        <div>
+            <h4>곱셈/나눗셈</h4>
+            <button class="btn btn-reset" onclick="resetRank('곱셈')">곱셈 순위 리셋</button>
+            <button class="btn btn-reset" onclick="resetRank('나눗셈')">나눗셈 순위 리셋</button>
+        </div>
+        <div>
+            <h4>미니게임</h4>
+            <button class="btn btn-reset" onclick="resetRank('10만들기')">10만들기 리셋</button>
+            <button class="btn btn-reset" onclick="resetRank('24만들기')">24만들기 리셋</button>
+            <button class="btn btn-reset" onclick="resetRank('슐태표')">슐태표 리셋</button>
+        </div>
+        <div>
+            <h4>특별 대회</h4>
+            <button class="btn btn-reset" style="background:var(--gold); color:black;" onclick="resetRank('암산챔피언쉽')">암산챔피언쉽 리셋</button>
+        </div>
+    </div>
+</section>
+
+<div id="modal-overlay">
+    <div class="modal-content">
+        <h2 id="modal-title" style="margin-bottom: 20px;">GAME RECORD</h2>
+        <div id="record-container" style="max-height: 400px; overflow-y: auto;"></div>
+        <button class="btn btn-delete" style="width: 100%; margin-top: 20px;" onclick="closeModal()">닫기</button>
+    </div>
+</div>
+
+<script>
+    // 페이지 로드 시 실행되는 통합 로직
+    window.onload = function() {
+        const role = localStorage.getItem('userRole');
+        const userName = localStorage.getItem('userName');
+        
+        // 1. 보안 체크
+        if (role !== 'admin' && role !== 'teacher') {
+            alert("권한이 없습니다. 관리자 로그인이 필요합니다.");
+            location.href = 'login.html';
+            return;
+        }
+
+        const badge = document.getElementById('user-role-badge');
+        const adminTop = document.getElementById('admin-only-top');
+        const resetSection = document.getElementById('reset-section');
+        const regTeacherSelect = document.getElementById('reg-teacher-select');
+        const filterSelect = document.getElementById('filter-teacher');
+
+        // 2. 권한별 UI 설정
+        if (role === 'admin') {
+            badge.innerText = "MASTER ADMIN";
+            badge.classList.add('badge-admin');
+            adminTop.style.display = 'block';
+            resetSection.style.display = 'block';
+            loadJoinRequests(); // 관리자만 가입 요청 로드
+        } else if (role === 'teacher') {
+            badge.innerText = `TEACHER: ${userName}`;
+            badge.classList.add('badge-teacher');
+            document.getElementById('page-title').innerText = "TEACHER MODE";
+
+            // 담당 선생님 자동 고정
+            regTeacherSelect.innerHTML = `<option value="${userName}">${userName} 선생님</option>`;
+            regTeacherSelect.disabled = true;
+
+            // 필터 자동 고정
+            filterSelect.value = userName;
+            filterSelect.disabled = true;
+            filterStudents();
+        }
+    };
+
+// admin.html 내 loadJoinRequests 함수 수정
+function loadJoinRequests() {
+    const requestListDiv = document.getElementById('request-list');
+    const requests = JSON.parse(localStorage.getItem('joinRequests') || '[]');
+
+    if (requests.length === 0) {
+        requestListDiv.innerHTML = "현재 대기중인 가입 요청이 없습니다.";
+        return;
+    }
+
+    requestListDiv.innerHTML = requests.map((req, index) => `
+        <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.05); padding:12px; border-radius:12px; margin-bottom:8px; border-left:4px solid ${req.type === '선생님' ? 'var(--blue)' : 'var(--red)'};">
+            <div>
+                <span class="role-badge ${req.type === '선생님' ? 'badge-teacher' : 'badge-admin'}" style="font-size:0.6rem; padding:2px 6px;">${req.type}</span>
+                <strong style="color:var(--gold); margin-left:5px;">${req.name}</strong> (${req.id})<br>
+                <span style="font-size:0.8rem; color:#fff;">📞 ${req.phone}</span><br>
+                <span style="font-size:0.7rem; color:#94a3b8;">신청일: ${req.date}</span>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:5px;">
+                <button class="btn btn-approve btn-sm" onclick="approveJoin(${index})">승인</button>
+                <button class="btn btn-delete btn-sm" onclick="rejectJoin(${index})">거절</button>
+            </div>
+        </div>
+    `).join('');
+}
+
+    // 가입 승인 로직
+    function approveJoin(index) {
+        const requests = JSON.parse(localStorage.getItem('joinRequests') || '[]');
+        const approvedUser = requests[index];
+        alert(`${approvedUser.name} 학생의 가입을 승인했습니다!`);
+        requests.splice(index, 1);
+        localStorage.setItem('joinRequests', JSON.stringify(requests));
+        loadJoinRequests();
+    }
+
+    // 가입 거절 로직
+    function rejectJoin(index) {
+        if(confirm("정말 거절하시겠습니까? 데이터가 삭제됩니다.")) {
+            const requests = JSON.parse(localStorage.getItem('joinRequests') || '[]');
+            requests.splice(index, 1);
+            localStorage.setItem('joinRequests', JSON.stringify(requests));
+            loadJoinRequests();
+        }
+    }
+
+    // 학생 필터링 로직
+    function filterStudents() {
+        const teacherFilter = document.getElementById('filter-teacher').value;
+        const searchFilter = document.getElementById('search-input').value.toLowerCase();
+        const tableBody = document.getElementById('student-list');
+        const rows = tableBody.getElementsByTagName('tr');
+
+        for (let i = 0; i < rows.length; i++) {
+            const row = rows[i];
+            const teacherName = row.getAttribute('data-teacher');
+            const studentInfo = row.cells[0].textContent.toLowerCase();
+
+            const matchTeacher = (teacherFilter === 'all' || teacherName === teacherFilter);
+            const matchSearch = studentInfo.includes(searchFilter);
+
+            row.style.display = (matchTeacher && matchSearch) ? "" : "none";
+        }
+    }
+
+    // 연습 기록 보기 팝업
+    function showRecords(name) {
+        document.getElementById('modal-overlay').style.display = 'flex';
+        document.getElementById('modal-title').innerText = `${name}의 연습 기록`;
+        const container = document.getElementById('record-container');
+        const records = [
+            { date: '2024-02-14 14:20', subject: '덧셈 초급', score: '100' },
+            { date: '2024-02-14 13:05', subject: '슐태표', score: '12.5s' },
+            { date: '2024-02-13 18:40', subject: '24만들기', score: '85' }
+        ];
+        container.innerHTML = records.map(r => `
+            <div class="record-item">
+                <div>
+                    <div style="font-weight:bold; color:var(--purple);">${r.subject}</div>
+                    <div class="record-date">${r.date}</div>
+                </div>
+                <div class="record-score">${r.score}</div>
+            </div>
+        `).join('');
+    }
+
+    function closeModal() {
+        document.getElementById('modal-overlay').style.display = 'none';
+    }
+
+    function resetRank(subject) {
+        if(confirm(`${subject}의 실시간 순위판을 초기화하시겠습니까?`)) {
+            alert(`${subject} 순위 리셋 완료!`);
+        }
+    }
+</script>
+</body>
+</html>
