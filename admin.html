@@ -271,8 +271,8 @@ window.onload = function() {
             filterSelect.disabled = true;
             filterStudents();
         }
-// [여기에 추가] 페이지 로딩 시 목록을 즉시 보여주기 위해 호출합니다.
-    displayUserList();
+     loadJoinRequests(); // 가입 요청 불러오기
+    displayUserList();  // [중요] 등록된 사용자 목록 불러오기
     };
 
 // admin.html 내 loadJoinRequests 함수 수정
@@ -301,25 +301,24 @@ function loadJoinRequests() {
     `).join('');
 }
 
-// admin.html 내의 approveJoin 함수 수정
 function approveJoin(index) {
     const requests = JSON.parse(localStorage.getItem('joinRequests') || '[]');
     const approvedUser = requests[index];
-    
-    // 승인된 사용자 명단 가져오기
+
+    // 1. 승인된 사용자 명단(approvedUsers)에 추가
     const users = JSON.parse(localStorage.getItem('approvedUsers') || '[]');
     users.push(approvedUser);
     localStorage.setItem('approvedUsers', JSON.stringify(users));
 
-    alert(`${approvedUser.name} 님의 가입을 승인했습니다!`);
-    
-    // 요청 목록에서 삭제
+    // 2. 가입 요청 목록에서 삭제
     requests.splice(index, 1);
     localStorage.setItem('joinRequests', JSON.stringify(requests));
-    
-    // 화면 갱신
+
+    alert(`${approvedUser.name} 님의 가입을 승인했습니다!`);
+
+    // 3. 화면의 가입 요청 목록과 하단 사용자 목록을 모두 새로고침
     loadJoinRequests();
-    displayUserList(); // 사용자 목록 갱신 함수 호출
+    displayUserList(); 
 }
 
     // 가입 거절 로직
@@ -383,40 +382,41 @@ function approveJoin(index) {
     }
 
 // [추가된 부분] 실제 데이터를 테이블에 그려주는 함수
-    function displayUserList() {
-        const tableBody = document.getElementById('student-list');
-        // 승인된 사용자 데이터를 LocalStorage에서 가져옵니다.
-        const users = JSON.parse(localStorage.getItem('approvedUsers') || '[]');
-        
-        if (users.length === 0) {
-            tableBody.innerHTML = '<tr><td colspan="9" style="text-align:center;">등록된 사용자가 없습니다.</td></tr>';
-            return;
-        }
-
-        tableBody.innerHTML = users.map(user => `
-            <tr data-teacher="${user.type === '선생님' ? '관리자' : '담당미정'}">
-                <td>${user.name} (${user.id})</td>
-                <td>${user.type}</td>
-                <td><span style="color:var(--green)">활동중</span></td>
-                <td><button class="btn btn-blue btn-sm" onclick="showRecords('${user.name}')">기록보기</button></td>
-                <td>Lv.1</td>
-                <td>-</td>
-                <td style="color:var(--blue)">💎 0</td>
-                <td style="color:var(--gold)">🪙 0</td>
-                <td><button class="btn btn-delete btn-sm" onclick="deleteUser('${user.id}')">삭제</button></td>
-            </tr>
-        `).join('');
+function displayUserList() {
+    const tableBody = document.getElementById('student-list');
+    const users = JSON.parse(localStorage.getItem('approvedUsers') || '[]');
+    
+    // 등록된 사용자가 없을 때
+    if (users.length === 0) {
+        tableBody.innerHTML = '<tr><td colspan="9" style="text-align:center; padding:20px;">등록된 선생님/학생이 없습니다.</td></tr>';
+        return;
     }
 
-    // [추가된 부분] 사용자 삭제 기능
-    function deleteUser(userId) {
-        if(confirm("정말 이 사용자를 삭제하시겠습니까?")) {
-            let users = JSON.parse(localStorage.getItem('approvedUsers') || '[]');
-            users = users.filter(u => u.id !== userId);
-            localStorage.setItem('approvedUsers', JSON.stringify(users));
-            displayUserList(); // 목록 새로고침
-        }
+    // 데이터를 테이블 줄(tr)로 변환
+    tableBody.innerHTML = users.map(user => `
+        <tr>
+            <td>${user.name} (${user.id})</td>
+            <td>${user.type}</td>
+            <td><span style="color:var(--green)">활동중</span></td>
+            <td><button class="btn btn-blue btn-sm" onclick="showRecords('${user.name}')">기록보기</button></td>
+            <td>Lv.1</td>
+            <td>-</td>
+            <td style="color:var(--blue)">💎 0</td>
+            <td style="color:var(--gold)">🪙 0</td>
+            <td><button class="btn btn-delete btn-sm" onclick="deleteUser('${user.id}')">삭제</button></td>
+        </tr>
+    `).join('');
+}
+
+// 사용자 삭제 기능 (필요할 경우)
+function deleteUser(userId) {
+    if(confirm("정말 삭제하시겠습니까?")) {
+        let users = JSON.parse(localStorage.getItem('approvedUsers') || '[]');
+        users = users.filter(u => u.id !== userId);
+        localStorage.setItem('approvedUsers', JSON.stringify(users));
+        displayUserList();
     }
+}
 
 </script>
 </body>
