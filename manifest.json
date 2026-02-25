@@ -1,0 +1,101 @@
+{
+  "name": "주산암산챔피언쉽",
+  "short_name": "챔피언쉽",
+  "description": "실시간 암산연습_챔피언쉽",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#020617",
+  "theme_color": "#a855f7",
+  "icons": [
+    {
+      "src": "dog.png",
+      "sizes": "659x680",
+      "type": "image/png"
+    },
+    {
+      "src": "cat.png",
+      "sizes": "648x823",
+      "type": "image/png"
+    }
+{
+      "src": "bear.png",
+      "sizes": "613x721",
+      "type": "image/png"
+    },
+{
+      "src": "rabbit.png",
+      "sizes": "635x641",
+      "type": "image/png"
+    },
+{
+      "src": "penguin.png",
+      "sizes": "548x795",
+      "type": "image/png"
+    },
+{
+      "src": "frog.png",
+      "sizes": "397x584",
+      "type": "image/png"
+    },
+{
+      "src": "pig.png",
+      "sizes": "479x590",
+      "type": "image/png"
+    },
+{
+      "src": "chick.png",
+      "sizes": "498x712",
+      "type": "image/png"
+    },
+{
+      "src": "baby_dragon.png",
+      "sizes": "359x362",
+      "type": "image/png"
+    },
+{
+      "src": "elephant.png",
+      "sizes": "717x677",
+      "type": "image/png"
+    },
+{
+      "src": "staff.png",
+      "sizes": "282x754",
+      "type": "image/png"
+    },
+{
+      "src": "shield.png",
+      "sizes": "457x565",
+      "type": "image/png"
+    },
+{
+      "src": "cape.png",
+      "sizes": "449x406",
+      "type": "image/png"
+    },
+{
+      "src": "wing_gold.png",
+      "sizes": "812x529",
+      "type": "image/png"
+    },
+{
+      "src": "slime_blue.png",
+      "sizes": "291x187",
+      "type": "image/png"
+    },
+{
+      "src": "slime_pink.png",
+      "sizes": "334x215",
+      "type": "image/png"
+    },
+{
+      "src": "slime_yellow.png",
+      "sizes": "335x215",
+      "type": "image/png"
+    },
+{
+      "src": "slime_green.png",
+      "sizes": "291x186",
+      "type": "image/png"
+    },
+  ]
+}

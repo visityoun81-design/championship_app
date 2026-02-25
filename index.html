@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CHAMPIONSHIP - LOGIN</title>
+
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="dog.png">
+    <script>
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('sw.js');
+      }
+    </script>
+
+
+    <style>
+        :root {
+            --primary-purple: #a855f7;
+            --dark-bg: #0f172a;
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --input-bg: rgba(0, 0, 0, 0.3);
+        }
+
+        body {
+            margin: 0; padding: 0;
+            font-family: 'Pretendard', sans-serif;
+            background: radial-gradient(circle at top, #1e1b4b, #020617);
+            color: white;
+            display: flex; justify-content: center; align-items: center;
+            min-height: 100vh; overflow-x: hidden;
+        }
+
+        .login-container {
+            width: 90%; max-width: 400px; padding: 40px 20px;
+            background: var(--glass-bg); backdrop-filter: blur(10px);
+            border-radius: 24px; border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); text-align: center;
+        }
+
+        .logo-text {
+            font-size: 2rem; font-weight: 900; letter-spacing: 4px;
+            background: linear-gradient(to right, #d8b4fe, #a855f7);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            margin-bottom: 30px; text-transform: uppercase;
+        }
+
+        .role-selector { display: flex; background: var(--input-bg); border-radius: 12px; margin-bottom: 25px; padding: 4px; }
+        .role-btn { flex: 1; padding: 10px; border: none; background: transparent; color: #94a3b8; cursor: pointer; font-weight: bold; transition: 0.3s; border-radius: 10px; }
+        .role-btn.active { background: var(--primary-purple); color: white; }
+
+        .input-group { text-align: left; margin-bottom: 20px; }
+        .input-group label { display: block; font-size: 0.8rem; color: #a855f7; margin-bottom: 8px; margin-left: 5px; }
+
+        input {
+            width: 100%; padding: 14px; box-sizing: border-box;
+            background: var(--input-bg); border: 1px solid rgba(168, 85, 247, 0.3);
+            border-radius: 12px; color: white; font-size: 1rem; outline: none;
+        }
+        input:focus { border-color: var(--primary-purple); box-shadow: 0 0 10px rgba(168, 85, 247, 0.2); }
+
+        .btn-login {
+            width: 100%; padding: 15px; background: linear-gradient(135deg, #a855f7, #7e22ce);
+            border: none; border-radius: 12px; color: white; font-weight: bold; font-size: 1.1rem;
+            cursor: pointer; margin-top: 10px; box-shadow: 0 10px 15px -3px rgba(168, 85, 247, 0.4);
+        }
+
+        .btn-request { display: block; margin-top: 20px; color: #94a3b8; text-decoration: none; font-size: 0.9rem; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+<div class="login-container">
+    <div class="logo-text">CHAMPIONSHIP</div>
+
+    <div class="role-selector">
+        <button class="role-btn active" onclick="setRole('student')">학생</button>
+        <button class="role-btn" onclick="setRole('teacher')">선생님</button>
+    </div>
+
+    <form id="loginForm" onsubmit="handleLogin(event)">
+        <div class="input-group">
+            <label>아이디</label>
+            <input type="text" id="login-id" placeholder="아이디를 입력해 주세요" required>
+        </div>
+        <div class="input-group">
+            <label>비밀번호</label>
+            <input type="password" id="login-pw" placeholder="비밀번호를 입력해 주세요" required>
+        </div>
+        <button type="submit" class="btn-login">로그인 하기</button>
+    </form>
+
+    <div class="btn-request" onclick="openJoinModal()">회원가입 요청하기</div>
+</div>
+
+<div id="join-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); backdrop-filter:blur(10px); z-index:10000; justify-content:center; align-items:center;">
+    <div style="background:linear-gradient(145deg, #1e293b, #0f172a); width:90%; max-width:400px; padding:30px; border-radius:24px; border:2px solid #a855f7; box-shadow:0 0 50px rgba(168,85,247,0.3);">
+        <h2 style="color:#a855f7; margin-top:0; font-family:'Orbitron'; text-align:center;">JOIN REQUEST</h2>
+        <p style="font-size:0.8rem; color:#94a3b8; text-align:center; margin-bottom:20px;">관리자에게 가입 승인 요청을 보냅니다.</p>
+        
+        <div style="display:flex; flex-direction:column; gap:15px;">
+            <div style="display:flex; gap:10px;">
+                <button type="button" id="type-student" class="role-btn active" onclick="setRequestType('학생')" style="flex:1; border:1px solid #a855f7;">학생</button>
+                <button type="button" id="type-teacher" class="role-btn" onclick="setRequestType('선생님')" style="flex:1; border:1px solid #a855f7;">선생님</button>
+            </div>
+            
+            <input type="text" id="req-name" placeholder="이름을 입력하세요">
+            <input type="text" id="req-id" placeholder="희망 아이디">
+            <input type="password" id="req-pw" placeholder="비밀번호">
+            <input type="tel" id="req-phone" placeholder="전화번호 (010-0000-0000)">
+            
+            <button class="btn-login" onclick="submitJoinRequest()">관리자에게 요청 보내기</button>
+            <button onclick="document.getElementById('join-modal').style.display='none'" style="background:none; border:none; color:#94a3b8; cursor:pointer; margin-top:10px;">닫기</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let selectedRequestType = '학생'; // 가입 요청 타입 초기값
+
+    // 로그인 시 역할 설정 (학생/선생님)
+    function setRole(role) {
+        const btns = document.querySelectorAll('.role-selector .role-btn');
+        btns.forEach(btn => btn.classList.remove('active'));
+        event.currentTarget.classList.add('active');
+    }
+
+    // 가입 요청 시 타입 설정 (학생/선생님)
+    function setRequestType(type) {
+        selectedRequestType = type;
+        document.getElementById('type-student').classList.toggle('active', type === '학생');
+        document.getElementById('type-teacher').classList.toggle('active', type === '선생님');
+    }
+
+    // 로그인 로직
+   // login.html의 handleLogin 함수 수정
+function handleLogin(event) {
+    event.preventDefault();
+    const idInput = document.getElementById('login-id').value;
+    const roleBtn = document.querySelector('.role-selector .role-btn.active').innerText;
+
+    localStorage.clear();
+
+    // 권한 저장
+    if (roleBtn === '선생님' && idInput === 'admin') {
+        localStorage.setItem('userRole', 'admin');
+        localStorage.setItem('userName', '마스터 관리자');
+    } else if (roleBtn === '선생님') {
+        localStorage.setItem('userRole', 'teacher');
+        localStorage.setItem('userName', idInput);
+    } else {
+        localStorage.setItem('userRole', 'student');
+        localStorage.setItem('userName', idInput);
+    }
+
+    // [부드러운 전환 효과] 컨테이너를 서서히 사라지게 한 뒤 이동
+    document.querySelector('.login-container').style.transition = "0.5s";
+    document.querySelector('.login-container').style.opacity = "0";
+    
+    setTimeout(() => {
+        location.href = 'mainpage.html';
+    }, 500);
+}
+
+    function openJoinModal() {
+        document.getElementById('join-modal').style.display = 'flex';
+    }
+
+    // 가입 요청 제출 (관리자 joinRequests 키로 저장)
+    function submitJoinRequest() {
+        const name = document.getElementById('req-name').value;
+        const id = document.getElementById('req-id').value;
+        const pw = document.getElementById('req-pw').value;
+        const phone = document.getElementById('req-phone').value;
+
+        if(!name || !id || !pw || !phone) return alert("모든 정보를 빠짐없이 입력해주세요!");
+
+        const requests = JSON.parse(localStorage.getItem('joinRequests') || '[]');
+        requests.push({ 
+            type: selectedRequestType, 
+            name, 
+            id, 
+            pw, 
+            phone, 
+            date: new Date().toLocaleString() 
+        });
+        localStorage.setItem('joinRequests', JSON.stringify(requests));
+
+        alert("관리자에게 가입 요청을 보냈습니다. 승인 후 이용이 가능합니다.");
+        document.getElementById('join-modal').style.display = 'none';
+    }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>마법사 정보 - 완벽 복구 버전</title>
+
+
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="dog.png">
+    <script>
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('sw.js');
+      }
+    </script>
+
+
+
+    <style>
+        body { background-color: #12122b; color: white; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; padding: 20px; margin: 0; }
+        .info-card { width: 100%; max-width: 420px; background: #1e1e3f; border-radius: 30px; padding: 25px; box-shadow: 0 20px 40px rgba(0,0,0,0.3); text-align: center; box-sizing: border-box; }
+
+        /* [1] 메뉴 탭 */
+        .tab-menu { display: flex; justify-content: space-between; gap: 8px; margin-bottom: 20px; }
+        .tab-btn { flex: 1; padding: 14px 2px; border-radius: 15px; border: none; background: #2d2d5a; color: #aaa; font-size: 13px; font-weight: bold; cursor: pointer; }
+        .tab-btn.active { background: #a366ff; color: white; }
+
+        /* [2] 캐릭터 전시 영역 - 사용자님 원본 좌표 100% 복구 */
+        .char-display { 
+            width: 100%; height: 260px; background: linear-gradient(to bottom, #2a2a5a, #1e1e3f); 
+            border-radius: 20px; position: relative; overflow: hidden; border: 1px solid #3d3d7a;
+            transition: all 0.4s ease-in-out; opacity: 1; margin-bottom: 15px;
+        }
+        .char-display.hidden { height: 0; opacity: 0; margin-bottom: 0; border: none; }
+        .char-display img { position: absolute; transform: translate(-50%, -50%); object-fit: contain; display: none; }
+        
+        #wing { width: 90%; height: 90%; z-index: 1; top: 50%; left: 50%; }
+        #cape { width: 65%; height: 65%; z-index: 2; top: 55%; left: 50%; }
+        #character { width: 75%; height: 75%; z-index: 3; top: 50%; left: 50%; display: block; }
+        #shield { width: 40%; height: 40%; z-index: 4; top: 60%; left: 20%; }
+        #staff { width: 75%; height: 75%; z-index: 5; top: 50%; left: 80%; }
+        #pet { width: 35%; height: 35%; z-index: 6; top: 80%; left: 80%; }
+
+        .name-tag { font-size: 24px; font-weight: bold; margin: 10px 0 20px; }
+
+        /* [3] 컨텐츠 영역 스타일 */
+        .section-card { background: #25254d; border-radius: 20px; padding: 20px; min-height: 400px; overflow-y: auto; text-align: left; }
+        .tab-title { font-size: 13px; color: #a366ff; font-weight: bold; margin: 15px 0 8px; border-bottom: 1px solid #3d3d7a; padding-bottom: 5px; }
+        .item-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+        .item-btn { background: #1e1e3f; border: 1px solid #3d3d7a; color: #ccc; padding: 10px 2px; border-radius: 10px; cursor: pointer; font-size: 11px; }
+        .item-btn.active { background: #a366ff; color: white; }
+        .item-btn.locked { color: #555; } /* 잠금 상태 스타일 */
+
+        /* 공부내역 테이블 [선생님 뷰 스타일] */
+        .history-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        .history-table th { color: #888; border-bottom: 1px solid #3d3d7a; padding: 10px 0; text-align: center; }
+        .history-table td { padding: 12px 0; border-bottom: 1px solid #1e1e3f; text-align: center; }
+
+        /* 파이어불 교환기 */
+        .fire-status { background: #ff4d4d; color: white; padding: 12px; border-radius: 15px; display: flex; justify-content: space-between; align-items: center; margin-top: 15px; font-weight: bold; }
+        .exchange-btn { background: white; color: #ff4d4d; border: none; padding: 5px 12px; border-radius: 8px; font-weight: bold; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <div class="info-card">
+        <div style="text-align: left; margin-bottom: 15px;">
+            <button onclick="location.href='로비.html'" style="background: rgba(163, 102, 255, 0.1); border: 1px solid #a366ff; color: #a366ff; padding: 6px 12px; border-radius: 10px; font-size: 13px; font-weight: bold; cursor: pointer;">◀ HOME</button>
+        </div>
+
+        <div class="tab-menu">
+            <button class="tab-btn active" onclick="openTab(event, 'decor')">캐릭터 꾸미기</button>
+            <button class="tab-btn" onclick="openTab(event, 'study')">공부 내역</button>
+            <button class="tab-btn" onclick="openTab(event, 'badge')">나의 뱃지</button>
+        </div>
+
+        <div id="main-display" class="char-display">
+            <img id="wing" src="wing_gold.png">
+            <img id="cape" src="cape.png">
+            <img id="character" src="dog.png">
+            <img id="shield" src="shield.png">
+            <img id="staff" src="staff.png">
+            <img id="pet" src="slime_blue.png">
+        </div>
+        <div id="main-name" class="name-tag">이쁘고 똑똑한 <span id="user-display-name">윤석화</span></div>
+
+        <div id="decor" class="content-section active">
+            <div class="section-card">
+                <div class="tab-title">모든 동물 친구들 (미보유 시 ❓)</div>
+                <div class="item-grid">
+                    <button class="item-btn active" onclick="toggleItem('character', 'dog.png', this)">강아지</button>
+                    <button class="item-btn locked" onclick="buyItem('character', 'cat.png', 50, this)">❓ 고양이</button>
+                    <button class="item-btn locked" onclick="buyItem('character', 'bear.png', 50, this)">❓ 곰돌이</button>
+                    <button class="item-btn locked" onclick="buyItem('character', 'rabbit.png', 50, this)">❓ 토끼</button>
+                    <button class="item-btn locked" onclick="buyItem('character', 'penguin.png', 50, this)">❓ 펭귄</button>
+                    <button class="item-btn locked" onclick="buyItem('character', 'frog.png', 50, this)">❓ 개구리</button>
+                    <button class="item-btn locked" onclick="buyItem('character', 'pig.png', 50, this)">❓ 돼지</button>
+                    <button class="item-btn locked" onclick="buyItem('character', 'chick.png', 50, this)">❓ 병아리</button>
+                    <button class="item-btn locked" onclick="buyItem('character', 'baby_dragon.png', 50, this)">❓ 애기용</button>
+                    <button class="item-btn locked" onclick="buyItem('character', 'elephant.png', 50, this)">❓ 코끼리</button>
+                </div>
+                <div class="tab-title">전설의 장비</div>
+                <div class="item-grid">
+                    <button class="item-btn locked" onclick="buyItem('staff', 'staff.png', 100, this)">❓ 지팡이</button>
+                    <button class="item-btn locked" onclick="buyItem('shield', 'shield.png', 100, this)">❓ 방패</button>
+                    <button class="item-btn locked" onclick="buyItem('cape', 'cape.png', 100, this)">❓ 망또</button>
+                    <button class="item-btn locked" onclick="buyItem('wing', 'wing_gold.png', 100, this)">❓ 날개</button>
+                </div>
+                <div class="tab-title">펫 (슬라임)</div>
+                <div class="item-grid">
+                    <button class="item-btn locked" onclick="buyItem('pet', 'slime_blue.png', 80, this)">❓ 파란</button>
+                    <button class="item-btn locked" onclick="buyItem('pet', 'slime_pink.png', 80, this)">❓ 분홍</button>
+                    <button class="item-btn locked" onclick="buyItem('pet', 'slime_yellow.png', 80, this)">❓ 노랑</button>
+                    <button class="item-btn locked" onclick="buyItem('pet', 'slime_green.png', 80, this)">❓ 초록</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="study" class="content-section" style="display:none;">
+            <div class="section-card">
+                <div style="color:#ffcc00; font-weight:bold; margin-bottom:15px;">📊 최근 학습 기록</div>
+                <table class="history-table">
+                    <thead><tr><th>날짜/시간</th><th>과목</th><th>점수</th><th>💎</th><th>🪙</th></tr></thead>
+                    <tbody id="study-logs-body">
+                        <tr><td>02.15 14:30</td><td>덧뺄셈초급</td><td>100</td><td>1</td><td>100</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="badge" class="content-section" style="display:none;">
+            <div class="section-card">
+                <div class="tab-title">✨ 획득한 명예 뱃지</div>
+                <div class="badge-grid" style="display:grid; grid-template-columns: repeat(3, 1fr); gap:10px; text-align:center;">
+                    <div style="background:#1e1e3f; padding:10px; border-radius:15px;">🥇<br>덧셈왕</div>
+                    <div style="background:#1e1e3f; padding:10px; border-radius:15px;">🏆<br>트로피</div>
+                    <div style="background:#1e1e3f; padding:10px; border-radius:15px;">🔥<br>파이어불</div>
+                </div>
+                <div class="fire-status">
+                    <span>🔥 파이어불: <b id="fire-count">1</b>개 보유</span>
+                    <button class="exchange-btn" onclick="exchangeFire()">보석 교환</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 초기 로드
+        window.onload = function() {
+            document.getElementById('user-display-name').innerText = localStorage.getItem('userName') || "윤석화";
+        };
+
+        // 탭 전환
+        function openTab(evt, tabName) {
+            const display = document.getElementById('main-display');
+            const nameTag = document.getElementById('main-name');
+            display.classList.toggle('hidden', tabName !== 'decor');
+            nameTag.style.display = (tabName === 'decor') ? 'block' : 'none';
+
+            const sections = document.getElementsByClassName("content-section");
+            for (let s of sections) s.style.display = "none";
+            const tablinks = document.getElementsByClassName("tab-btn");
+            for (let t of tablinks) t.classList.remove("active");
+
+            document.getElementById(tabName).style.display = "block";
+            evt.currentTarget.classList.add("active");
+        }
+
+        // 아이템 토글 로직
+        function toggleItem(id, fileName, btn) {
+            const element = document.getElementById(id);
+            const isShowing = window.getComputedStyle(element).display !== 'none';
+            if (isShowing && element.src.includes(fileName)) {
+                element.style.display = 'none';
+                btn.classList.remove('active');
+            } else {
+                element.src = fileName;
+                element.style.display = 'block';
+                if (id === 'character' || id === 'pet') {
+                    const siblings = btn.parentElement.querySelectorAll('.item-btn');
+                    siblings.forEach(s => s.classList.remove('active'));
+                }
+                btn.classList.add('active');
+            }
+        }
+
+        // 미스터리 상점 구매
+        function buyItem(id, file, price, btn) {
+            if (btn.classList.contains('locked')) {
+                if (confirm(`보석 ${price}개로 잠금을 해제할까요?`)) {
+                    btn.classList.remove('locked');
+                    btn.innerText = btn.innerText.replace('❓ ', '');
+                    toggleItem(id, file, btn);
+                }
+            } else {
+                toggleItem(id, file, btn);
+            }
+        }
+
+        function exchangeFire() {
+            alert("파이어불을 보석 10개로 교환했습니다!");
+        }
+    </script>
+</body>
+</html>
