@@ -14,6 +14,28 @@
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('sw.js');
       }
+
+// 1초마다 대회가 시작되었는지 체크하는 기능
+setInterval(function() {
+    const isStarted = localStorage.getItem('tournamentActive');
+    const eventBanner = document.getElementById('event-banner'); // 이벤트 배너 ID
+
+    if (isStarted === 'true') {
+        // 대회가 시작되었다면 배너를 보여주거나 강조 효과
+        if (eventBanner) {
+            eventBanner.style.display = 'block';
+            eventBanner.innerHTML = "🔥 지금은 대회 시간입니다! 높은 점수에 도전하세요! 🔥";
+            eventBanner.style.backgroundColor = "#f87171"; // 빨간색으로 강조
+        }
+    } else {
+        // 대회가 종료되었다면 배너를 숨기거나 평소 상태로
+        if (eventBanner) {
+            eventBanner.style.display = 'none';
+        }
+    }
+}, 1000); // 1000ms = 1초마다 확인
+
+
     </script>
 
 
