@@ -9,6 +9,7 @@ const FILES_TO_CACHE = [
   'add_medium.html',
   'add_master.html',
   'championship.html',
+  'monitor.html',
   'dog.png'
   'cat.png'
   'bear.png'
@@ -39,4 +40,5 @@ self.addEventListener('fetch', (event) => {
   event.respondWith(
     caches.match(event.request).then((response) => response || fetch(event.request))
   );
+
 });
