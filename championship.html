@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>CHAMPIONSHIP 2026 - MASTER FINAL</title>
+    <title>CHAMPIONSHIP MASTER FINAL</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@900&family=Orbitron:wght@700&display=swap" rel="stylesheet">
 
     <style>
@@ -484,19 +484,38 @@
         function initAudio() { if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
         function playSfx(type) { if(!audioCtx) return; if(audioCtx.state==='suspended') audioCtx.resume(); const now = audioCtx.currentTime; if(type==='magic' || type==='bonus'){ [880, 1318].forEach((f, i) => { const osc = audioCtx.createOscillator(), gain = audioCtx.createGain(); osc.type = 'sine'; osc.connect(gain); gain.connect(audioCtx.destination); osc.frequency.setValueAtTime(f, now + i*0.05); gain.gain.setValueAtTime(0, now + i*0.05); gain.gain.linearRampToValueAtTime(0.06, now + i*0.05 + 0.02); gain.gain.exponentialRampToValueAtTime(0.001, now + i*0.05 + 0.3); osc.start(now + i*0.05); osc.stop(now + i*0.05 + 0.4); }); } else if(type==='click'){ const o=audioCtx.createOscillator(), g=audioCtx.createGain(); o.connect(g); g.connect(audioCtx.destination); o.frequency.setValueAtTime(1000,now); g.gain.setValueAtTime(0.05,now); o.start(); o.stop(now+0.05); } else if(type==='correct'){ const o=audioCtx.createOscillator(), g=audioCtx.createGain(); o.connect(g); g.connect(audioCtx.destination); o.frequency.setValueAtTime(600,now); g.gain.setValueAtTime(0.1,now); o.start(); o.stop(now+0.2); } else if(type==='wrong'){ const o=audioCtx.createOscillator(), g=audioCtx.createGain(); o.connect(g); g.connect(audioCtx.destination); o.frequency.setValueAtTime(220,now); g.gain.setValueAtTime(0.05,now); o.start(); o.stop(now+0.15); if(window.navigator.vibrate) window.navigator.vibrate(200); } else if(type==='typechange'){ [880, 1109, 1318].forEach((f, i) => { const o=audioCtx.createOscillator(), g=audioCtx.createGain(); o.connect(g); g.connect(audioCtx.destination); o.frequency.setValueAtTime(f, now+i*0.1); g.gain.setValueAtTime(0.02, now+i*0.1); o.start(now+i*0.1); o.stop(now+i*0.1+0.3); }); } else if(type==='finish'){ [440, 554, 659, 880].forEach((f, i) => { const o=audioCtx.createOscillator(), g=audioCtx.createGain(); o.connect(g); g.connect(audioCtx.destination); o.type='sine'; o.frequency.setValueAtTime(f, now+i*0.15); g.gain.setValueAtTime(0.1, now+i*0.15); o.start(now+i*0.15); o.stop(now+i*0.15+0.8); }); } }
         function handleAutoFullscreen() { if(!document.fullscreenElement && mainTimer) document.documentElement.requestFullscreen().catch(()=>{}); }
-        function goFullScreen() { const savedName = localStorage.getItem('userName') || "게스트"; playerName = setUniqueName(savedName); initAudio(); document.documentElement.requestFullscreen().catch(()=>{}); document.getElementById('fs-trigger').style.display = 'none'; if(!mainTimer) { startTimer(); updateHallOfFame(); showSchulte(3, 15000); } }
-        function setUniqueName(name) { let ranks = JSON.parse(localStorage.getItem('championship_ranks_v11') || "[]"); let count = ranks.filter(r => r.realName === name).length; return count > 0 ? `${name}${count + 1}` : name; }
+
+       function goFullScreen() { 
+    const savedName = localStorage.getItem('userName') || "게스트"; 
+    playerName = typeof setUniqueName === 'function' ? setUniqueName(savedName) : savedName;
+    
+    // [보완] 소리 시스템을 준비시키고 강제로 깨웁니다.
+    initAudio(); 
+    if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume(); 
+    }
+
+    document.documentElement.requestFullscreen().catch(()=>{}); 
+    document.getElementById('fs-trigger').style.display = 'none'; 
+    if(!mainTimer) { 
+        startTimer(); 
+        updateHallOfFame(); 
+        showSchulte(3, 15000); 
+    } 
+}
+
+        function setUniqueName(name) { let ranks = JSON.parse(localStorage.getItem('rank_championship') || "[]"); let count = ranks.filter(r => r.realName === name).length; return count > 0 ? `${name}${count + 1}` : name; }
         function startTimer() { mainTimer = setInterval(() => { if(isTimeUp) return; timeLeft--; let m = Math.floor(timeLeft/60), s = timeLeft%60; document.getElementById('timer-display').innerText = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`; saveRecord(false); if(timeLeft <= 0) { isTimeUp = true; clearInterval(mainTimer); showTimeOver(); } }, 1000); }
         function getFormattedDate() { const now = new Date(); const year = String(now.getFullYear()).slice(-2); const month = String(now.getMonth() + 1).padStart(2, '0'); const day = String(now.getDate()).padStart(2, '0'); const hours = String(now.getHours()).padStart(2, '0'); const minutes = String(now.getMinutes()).padStart(2, '0'); return `${year}.${month}.${day} ${hours}:${minutes}`; }
 
 
         function saveRecord(finished) { 
-            let ranks = JSON.parse(localStorage.getItem('championship_ranks_v11') || "[]"); 
+           let ranks = JSON.parse(localStorage.getItem('rank_championship') || "[]"); 
             let idx = ranks.findIndex(r => r.name === playerName); 
             let realNameOnly = playerName.replace(/[0-9]/g, ''); 
             let record = { name: playerName, realName: realNameOnly, score: totalScore, lastActive: Date.now(), isPlaying: !finished, fullDate: getFormattedDate() }; 
             if(idx === -1) ranks.push(record); else ranks[idx] = record; 
-            localStorage.setItem('championship_ranks_v11', JSON.stringify(ranks)); 
+            localStorage.setItem('rank_championship', JSON.stringify(ranks)); 
             if(finished) { 
                 let currentGems = parseInt(localStorage.getItem('userGems') || "0"); 
                 localStorage.setItem('userGems', currentGems + totalScore);
@@ -506,49 +525,48 @@
             updateHallOfFame(); 
         }
 
-        function updateHallOfFame() { 
-            let ranks = JSON.parse(localStorage.getItem('championship_ranks_v11') || "[]"); 
-            const now = Date.now();
-            ranks.forEach(r => { if(now - r.lastActive > 180000) r.isPlaying = false; }); 
+       function updateHallOfFame() { 
+    // 과목명에 맞게 키값을 확인하세요
+    const storageKey = 'rank_championship'; 
+    const ranks = JSON.parse(localStorage.getItem(storageKey) || "[]");
+    
+    // 1. 다중 조건 정렬 (점수 -> 시간)
+    ranks.sort((a, b) => {
+        if (b.score !== a.score) return b.score - a.score;
+        return (b.timeLeft || 0) - (a.timeLeft || 0);
+    });
 
-            // 점수 높은 순 -> 시간 짧은 순 정렬
-            ranks.sort((a, b) => b.score - a.score || (b.timeLeft - a.timeLeft));
+    let html = ""; 
+    const medals = ["🥇", "🥈", "🥉", "🏅", "🎖️"]; 
+    let displayRank = 0;
+    let lastScore = -1;
+    let lastTime = -1;
 
-            // 순위가 바뀌었을 때 애니메이션을 실행하는 부분
-            if (ranks.length > 0) {
-                let currentTopPlayer = ranks[0].name;
-                if (lastTopPlayer !== "" && lastTopPlayer !== currentTopPlayer) {
-                    playSfx('bonus');
-                    const notice = document.getElementById('reversal-notice');
-                    if(notice) {
-                        notice.style.display = 'block';
-                        notice.style.animation = 'none';
-                        notice.offsetHeight;
-                        notice.style.animation = 'fade-up 2s forwards';
-                        setTimeout(() => { notice.style.display = 'none'; }, 2000);
-                    }
-                }
-                lastTopPlayer = currentTopPlayer;
-            }
-
-            let html = ""; 
-            const medals = ["🥇", "🥈", "🥉", "🏅", "🎖️"]; 
-            for(let i = 0; i < ranks.length; i++) { 
-                let r = ranks[i]; 
-                let isMeClass = (r.name === playerName) ? 'my-record' : '';
-                let playingClass = r.isPlaying ? 'is-playing' : '';
-                let firstClass = (i === 0) ? 'first-place' : ''; 
-                let crownHtml = (i === 0) ? `<span class="crown-icon">🏆</span>` : '';
-
-                html += `<div class="rank-item color-${i<5?i+1:'other'} ${playingClass} ${isMeClass} ${firstClass}"><span>${i<5?medals[i]:''}${i+1}.${r.name}${crownHtml}</span><span style="font-family:'Orbitron'; font-weight:900;">${r.score}</span></div>`; 
-            } 
-            document.getElementById('hall-of-fame').innerHTML = html; 
+    for(let i = 0; i < ranks.length; i++) { 
+        let r = ranks[i]; 
+        
+        // 2. 건너뛰기 없는 순위 부여 (점수와 시간 모두 체크)
+        if (r.score !== lastScore || (r.timeLeft || 0) !== lastTime) {
+            displayRank++;
         }
+        lastScore = r.score;
+        lastTime = (r.timeLeft || 0);
+
+        let isMeClass = (r.name === playerName) ? 'my-record' : '';
+        let playingClass = r.isPlaying ? 'is-playing' : '';
+        
+        html += `<div class="rank-item color-${displayRank<=5?displayRank:'other'} ${playingClass} ${isMeClass}">
+                    <span>${displayRank<=5?medals[displayRank-1]:''}${displayRank}.${r.name}</span>
+                    <span style="font-family:'Orbitron'; font-weight:900;">${r.score}</span>
+                </div>`; 
+    } 
+    document.getElementById('hall-of-fame').innerHTML = html;
+}
 
         function showPracticeLogs() { 
     const list = document.getElementById('my-log-list'); 
     const title = document.getElementById('course-title').innerText; 
-    let ranks = JSON.parse(localStorage.getItem('championship_ranks_v11') || "[]"); 
+    let ranks = JSON.parse(localStorage.getItem('rank_championship') || "[]"); 
     let myLogs = ranks.filter(r => r.realName === playerName.replace(/[0-9]/g, '')).sort((a,b)=>b.lastActive - a.lastActive);
     
     // 헤더 추가 및 리스트 출력
@@ -768,7 +786,7 @@ function showFinalResult() {
 
     
     // 데이터 불러오기
-    let allRanks = JSON.parse(localStorage.getItem('championship_ranks_v11') || "[]").sort((a,b)=>b.score - a.score); 
+    let allRanks = JSON.parse(localStorage.getItem('rank_championship') || "[]").sort((a,b)=>b.score - a.score); 
     const realNameOnly = playerName.replace(/[0-9]/g, ''); 
     
     // 현재 게임 순위 계산
