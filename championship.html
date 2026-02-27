@@ -6,6 +6,17 @@
     <title>CHAMPIONSHIP MASTER FINAL</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@900&family=Orbitron:wght@700&display=swap" rel="stylesheet">
 
+
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js');
+  }
+</script>
+
+
     <style>
         :root { --bg: #000; --purple: #c084fc; --green: #4ade80; --red: #f87171; --bead: #4ade80; --bar-top: 100px; --gold: #fbbf24; }
         body { margin: 0; background: var(--bg); color: #fff; font-family: 'Noto Sans KR', sans-serif; display: flex; height: 100vh; width: 100vw; overflow: hidden; touch-action: none; -webkit-user-select: none; user-select: none; flex-direction: row; }
@@ -509,59 +520,84 @@
         function getFormattedDate() { const now = new Date(); const year = String(now.getFullYear()).slice(-2); const month = String(now.getMonth() + 1).padStart(2, '0'); const day = String(now.getDate()).padStart(2, '0'); const hours = String(now.getHours()).padStart(2, '0'); const minutes = String(now.getMinutes()).padStart(2, '0'); return `${year}.${month}.${day} ${hours}:${minutes}`; }
 
 
-        function saveRecord(finished) { 
-           let ranks = JSON.parse(localStorage.getItem('rank_championship') || "[]"); 
-            let idx = ranks.findIndex(r => r.name === playerName); 
-            let realNameOnly = playerName.replace(/[0-9]/g, ''); 
-            let record = { name: playerName, realName: realNameOnly, score: totalScore, lastActive: Date.now(), isPlaying: !finished, fullDate: getFormattedDate() }; 
-            if(idx === -1) ranks.push(record); else ranks[idx] = record; 
-            localStorage.setItem('rank_championship', JSON.stringify(ranks)); 
-            if(finished) { 
-                let currentGems = parseInt(localStorage.getItem('userGems') || "0"); 
-                localStorage.setItem('userGems', currentGems + totalScore);
-                let currentCoins = parseInt(localStorage.getItem('userCoins') || "0");
-                localStorage.setItem('userCoins', currentCoins + 100); 
-            } 
-            updateHallOfFame(); 
-        }
+function saveRecord(finished) { 
+    // [1] Firebase 설정 (선생님의 설정값으로 채우세요)
+  const firebaseConfig = {
+    apiKey: "AIzaSyCbhFq8vcLem8DoMdlsXpC-ZRYELhJSFHU",
+    authDomain: "championship-8f923.firebaseapp.com",
+    databaseURL: "https://championship-8f923-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "championship-8f923",
+    storageBucket: "championship-8f923.firebasestorage.app",
+    messagingSenderId: "118704807417",
+    appId: "1:118704807417:web:b1cacb9636d51a38d67128",
+    measurementId: "G-KLHCC95R2C"
+  };
 
-       function updateHallOfFame() { 
-    // 과목명에 맞게 키값을 확인하세요
-    const storageKey = 'rank_championship'; 
-    const ranks = JSON.parse(localStorage.getItem(storageKey) || "[]");
-    
-    // 1. 다중 조건 정렬 (점수 -> 시간)
-    ranks.sort((a, b) => {
-        if (b.score !== a.score) return b.score - a.score;
-        return (b.timeLeft || 0) - (a.timeLeft || 0);
-    });
+    // Firebase 초기화 (한 번만 실행되도록 체크)
+    if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+    }
+    var db = firebase.database();
 
-    let html = ""; 
-    const medals = ["🥇", "🥈", "🥉", "🏅", "🎖️"]; 
-    let displayRank = 0;
-    let lastScore = -1;
-    let lastTime = -1;
+    // [2] 기존 로컬 저장 로직 (기존 기록 유지용)
+    let ranks = JSON.parse(localStorage.getItem('rank_add_base') || "[]"); 
+    let idx = ranks.findIndex(r => r.name === playerName); 
+    let record = { 
+        name: playerName, 
+        realName: playerName.replace(/[0-9]/g, ''), 
+        score: totalScore, 
+        lastActive: Date.now(), 
+        isPlaying: !finished, 
+        fullDate: getFormattedDate(), 
+        timeLeft: timeLeft 
+    }; 
+    if(idx === -1) ranks.push(record); else ranks[idx] = record; 
+    localStorage.setItem('rank_add_base', JSON.stringify(ranks)); 
 
-    for(let i = 0; i < ranks.length; i++) { 
-        let r = ranks[i]; 
-        
-        // 2. 건너뛰기 없는 순위 부여 (점수와 시간 모두 체크)
-        if (r.score !== lastScore || (r.timeLeft || 0) !== lastTime) {
-            displayRank++;
-        }
-        lastScore = r.score;
-        lastTime = (r.timeLeft || 0);
+    // [3] ★ Firebase 실시간 전송 (전광판 연동용) ★
+    var userLogId = localStorage.getItem('loginId'); // 관리자 페이지에서 만든 ID
+    if(userLogId) {
+        db.ref('rankings/rank_championship/' + userLogId).set({
+            name: playerName,
+            score: totalScore,
+            timeLeft: timeLeft,
+            isPlaying: !finished,
+            lastActive: Date.now()
+        });
+    }
 
-        let isMeClass = (r.name === playerName) ? 'my-record' : '';
-        let playingClass = r.isPlaying ? 'is-playing' : '';
-        
-        html += `<div class="rank-item color-${displayRank<=5?displayRank:'other'} ${playingClass} ${isMeClass}">
-                    <span>${displayRank<=5?medals[displayRank-1]:''}${displayRank}.${r.name}</span>
-                    <span style="font-family:'Orbitron'; font-weight:900;">${r.score}</span>
-                </div>`; 
-    } 
-    document.getElementById('hall-of-fame').innerHTML = html;
+    if(finished) { 
+        localStorage.setItem('userGems', (parseInt(localStorage.getItem('userGems')||0)) + totalScore); 
+        localStorage.setItem('userCoins', (parseInt(localStorage.getItem('userCoins')||0)) + 100); 
+    }
+    updateHallOfFameRealtime();
 }
+
+// 옆면 랭킹 실시간 업데이트 함수 추가
+function updateHallOfFameRealtime() {
+    firebase.database().ref('rankings/rank_championship').once('value', function(snapshot) {
+        var data = snapshot.val() || {};
+        var ranks = Object.values(data);
+        
+        ranks.sort((a, b) => b.score - a.score || (b.timeLeft || 0) - (a.timeLeft || 0));
+
+        let html = ""; 
+        const medals = ["🥇", "🥈", "🥉", "🏅", "🎖️"]; 
+        for(let i = 0; i < ranks.length; i++) { 
+            let r = ranks[i]; 
+            let displayRank = i + 1;
+            let isMeClass = (r.name === playerName) ? 'my-record' : '';
+            let playingClass = r.isPlaying ? 'is-playing' : '';
+            
+            html += `<div class="rank-item color-${displayRank<=5?displayRank:'other'} ${playingClass} ${isMeClass}">
+                        <span>${displayRank<=5?medals[i]:''}${displayRank}.${r.name}</span>
+                        <span style="font-family:'Orbitron'; font-weight:900;">${r.score}</span>
+                    </div>`; 
+        } 
+        document.getElementById('hall-of-fame').innerHTML = html;
+    });
+}
+
 
         function showPracticeLogs() { 
     const list = document.getElementById('my-log-list'); 
