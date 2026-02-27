@@ -9,12 +9,67 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="apple-touch-icon" href="dog.png">
-    <script>
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js');
-      }
+    <script type="module">
+    // Firebase 연결 도구들 가져오기
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getDatabase, ref, set, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-    </script>
+    // [내일 설정값을 여기에 넣으세요]
+  const firebaseConfig = {
+    apiKey: "AIzaSyCbhFq8vcLem8DoMdlsXpC-ZRYELhJSFHU",
+    authDomain: "championship-8f923.firebaseapp.com",
+    databaseURL: "https://championship-8f923-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "championship-8f923",
+    storageBucket: "championship-8f923.firebasestorage.app",
+    messagingSenderId: "118704807417",
+    appId: "1:118704807417:web:b1cacb9636d51a38d67128",
+  }
+
+    // Firebase 초기화
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    // [중요] 외부 버튼에서 함수를 부를 수 있게 window에 등록합니다.
+    window.requestJoin = function() {
+        const name = document.getElementById('join-name')?.value; // 가입창 이름 input ID 확인
+        const id = document.getElementById('join-id')?.value;     // 가입창 ID input ID 확인
+        const pw = document.getElementById('join-pw')?.value;     // 가입창 PW input ID 확인
+        
+        if(!name || !id || !pw) return alert("정보를 모두 입력해주세요.");
+        
+        const joinRef = ref(db, 'joinRequests/' + id);
+        set(joinRef, {
+            name: name,
+            id: id,
+            pw: pw,
+            type: '학생',
+            requestDate: new Date().toLocaleString()
+        }).then(() => {
+            alert("가입 신청 완료! 선생님의 승인을 기다려주세요.");
+        }).catch(err => alert("오류 발생: " + err.message));
+    }
+
+    window.login = function() {
+        const id = document.getElementById('login-id')?.value; // 로그인 ID input ID 확인
+        const pw = document.getElementById('login-pw')?.value; // 로그인 PW input ID 확인
+
+        if(!id || !pw) return alert("아이디와 비밀번호를 입력해주세요.");
+
+        const userRef = ref(db, 'approvedUsers/' + id);
+        get(userRef).then((snapshot) => {
+            if (snapshot.exists()) {
+                const userData = snapshot.val();
+                if (userData.pw === pw) {
+                    // 로그인 성공 시 브라우저에 임시 저장 (기존과 동일)
+                    localStorage.setItem('loginId', id);
+                    localStorage.setItem('userName', userData.name);
+                    localStorage.setItem('userRole', userData.type);
+                    location.href = 'mainpage.html';
+                } else { alert("비밀번호가 틀렸습니다."); }
+            } else { alert("승인 대기 중이거나 아이디가 없습니다."); }
+        }).catch(err => alert("로그인 오류: " + err.message));
+    }
+</script>
 
 
     <style>
