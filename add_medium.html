@@ -11,11 +11,16 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="apple-touch-icon" href="dog.png">
-    <script>
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js');
-      }
-    </script>
+
+
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js');
+  }
+</script>
 
 
 
@@ -501,21 +506,58 @@
         function getFormattedDate() { const now = new Date(); const year = String(now.getFullYear()).slice(-2); const month = String(now.getMonth() + 1).padStart(2, '0'); const day = String(now.getDate()).padStart(2, '0'); const hours = String(now.getHours()).padStart(2, '0'); const minutes = String(now.getMinutes()).padStart(2, '0'); return `${year}.${month}.${day} ${hours}:${minutes}`; }
 
 
-        function saveRecord(finished) { 
-            let ranks = JSON.parse(localStorage.getItem('rank_add_medium') || "[]"); 
-            let idx = ranks.findIndex(r => r.name === playerName); 
-            let realNameOnly = playerName.replace(/[0-9]/g, ''); 
-            let record = { name: playerName, realName: realNameOnly, score: totalScore, lastActive: Date.now(), isPlaying: !finished, fullDate: getFormattedDate() }; 
-            if(idx === -1) ranks.push(record); else ranks[idx] = record; 
-            localStorage.setItem('rank_add_medium', JSON.stringify(ranks)); 
-            if(finished) { 
-                let currentGems = parseInt(localStorage.getItem('userGems') || "0"); 
-                localStorage.setItem('userGems', currentGems + totalScore);
-                let currentCoins = parseInt(localStorage.getItem('userCoins') || "0");
-                localStorage.setItem('userCoins', currentCoins + 100); 
-            } 
-            updateHallOfFame(); 
-        }
+function saveRecord(finished) { 
+    // [1] Firebase 설정 (선생님의 설정값으로 채우세요)
+  const firebaseConfig = {
+    apiKey: "AIzaSyCbhFq8vcLem8DoMdlsXpC-ZRYELhJSFHU",
+    authDomain: "championship-8f923.firebaseapp.com",
+    databaseURL: "https://championship-8f923-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "championship-8f923",
+    storageBucket: "championship-8f923.firebasestorage.app",
+    messagingSenderId: "118704807417",
+    appId: "1:118704807417:web:b1cacb9636d51a38d67128",
+    measurementId: "G-KLHCC95R2C"
+  }
+
+    // Firebase 초기화 (한 번만 실행되도록 체크)
+    if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+    }
+    var db = firebase.database();
+
+    // [2] 기존 로컬 저장 로직 (기존 기록 유지용)
+    let ranks = JSON.parse(localStorage.getItem('rank_add_base') || "[]"); 
+    let idx = ranks.findIndex(r => r.name === playerName); 
+    let record = { 
+        name: playerName, 
+        realName: playerName.replace(/[0-9]/g, ''), 
+        score: totalScore, 
+        lastActive: Date.now(), 
+        isPlaying: !finished, 
+        fullDate: getFormattedDate(), 
+        timeLeft: timeLeft 
+    }; 
+    if(idx === -1) ranks.push(record); else ranks[idx] = record; 
+    localStorage.setItem('rank_add_base', JSON.stringify(ranks)); 
+
+    // [3] ★ Firebase 실시간 전송 (전광판 연동용) ★
+    var userLogId = localStorage.getItem('loginId'); // 관리자 페이지에서 만든 ID
+    if(userLogId) {
+        db.ref('rankings/rank_add_medium/' + userLogId).set({
+            name: playerName,
+            score: totalScore,
+            timeLeft: timeLeft,
+            isPlaying: !finished,
+            lastActive: Date.now()
+        });
+    }
+
+    if(finished) { 
+        localStorage.setItem('userGems', (parseInt(localStorage.getItem('userGems')||0)) + totalScore); 
+        localStorage.setItem('userCoins', (parseInt(localStorage.getItem('userCoins')||0)) + 100); 
+    }
+    updateHallOfFame(); 
+}
 
        function updateHallOfFame() { 
     // 과목명에 맞게 키값을 확인하세요
