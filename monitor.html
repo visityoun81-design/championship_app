@@ -197,7 +197,7 @@
                 
         <button class="league-btn" id="btn-div" onclick="showTripleLeague('div', this)" 
                 style="padding: 6px 14px; font-size: 0.85rem; background: #f87171; color: white; border: none; border-radius: 8px; font-weight: 900; cursor: pointer;">➗ 나눗셈리그</button>
-<button onclick="makeFakeData()" style="padding: 8px 16px; font-size: 0.8rem; background: #444; color: #aaa; border: 1px dashed #666; border-radius: 10px; cursor: pointer;">🛠️ 스크롤 테스트(가짜데이터)</button>
+<button onclick="makeFakeData()" style="display: none; padding: 8px 16px; font-size: 0.8rem; background: #444; color: #aaa; border: 1px dashed #666; border-radius: 10px; cursor: pointer;">🛠️ 스크롤 테스트(가짜데이터)</button>
     </div>
 
     <div id="dynamic-board-area" style="width: 100%; max-width: 1800px;">
@@ -246,17 +246,6 @@ let lastFirstPlaceName = ""; // 이전 1등 이름을 기억할 변수
     }
 
 
-// 버튼에 활성화 표시를 해주는 공통 함수
-function activateButton(targetBtn) {
-// [추가] 버튼 누를 때 소리 재생!
-    playClickSound();
-    // 모든 버튼에서 active-league 클래스 제거
-    document.querySelectorAll('.league-btn').forEach(btn => {
-        btn.classList.remove('active-league');
-    });
-    // 클릭된 버튼에만 클래스 추가
-    if(targetBtn) targetBtn.classList.add('active-league');
-}
 
     // [함수 2] 3개 과목 동시 화면 (덧셈, 곱셈, 나눗셈)
     function showTripleLeague(type, btn) {
@@ -380,25 +369,6 @@ function playWinnerSound() {
     }
 }
 
-// [버튼 클릭 효과음 함수]
-function playClickSound() {
-    const context = new (window.AudioContext || window.webkitAudioContext)();
-    const oscillator = context.createOscillator();
-    const gainNode = context.createGain();
-
-    oscillator.type = 'sine'; 
-    oscillator.frequency.setValueAtTime(800, context.currentTime); // 높은 음
-    oscillator.frequency.exponentialRampToValueAtTime(1200, context.currentTime + 0.05); // 짧게 상승
-
-    gainNode.gain.setValueAtTime(0.05, context.currentTime); // 소리는 아주 작고 깔끔하게
-    gainNode.gain.exponentialRampToValueAtTime(0.001, context.currentTime + 0.05);
-
-    oscillator.connect(gainNode);
-    gainNode.connect(context.destination);
-
-    oscillator.start();
-    oscillator.stop(context.currentTime + 0.05);
-}
 
 
 // 브라우저가 직접 소리를 만들어내는 함수 (절대 실패 없음)
@@ -430,6 +400,7 @@ window.onload = function() {
 
 
 
+// [테스트 함수] 필요한 때만 주석을 풀어서 쓰세요.
 function makeFakeData() {
     const targets = ['b-1', 'b-2', 'b-3', 'board-single'];
     targets.forEach(targetId => {
@@ -441,14 +412,40 @@ function makeFakeData() {
             fakeArray.push({
                 name: "테스트유저" + i,
                 score: Math.floor(Math.random() * 100),
-                isPlaying: i % 10 === 0 // 10명마다 한 명씩 '경기 중' 불빛 들어오게 함
+                isPlaying: i % 10 === 0
             });
         }
-        // 점수순 정렬
         fakeArray.sort((a, b) => b.score - a.score);
         renderList(targetId, fakeArray);
     });
-    alert("50명의 가짜 데이터가 생성되었습니다. 스크롤을 확인해보세요!");
+    alert("50명의 가짜 데이터가 생성되었습니다.");
+}
+
+// --- 아래는 버튼 불빛과 소리를 담당하는 필수 함수들입니다 ---
+
+function activateButton(targetBtn) {
+    playClickSound(); // 딸깍 소리
+    
+    // 모든 버튼 불 끄기
+    document.querySelectorAll('.league-btn').forEach(btn => {
+        btn.classList.remove('active-league');
+    });
+    
+    // 선택한 버튼 불 켜기
+    if(targetBtn) targetBtn.classList.add('active-league');
+}
+
+function playClickSound() {
+    const context = new (window.AudioContext || window.webkitAudioContext)();
+    const oscillator = context.createOscillator();
+    const gainNode = context.createGain();
+    oscillator.type = 'sine';
+    oscillator.frequency.setValueAtTime(800, context.currentTime);
+    gainNode.gain.setValueAtTime(0.05, context.currentTime);
+    oscillator.connect(gainNode);
+    gainNode.connect(context.destination);
+    oscillator.start();
+    oscillator.stop(context.currentTime + 0.05);
 }
 
 
