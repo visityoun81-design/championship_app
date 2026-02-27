@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CHAMPIONSHIP 2026 - 실시간 전광판</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Noto+Sans+KR:wght@900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
     <style>
         body { 
             margin: 0; 
@@ -13,42 +14,111 @@
             font-family: 'Noto Sans KR', sans-serif; 
             overflow-y: auto;
         }
-        .monitor-container { 
-            min-height: 100vh; display: flex; flex-direction: column; 
-            align-items: center; padding: 40px 20px; 
-            box-sizing: border-box; 
-        }
-        .title { 
-            font-family: 'Orbitron'; font-size: 3.5rem; 
-            background: linear-gradient(to right, #d8b4fe, #a855f7);
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-            text-shadow: 0 0 30px rgba(168, 85, 247, 0.4); 
-            margin-bottom: 50px; letter-spacing: 12px; font-weight: 900;
-        }
+        
+  /* 가로모드 및 대화면 최적화 */
+.monitor-container { 
+    min-height: 100vh; 
+    display: flex; 
+    flex-direction: column; 
+    align-items: center; 
+    /* 상단 패딩을 40px에서 15px로 줄임 */
+    padding: 15px 10px; 
+    box-sizing: border-box; 
+}
+
+.title { 
+    font-family: 'Orbitron'; 
+    /* 글자 크기를 3.5rem에서 2.1rem으로 축소 */
+    font-size: 2.1rem; 
+    background: linear-gradient(to right, #d8b4fe, #a855f7);
+    -webkit-background-clip: text; 
+    -webkit-text-fill-color: transparent;
+    /* 아래쪽 마진을 50px에서 15px로 대폭 축소 */
+    margin-bottom: 5px; 
+    letter-spacing: 8px; 
+    font-weight: 900;
+}
+
+/* 현재 선택된 버튼 스타일 */
+.active-league {
+    border: 2px solid white !important;
+    box-shadow: 0 0 15px white !important;
+    transform: scale(1.05);
+    filter: brightness(1.2);
+}
+
         .rank-board { 
             width: 100%; max-width: 1700px; 
             display: grid; 
             grid-template-columns: repeat(5, 1fr); 
             gap: 25px 18px; 
         }
-        .rank-item { 
-            background: rgba(255, 255, 255, 0.05); 
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1); 
-            padding: 20px 15px; 
-            border-radius: 20px; 
-            display: flex; 
-            align-items: center; 
-            justify-content: space-between;
-        }
-        .rank-num { 
-            font-family: 'Orbitron', sans-serif; font-size: 1.3rem; font-weight: 900; 
-            width: 48px; height: 48px; border-radius: 50%; 
-            display: flex; align-items: center; justify-content: center; 
-            color: #fff; background: #334155; 
-            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
-            flex-shrink: 0;
-        }
+
+
+.rank-item { 
+    background: rgba(255, 255, 255, 0.05); 
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1); 
+    padding: 6px 15px; /* 높이를 더 줄였습니다 */
+    border-radius: 12px; 
+    display: flex; 
+    align-items: center; 
+    /* justify-content: space-between; 대신 가로로 쭉 나열하도록 변경 */
+    gap: 15px; 
+    margin-bottom: 4px;
+}
+
+.info-wrap { 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; /* [핵심] 중앙 정렬 */
+    flex-grow: 1; 
+    gap: 20px; /* 이름과 점수 사이의 간격 */
+}
+
+.user-name { 
+    font-size: 1.1rem; 
+    font-weight: 700; 
+    text-align: center; /* 이름 텍스트 자체 중앙 정렬 */
+}
+
+.user-score { 
+    font-family: 'Orbitron'; 
+    font-size: 1.4rem; 
+    color: #4ade80; 
+    font-weight: 900;
+}
+
+
+/* 이름과 점수 텍스트 크기 미세 조정 */
+.user-name { font-size: 1.1rem; font-weight: 700; }
+.user-score { font-size: 1.4rem; font-weight: 900; }
+
+
+.rank-num { 
+    position: relative; /* ★ 아이콘 위치의 기준점 - 필수! */
+    font-family: 'Orbitron', sans-serif; 
+    font-size: 1rem; 
+    width: 34px; 
+    height: 34px; 
+    border-radius: 50%; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    flex-shrink: 0;
+    font-weight: 900;
+    z-index: 5; /* 아이콘이 위로 올라오게 함 */
+}
+
+.rank-icon {
+    position: absolute;
+    top: -16px; /* 숫자 원 위로 살짝 띄움 */
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 1.3rem; /* 아이콘 크기 */
+    pointer-events: none;
+}
+
         .medal-1 { background: linear-gradient(135deg, #ffd700, #b8860b) !important; color: #000 !important; border: 2px solid #fff; box-shadow: 0 0 15px #ffd700; }
         .medal-2 { background: linear-gradient(135deg, #ff85a2, #d6336c) !important; border: 2px solid #fff; }
         .medal-3 { background: linear-gradient(135deg, #4ea8de, #0077b6) !important; border: 2px solid #fff; }
@@ -60,18 +130,86 @@
         .user-score { font-family: 'Orbitron'; font-size: 1.8rem; color: #4ade80; min-width: 60px; text-align: right; }
         .is-playing { animation: pulse-glow 1.2s infinite; border: 2px solid #a855f7 !important; background: rgba(168, 85, 247, 0.15) !important; }
         @keyframes pulse-glow { 0% { box-shadow: 0 0 5px #a855f7; } 50% { box-shadow: 0 0 25px #a855f7; } 100% { box-shadow: 0 0 5px #a855f7; } }
+
+.rank-board-column {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    background: rgba(255, 255, 255, 0.02);
+    padding: 10px;
+    border-radius: 15px;
+    /* 가로모드에서 높이를 꽉 채우도록 설정 */
+    height: calc(100vh - 180px); 
+    overflow-y: auto; /* 인원 많아지면 여기서 스크롤 발생 */
+    scrollbar-width: thin; /* 스크롤바 두께 조절 (파이어폭스) */
+}
+
+/* 크롬/사파리 스크롤바 디자인 */
+.rank-board-column::-webkit-scrollbar {
+    width: 5px;
+}
+.rank-board-column::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+}
+
+/* 글자 크기 자동 조절 (가로모드 대응) */
+@media (max-height: 500px) {
+    .title { font-size: 2rem !important; margin-bottom: 15px !important; }
+    .user-name { font-size: 0.9rem !important; }
+    .user-score { font-size: 1.1rem !important; }
+    .rank-num { width: 30px !important; height: 30px !important; font-size: 0.8rem !important; }
+}
+/* 기존 rank-item 스타일을 그대로 사용하되 너비를 100%로 설정 */
+.rank-item {
+    width: 100% !important;
+    box-sizing: border-box;
+}
+
+/* 1위 강조 애니메이션 */
+@keyframes gold-glow {
+    0% { box-shadow: 0 0 5px #ffd700; transform: scale(1); }
+    50% { box-shadow: 0 0 40px #ffd700; transform: scale(1.05); }
+    100% { box-shadow: 0 0 5px #ffd700; transform: scale(1); }
+}
+.first-place-new {
+    animation: gold-glow 1s ease-in-out 3; /* 3번 번쩍임 */
+    border: 3px solid #ffd700 !important;
+    background: rgba(255, 215, 0, 0.2) !important;
+}
+
+
     </style>
 </head>
 <body>
-    <div class="monitor-container">
-        <div class="title">LIVE CHAMPIONSHIP</div>
-        <div id="rank-board" class="rank-board"></div>
+<div class="monitor-container">
+    <div class="title" id="main-title">LIVE CHAMPIONSHIP</div>
+    
+    <div id="button-group" style="margin-bottom: 20px; display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;">
+        <button class="league-btn" id="btn-championship" onclick="showSingleLeague('rank_championship', 'CHAMPIONSHIP', this)" 
+                style="padding: 6px 14px; font-size: 0.85rem; background: #a855f7; color: white; border: none; border-radius: 8px; font-weight: 900; cursor: pointer;">🏆 암산챔피언</button>
+                
+        <button class="league-btn" id="btn-add" onclick="showTripleLeague('add', this)" 
+                style="padding: 6px 14px; font-size: 0.85rem; background: #4ea8de; color: white; border: none; border-radius: 8px; font-weight: 900; cursor: pointer;">➕ 덧셈리그</button>
+                
+        <button class="league-btn" id="btn-mul" onclick="showTripleLeague('mul', this)" 
+                style="padding: 6px 14px; font-size: 0.85rem; background: #fbbf24; color: black; border: none; border-radius: 8px; font-weight: 900; cursor: pointer;">✖️ 곱셈리그</button>
+                
+        <button class="league-btn" id="btn-div" onclick="showTripleLeague('div', this)" 
+                style="padding: 6px 14px; font-size: 0.85rem; background: #f87171; color: white; border: none; border-radius: 8px; font-weight: 900; cursor: pointer;">➗ 나눗셈리그</button>
+<button onclick="makeFakeData()" style="padding: 8px 16px; font-size: 0.8rem; background: #444; color: #aaa; border: 1px dashed #666; border-radius: 10px; cursor: pointer;">🛠️ 스크롤 테스트(가짜데이터)</button>
     </div>
+
+    <div id="dynamic-board-area" style="width: 100%; max-width: 1800px;">
+        </div>
+</div>
 
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
 <script>
+let lastFirstPlaceName = ""; // 이전 1등 이름을 기억할 변수
+
     // [1] Firebase 설정 (index와 동일하게 채워주세요)
   const firebaseConfig = {
     apiKey: "AIzaSyCbhFq8vcLem8DoMdlsXpC-ZRYELhJSFHU",
@@ -87,63 +225,233 @@
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     var db = firebase.database();
 
-    // [2] 현재 보고 싶은 과목 설정 (예: 암산챔피언)
-    var currentSubject = 'rank_championship'; 
+    // [함수 1] 단독 과목 화면 (암산챔피언 등)
+    function showSingleLeague(subKey, title, btn) {
+        activateButton(btn);
+        document.getElementById('main-title').innerText = title;
+        document.getElementById('main-title').innerText = title;
+        const area = document.getElementById('dynamic-board-area');
+        area.innerHTML = `<div id="board-single" class="rank-board"></div>`; // 기존 스타일 사용
+        
+        // 기존 5열 그리드 스타일을 위해 클래스 조정
+        area.querySelector('#board-single').style.display = 'grid';
+        area.querySelector('#board-single').style.gridTemplateColumns = 'repeat(5, 1fr)';
 
-    // [3] 실시간 순위 감시 및 그리기
-    function startMonitor() {
-        db.ref('rankings/' + currentSubject).on('value', function(snapshot) {
-            var data = snapshot.val() || {};
-            var rankArray = [];
-            
-            for(var id in data) {
-                rankArray.push(data[id]);
-            }
-
-            // 정렬 로직: 점수 높은 순 -> 남은 시간 많은 순
-            rankArray.sort(function(a, b) {
-                if (b.score !== a.score) return b.score - a.score;
-                return b.timeLeft - a.timeLeft;
-            });
-
-            renderBoard(rankArray); // 기존에 있던 전광판 그리기 함수 호출
+        db.ref('rankings/' + subKey).off(); // 이전 감시 중단
+        db.ref('rankings/' + subKey).on('value', function(snapshot) {
+            const data = snapshot.val() || {};
+            const arr = Object.values(data).sort((a, b) => b.score - a.score || (b.timeLeft || 0) - (a.timeLeft || 0));
+            renderList('board-single', arr, 50); // 상위 50명
         });
     }
-// [4] ★ 새로 추가된 화면 그리기 함수 (이게 없어서 안 나왔던 거예요!) ★
-    function renderBoard(rankArray) {
-        var board = document.getElementById('rank-board');
-        var html = "";
+
+
+// 버튼에 활성화 표시를 해주는 공통 함수
+function activateButton(targetBtn) {
+// [추가] 버튼 누를 때 소리 재생!
+    playClickSound();
+    // 모든 버튼에서 active-league 클래스 제거
+    document.querySelectorAll('.league-btn').forEach(btn => {
+        btn.classList.remove('active-league');
+    });
+    // 클릭된 버튼에만 클래스 추가
+    if(targetBtn) targetBtn.classList.add('active-league');
+}
+
+    // [함수 2] 3개 과목 동시 화면 (덧셈, 곱셈, 나눗셈)
+    function showTripleLeague(type, btn) {
+        activateButton(btn);
+        const titles = { 'add': 'ADDITION LEAGUE', 'mul': 'MULTIPLICATION LEAGUE', 'div': 'DIVISION LEAGUE' };
+        document.getElementById('main-title').innerText = titles[type];
         
-        // 상위 50명까지만 표시 (필요시 조정 가능)
-        for(var i = 0; i < Math.min(rankArray.length, 50); i++) {
-            var r = rankArray[i];
-            var rankNum = i + 1;
-            
-            // 메달 및 효과 클래스 설정
-            var medalClass = rankNum <= 5 ? "medal-" + rankNum : "";
-            var playingClass = r.isPlaying ? "is-playing" : "";
-            
-            html += `
-                <div class="rank-item ${playingClass}">
-                    <div class="rank-num ${medalClass}">${rankNum}</div>
-                    <div class="info-wrap">
-                        <div class="user-name">${r.name}</div>
-                        <div class="user-score">${r.score}</div>
-                    </div>
+        const area = document.getElementById('dynamic-board-area');
+        area.innerHTML = `
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;">
+                <div><h2 style="text-align:center; color:#4ade80;">BASE</h2><div id="b-1" class="rank-board-column"></div></div>
+                <div><h2 style="text-align:center; color:#fbbf24;">MEDIUM</h2><div id="b-2" class="rank-board-column"></div></div>
+                <div><h2 style="text-align:center; color:#f87171;">MASTER</h2><div id="b-3" class="rank-board-column"></div></div>
+            </div>`;
+
+        const subKeys = [ `rank_${type}_base`, `rank_${type}_medium`, `rank_${type}_master` ];
+        
+        subKeys.forEach((key, idx) => {
+            db.ref('rankings/' + key).off();
+            db.ref('rankings/' + key).on('value', function(snapshot) {
+                const data = snapshot.val() || {};
+                const arr = Object.values(data).sort((a, b) => b.score - a.score || (b.timeLeft || 0) - (a.timeLeft || 0));
+                renderList('b-' + (idx+1), arr, 15); // 각 열당 15명
+            });
+        });
+    }
+
+// [함수 3] 공통 그리기 함수 (인원 제한 해제 버전)
+function renderList(targetId, arr) {
+    const board = document.getElementById(targetId);
+    if(!board || arr.length === 0) return;
+    
+    // [중요] 1등이 바뀌었는지 체크 (첫 번째 데이터의 이름 확인)
+    const currentFirstPlace = arr[0].name;
+    
+    // 이전 1등과 다르고, 빈 데이터가 아닐 때만 효과 발생
+    if (lastFirstPlaceName !== "" && lastFirstPlaceName !== currentFirstPlace) {
+        triggerWinnerEffect(); // 폭죽 함수 실행
+    }
+    lastFirstPlaceName = currentFirstPlace; // 현재 1등 이름을 저장
+
+    let html = "";
+    for(let i = 0; i < arr.length; i++) { 
+        const r = arr[i];
+        const rankNum = i + 1;
+        
+        let icon = "";
+        if(rankNum === 1) icon = "👑";
+        else if(rankNum === 2) icon = "🥈";
+        else if(rankNum === 3) icon = "🥉";
+        else if(rankNum === 4) icon = "🏅";
+        else if(rankNum === 5) icon = "🎖️";
+
+        const medalClass = rankNum <= 5 ? "medal-" + rankNum : "";
+        const playingClass = r.isPlaying ? "is-playing" : "";
+        
+        // 1위에게만 특별 클래스 추가 (애니메이션)
+        const firstPlaceClass = (rankNum === 1) ? "first-place-new" : "";
+
+        html += `
+            <div class="rank-item ${playingClass} ${firstPlaceClass}">
+                <div class="rank-num ${medalClass}">
+                    <span class="rank-icon">${icon}</span>
+                    ${rankNum}
                 </div>
-            `;
+                <div class="info-wrap">
+                    <div class="user-name">${r.name}</div>
+                    <div class="user-score">${r.score}</div>
+                </div>
+            </div>`;
+    }
+    board.innerHTML = html || "<div style='text-align:center; color:#555; padding:20px;'>참가자 없음</div>";
+}
+// [폭죽 효과 함수]
+function triggerWinnerEffect() {
+// [추가] 소리 재생!
+    playWinnerSound();
+
+    // 중앙에서 터지는 폭죽
+    confetti({
+        particleCount: 150,
+        spread: 70,
+        origin: { y: 0.6 },
+        colors: ['#ffd700', '#ffffff', '#ff85a2']
+    });
+    
+    // 왼쪽에서 쏘는 폭죽
+    confetti({
+        particleCount: 80,
+        angle: 60,
+        spread: 55,
+        origin: { x: 0 }
+    });
+    
+    // 오른쪽에서 쏘는 폭죽
+    confetti({
+        particleCount: 80,
+        angle: 120,
+        spread: 55,
+        origin: { x: 1 }
+    });
+}
+
+// [폭죽 소리 함수]
+function playWinnerSound() {
+    try {
+        // 방법 1: 검증된 박수 소리 (위키미디어 공개 소스 - 아주 안정적임)
+        const audio = new Audio('https://upload.wikimedia.org/wikipedia/commons/3/3f/Clapping_Hand.wav');
+        audio.volume = 0.7;
+        
+        const playPromise = audio.play();
+        
+        if (playPromise !== undefined) {
+            playPromise.catch(error => {
+                // 방법 2: 만약 위 소리가 차단되면, 직접 전자음을 생성함 (치트키)
+                playBeepSound();
+            });
         }
-        board.innerHTML = html;
+    } catch (e) {
+        playBeepSound();
     }
+}
+
+// [버튼 클릭 효과음 함수]
+function playClickSound() {
+    const context = new (window.AudioContext || window.webkitAudioContext)();
+    const oscillator = context.createOscillator();
+    const gainNode = context.createGain();
+
+    oscillator.type = 'sine'; 
+    oscillator.frequency.setValueAtTime(800, context.currentTime); // 높은 음
+    oscillator.frequency.exponentialRampToValueAtTime(1200, context.currentTime + 0.05); // 짧게 상승
+
+    gainNode.gain.setValueAtTime(0.05, context.currentTime); // 소리는 아주 작고 깔끔하게
+    gainNode.gain.exponentialRampToValueAtTime(0.001, context.currentTime + 0.05);
+
+    oscillator.connect(gainNode);
+    gainNode.connect(context.destination);
+
+    oscillator.start();
+    oscillator.stop(context.currentTime + 0.05);
+}
 
 
-    // 과목 변경 함수 (버튼 클릭 시)
-    function changeSubject(subKey) {
-        currentSubject = subKey;
-        startMonitor(); // 다시 감시 시작
-    }
+// 브라우저가 직접 소리를 만들어내는 함수 (절대 실패 없음)
+function playBeepSound() {
+    const context = new (window.AudioContext || window.webkitAudioContext)();
+    const oscillator = context.createOscillator();
+    const gainNode = context.createGain();
 
-    window.onload = startMonitor;
+    oscillator.type = 'sine'; // 부드러운 소리
+    oscillator.frequency.setValueAtTime(523.25, context.currentTime); // '도' 음계
+    oscillator.frequency.exponentialRampToValueAtTime(1046.50, context.currentTime + 0.3); // 위로 솟는 소리
+
+    gainNode.gain.setValueAtTime(0.1, context.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, context.currentTime + 0.3);
+
+    oscillator.connect(gainNode);
+    gainNode.connect(context.destination);
+
+    oscillator.start();
+    oscillator.stop(context.currentTime + 0.3);
+}
+
+
+// 처음 로드될 때 덧셈 버튼에 불이 들어오게 설정
+window.onload = function() {
+    const defaultBtn = document.getElementById('btn-add');
+    showTripleLeague('add', defaultBtn);
+};
+
+
+
+function makeFakeData() {
+    const targets = ['b-1', 'b-2', 'b-3', 'board-single'];
+    targets.forEach(targetId => {
+        const board = document.getElementById(targetId);
+        if(!board) return;
+        
+        let fakeArray = [];
+        for(let i = 1; i <= 50; i++) {
+            fakeArray.push({
+                name: "테스트유저" + i,
+                score: Math.floor(Math.random() * 100),
+                isPlaying: i % 10 === 0 // 10명마다 한 명씩 '경기 중' 불빛 들어오게 함
+            });
+        }
+        // 점수순 정렬
+        fakeArray.sort((a, b) => b.score - a.score);
+        renderList(targetId, fakeArray);
+    });
+    alert("50명의 가짜 데이터가 생성되었습니다. 스크롤을 확인해보세요!");
+}
+
+
 </script>
 </body>
 </html>
