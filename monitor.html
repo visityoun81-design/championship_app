@@ -273,25 +273,31 @@ let lastFirstPlaceName = ""; // 이전 1등 이름을 기억할 변수
         });
     }
 
-// [함수 3] 공통 그리기 함수 (인원 제한 해제 버전)
+// [함수 3] 공통 그리기 함수
 function renderList(targetId, arr) {
     const board = document.getElementById(targetId);
-    if(!board || arr.length === 0) return;
-    
-    // [중요] 1등이 바뀌었는지 체크 (첫 번째 데이터의 이름 확인)
-    const currentFirstPlace = arr[0].name;
-    
-    // 이전 1등과 다르고, 빈 데이터가 아닐 때만 효과 발생
-    if (lastFirstPlaceName !== "" && lastFirstPlaceName !== currentFirstPlace) {
-        triggerWinnerEffect(); // 폭죽 함수 실행
-    }
-    lastFirstPlaceName = currentFirstPlace; // 현재 1등 이름을 저장
+    if (!board) return;
 
+    // 1. 데이터가 없을 때 처리
+    if (!arr || arr.length === 0) {
+        board.innerHTML = "<div style='text-align:center; color:#555; padding:20px;'>참가자 없음</div>";
+        return; 
+    }
+
+    // 2. 1등 변경 감지 및 폭죽/소리 실행
+    const currentFirstPlace = arr[0].name;
+    if (lastFirstPlaceName !== "" && lastFirstPlaceName !== currentFirstPlace) {
+        triggerWinnerEffect(); // 폭죽 + 1등 변경 소리 실행
+    }
+    lastFirstPlaceName = currentFirstPlace;
+
+    // 3. 리스트 그리기 시작
     let html = "";
-    for(let i = 0; i < arr.length; i++) { 
+    for (let i = 0; i < arr.length; i++) {
         const r = arr[i];
         const rankNum = i + 1;
         
+        // 순위별 아이콘 설정
         let icon = "";
         if(rankNum === 1) icon = "👑";
         else if(rankNum === 2) icon = "🥈";
@@ -302,7 +308,7 @@ function renderList(targetId, arr) {
         const medalClass = rankNum <= 5 ? "medal-" + rankNum : "";
         const playingClass = r.isPlaying ? "is-playing" : "";
         
-        // 1위에게만 특별 클래스 추가 (애니메이션)
+        // ★ [여기가 핵심] 1위에게만 특별 클래스(반짝임 효과) 추가
         const firstPlaceClass = (rankNum === 1) ? "first-place-new" : "";
 
         html += `
@@ -317,7 +323,7 @@ function renderList(targetId, arr) {
                 </div>
             </div>`;
     }
-    board.innerHTML = html || "<div style='text-align:center; color:#555; padding:20px;'>참가자 없음</div>";
+    board.innerHTML = html;
 }
 // [폭죽 효과 함수]
 function triggerWinnerEffect() {
