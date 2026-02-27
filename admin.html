@@ -189,205 +189,181 @@
     </div>
 </div>
 
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
 <script>
+    // [2] Firebase 설정 (내일 설정값을 여기에 넣으세요)
+  const firebaseConfig = {
+    apiKey: "AIzaSyCbhFq8vcLem8DoMdlsXpC-ZRYELhJSFHU",
+    authDomain: "championship-8f923.firebaseapp.com",
+    databaseURL: "https://championship-8f923-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "championship-8f923",
+    storageBucket: "championship-8f923.firebasestorage.app",
+    messagingSenderId: "118704807417",
+    appId: "1:118704807417:web:b1cacb9636d51a38d67128",
+    measurementId: "G-KLHCC95R2C"
+  }
 
-// [1] 상단 공통 변수 설정
-const loginId = localStorage.getItem('loginId');
-const loginName = localStorage.getItem('userName');
-const userRole = localStorage.getItem('userRole');
-
-const group1 = ['암산챔피언', '덧셈초급', '덧셈중급', '덧셈마스터', '10만들기', '24만들기', '슐태표'];
-const group2 = ['곱셈초급', '곱셈중급', '곱셈마스터', '나눗셈초급', '나눗셈중급', '나눗셈마스터'];
-
-// [2] 통합 실행 함수 (중복된 onload를 하나로 합침)
-window.onload = function() {
-    /*if (!loginId) {
-        alert("로그인이 필요합니다.");
-        location.href = "index.html";
-        return;
+    // [3] Firebase 연결 시작
+    if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
     }
-*/
-    const regArea = document.getElementById('reg-type-select-area');
-    const regTypeSelect = document.getElementById('reg-type');
-    const regTeacherSelect = document.getElementById('reg-teacher-select');
+    var db = firebase.database();
 
-    if (userRole === 'admin') {
-        // 관리자 모드 설정
-        document.getElementById('admin-only-top').style.display = 'block';
-        document.getElementById('reset-section').style.display = 'block';
-        if(regArea) regArea.style.display = 'grid';
-        regTypeSelect.innerHTML = `<option value="학생">학생 등록</option><option value="선생님">선생님 등록</option>`;
-    } else {
-        // 선생님 모드 설정
-        document.getElementById('admin-only-top').style.display = 'none';
-        document.getElementById('reset-section').style.display = 'none';
-        if(regArea) regArea.style.display = 'none'; // 유형 선택 숨김
-        
-        regTypeSelect.innerHTML = `<option value="학생">학생 등록</option>`;
-        regTypeSelect.value = "학생";
-        
-        // 중요: 담당 선생님을 본인으로 강제 고정
-        regTeacherSelect.innerHTML = `<option value="${loginName}">${loginName}</option>`;
-        regTeacherSelect.value = loginName;
-    }
+    // [4] 변수 설정
+    var loginName = localStorage.getItem('userName');
+    var userRole = localStorage.getItem('userRole');
+    var group1 = ['암산챔피언', '덧셈초급', '덧셈중급', '덧셈마스터', '10만들기', '24만들기', '슐태표'];
+    var group2 = ['곱셈초급', '곱셈중급', '곱셈마스터', '나눗셈초급', '나눗셈중급', '나눗셈마스터'];
 
-    updateTeacherSelects();
-    displayUserList();
-    loadJoinRequests();
-};
+    // [5] 화면 초기화 (여기서 버튼들이 보이고 숨겨집니다)
+    window.onload = function() {
+        var regArea = document.getElementById('reg-type-select-area');
+        var regTeacherSelect = document.getElementById('reg-teacher-select');
+        var adminTop = document.getElementById('admin-only-top');
+        var resetSec = document.getElementById('reset-section');
 
-// [3] 사용자 목록 표시 함수 (필터링 로직)
-function displayUserList() {
-    const users = JSON.parse(localStorage.getItem('approvedUsers') || '[]');
-    const filterSelect = document.getElementById('filter-teacher');
-    const search = document.getElementById('search-input').value.toLowerCase();
-
-    let filteredStudents;
-    const students = users.filter(u => u.type === '학생');
-
-    if (userRole === 'admin') {
-        const filterValue = filterSelect.value;
-        filteredStudents = students.filter(u => {
-            const matchT = (filterValue === 'all' || u.teacher === filterValue);
-            const matchS = u.name.toLowerCase().includes(search);
-            return matchT && matchS;
-        });
-    } else {
-        // 선생님 모드: 본인이 등록한 학생만 필터링
-        filteredStudents = students.filter(u => {
-            return u.teacher === loginName && u.name.toLowerCase().includes(search);
-        });
-        filterSelect.style.display = 'none';
-    }
-
-    // 선생님 명단 (관리자만 확인 가능)
-    const teacherSection = document.getElementById('teacher-list-section');
-    if (userRole === 'admin') {
-        teacherSection.style.display = 'block';
-        const teacherTableBody = document.getElementById('teacher-list-body');
-        const teachers = users.filter(u => u.type === '선생님');
-        document.getElementById('teacher-count').innerText = `${teachers.length}명`;
-        teacherTableBody.innerHTML = teachers.map(t => `
-            <tr>
-                <td><strong>${t.name}</strong><br><span style="font-size:0.65rem; color:#94a3b8;">${t.id}</span></td>
-                <td><span style="font-size:0.75rem; color:#64748b;">${t.pw}</span></td>
-                <td><button class="btn btn-delete btn-sm" onclick="deleteUser('${t.id}')">삭제</button></td>
-            </tr>
-        `).join('');
-    } else {
-        teacherSection.style.display = 'none';
-    }
-
-    // 학생 명단 출력
-    const studentTableBody = document.getElementById('user-list-body');
-    document.getElementById('user-count').innerText = `${filteredStudents.length}명`;
-    studentTableBody.innerHTML = filteredStudents.map(user => `
-        <tr>
-            <td><strong>${user.name}</strong><br><span style="font-size:0.65rem; color:#94a3b8;">${user.id}</span></td>
-            <td><button class="btn btn-blue btn-sm" onclick="showDetail('${user.id}')">기록</button></td>
-            <td>Lv.${user.level || 1}</td>
-            <td style="font-size:0.75rem; color:var(--gold)">${user.teacher || '-'}</td>
-            <td><button class="btn btn-delete btn-sm" onclick="deleteUser('${user.id}')">삭제</button></td>
-        </tr>
-    `).join('');
-}
-
-// [4] 직접 등록 함수 (선생님 모드 강제 보정 추가)
-function directRegister() {
-    const name = document.getElementById('reg-name').value;
-    const id = document.getElementById('reg-id').value;
-    const pw = document.getElementById('reg-pw').value;
-    let type = document.getElementById('reg-type').value;
-    let teacher = document.getElementById('reg-teacher-select').value;
-
-    // 선생님 모드일 경우 데이터 강제 보정
-    if (userRole !== 'admin') {
-        type = "학생";
-        teacher = loginName;
-    }
-
-    if(!name || !id || !pw) return alert("모든 정보를 입력해주세요.");
-
-    const users = JSON.parse(localStorage.getItem('approvedUsers') || '[]');
-    if(users.some(u => u.id === id)) return alert("이미 존재하는 아이디입니다.");
-
-    const newUser = { 
-        name, id, pw, type, teacher, 
-        level: 1, gems: 0, coins: 0, 
-        bestScores: {}, badges: "", practiceLogs: [] 
+        if (userRole === 'admin') {
+            if(adminTop) adminTop.style.display = 'block';
+            if(resetSec) resetSec.style.display = 'block';
+        } else {
+            if(adminTop) adminTop.style.display = 'none';
+            if(resetSec) resetSec.style.display = 'none';
+            if(regArea) regArea.style.display = 'none';
+            if(regTeacherSelect) {
+                regTeacherSelect.innerHTML = '<option value="' + loginName + '">' + loginName + '</option>';
+                regTeacherSelect.value = loginName;
+            }
+        }
+        displayUserList(); // 리스트 실행
+        loadJoinRequests(); // 승인요청 실행
     };
 
-    users.push(newUser);
-    localStorage.setItem('approvedUsers', JSON.stringify(users));
-    
-    alert(`${name} 등록 완료!`);
-    location.reload(); 
-}
+    // [6] 학생/선생님 목록 실시간 표시
+    function displayUserList() {
+        db.ref('approvedUsers').on('value', function(snapshot) {
+            var usersObj = snapshot.val() || {};
+            var users = [];
+            for(var key in usersObj) {
+                var u = usersObj[key];
+                u.id = key;
+                users.push(u);
+            }
 
-// [5] 기타 필수 함수들 (모달, 삭제, 리셋 등)
-function showDetail(id) {
-    const users = JSON.parse(localStorage.getItem('approvedUsers') || '[]');
-    const user = users.find(u => u.id === id);
-    if(!user) return;
-    document.getElementById('modal-user-name').innerText = `📊 ${user.name} 학생 리포트`;
-    document.getElementById('m-gem').innerText = user.gems || 0;
-    document.getElementById('m-coin').innerText = user.coins || 0;
-    document.getElementById('m-badges').innerText = user.badges || "없음";
-    const best = user.bestScores || {};
-    const makeHTML = (arr) => arr.map(sub => `<div class="subject-card"><span style="color:#94a3b8; font-size:0.75rem;">${sub}</span><span class="score-val">${best[sub] || '-'}</span></div>`).join('');
-    document.getElementById('col-1').innerHTML = makeHTML(group1);
-    document.getElementById('col-2').innerHTML = makeHTML(group2);
-    const logs = user.practiceLogs || [];
-    document.getElementById('m-log-list').innerHTML = logs.length ? logs.slice().reverse().map(l => `<div style="display:flex; justify-content:space-between; padding:4px 0; border-bottom:1px solid #1e293b;"><span style="color:#64748b;">${l.date}</span><span>${l.subject}</span><span style="color:var(--gold)">${l.score}</span></div>`).join('') : "<div style='text-align:center; padding:10px;'>내역 없음</div>";
-    document.getElementById('record-modal').style.display = 'flex';
-}
+            var filterValue = document.getElementById('filter-teacher') ? document.getElementById('filter-teacher').value : 'all';
+            var search = document.getElementById('search-input') ? document.getElementById('search-input').value.toLowerCase() : "";
 
-function closeModal() { document.getElementById('record-modal').style.display = 'none'; }
-function deleteUser(id) { if(confirm("정말 삭제하시겠습니까?")) { let users = JSON.parse(localStorage.getItem('approvedUsers') || '[]'); users = users.filter(u => u.id !== id); localStorage.setItem('approvedUsers', JSON.stringify(users)); displayUserList(); }}
-function updateTeacherSelects() {
-    const users = JSON.parse(localStorage.getItem('approvedUsers') || '[]');
-    const teachers = users.filter(u => u.type === '선생님');
-    const f = document.getElementById('filter-teacher');
-    const r = document.getElementById('reg-teacher-select');
-    let opt = '<option value="all">전체보기</option>';
-    let rOpt = '<option value="관리자">관리자 직속</option>';
-    teachers.forEach(t => { opt += `<option value="${t.name}">${t.name}</option>`; rOpt += `<option value="${t.name}">${t.name}</option>`; });
-    f.innerHTML = opt; r.innerHTML = rOpt;
-    if(userRole !== 'admin') { r.innerHTML = `<option value="${loginName}">${loginName}</option>`; }
-}
-function loadJoinRequests() {
-    const list = document.getElementById('request-list');
-    const reqs = JSON.parse(localStorage.getItem('joinRequests') || '[]');
-    list.innerHTML = reqs.length ? reqs.map((r, i) => `<div style="display:flex; justify-content:space-between; padding:8px; background:rgba(255,255,255,0.05); margin-bottom:5px; border-radius:8px;"><span>${r.name}(${r.type})</span><button class="btn btn-approve btn-sm" onclick="approveJoin(${i})">승인</button></div>`).join('') : "요청 없음";
-}
-function approveJoin(i) {
-    const reqs = JSON.parse(localStorage.getItem('joinRequests') || '[]');
-    const approved = JSON.parse(localStorage.getItem('approvedUsers') || '[]');
-    const user = reqs[i];
-    user.level=1; user.gems=0; user.coins=0; user.bestScores={}; user.badges=""; user.practiceLogs=[];
-    approved.push(user);
-    localStorage.setItem('approvedUsers', JSON.stringify(approved));
-    reqs.splice(i, 1);
-    localStorage.setItem('joinRequests', JSON.stringify(reqs));
-    location.reload();
-}
-function resetRank(subject) {
-    if(confirm(`${subject}의 실시간 순위판(랭킹)을 초기화하시겠습니까?`)) {
-        let rankKey = "";
-        if(subject === '덧셈초급') rankKey = 'rank_add_base';
-        else if(subject === '덧셈중급') rankKey = 'rank_add_medium';
-        else if(subject === '덧셈마스터') rankKey = 'rank_add_master';
-        else if(subject === '암산챔피언') rankKey = 'rank_championship';
-        else if(subject === '전체대회') {
-            const keys = ['rank_add_base', 'rank_add_medium', 'rank_add_master', 'rank_championship']; // 필요한 만큼 추가
-            keys.forEach(k => localStorage.removeItem(k));
-            alert("초기화 완료"); location.reload(); return;
-        }
-        if(rankKey) localStorage.removeItem(rankKey);
-        location.reload();
+            // 선생님 관리
+            if (userRole === 'admin') {
+                var teachers = users.filter(function(u) { return u.type === '선생님'; });
+                document.getElementById('teacher-count').innerText = teachers.length + "명";
+                document.getElementById('teacher-list-body').innerHTML = teachers.map(function(t) {
+                    return '<tr><td><strong>' + t.name + '</strong><br>' + t.id + '</td><td>' + t.pw + '</td><td><button class="btn btn-delete btn-sm" onclick="deleteUser(\'' + t.id + '\')">삭제</button></td></tr>';
+                }).join('');
+            }
+
+            // 학생 관리
+            var students = users.filter(function(u) { return u.type === '학생'; });
+            var filtered = students.filter(function(u) {
+                var matchT = (userRole === 'admin') ? (filterValue === 'all' || u.teacher === filterValue) : (u.teacher === loginName);
+                var matchS = u.name.toLowerCase().includes(search);
+                return matchT && matchS;
+            });
+
+            document.getElementById('user-count').innerText = filtered.length + "명";
+            document.getElementById('user-list-body').innerHTML = filtered.map(function(user) {
+                return '<tr>' +
+                    '<td><strong>' + user.name + '</strong><br>' + user.id + '</td>' +
+                    '<td><button class="btn btn-blue btn-sm" onclick="showDetail(\'' + user.id + '\')">기록</button></td>' +
+                    '<td>Lv.' + (user.level || 1) + '</td>' +
+                    '<td style="color:#facc15">' + (user.teacher || '-') + '</td>' +
+                    '<td><button class="btn btn-delete btn-sm" onclick="deleteUser(\'' + user.id + '\')">삭제</button></td>' +
+                '</tr>';
+            }).join('');
+        });
     }
-}
-window.onclick = function(event) { if (event.target == document.getElementById('record-modal')) closeModal(); }
+
+    // [7] 가입 승인 로직
+    function loadJoinRequests() {
+        db.ref('joinRequests').on('value', function(snapshot) {
+            var data = snapshot.val();
+            var list = document.getElementById('request-list');
+            if(!list) return;
+            if(!data) { list.innerHTML = "요청 없음"; return; }
+            var html = "";
+            for(var id in data) {
+                html += '<div style="display:flex; justify-content:space-between; padding:8px; background:rgba(255,255,255,0.05); margin-bottom:5px; border-radius:8px;">' +
+                        '<span>' + data[id].name + '(' + data[id].type + ')</span>' +
+                        '<button class="btn btn-approve btn-sm" onclick="approveJoin(\'' + id + '\')">승인</button></div>';
+            }
+            list.innerHTML = html;
+        });
+    }
+
+    function approveJoin(id) {
+        db.ref('joinRequests/' + id).once('value').then(function(snapshot) {
+            if (snapshot.exists()) {
+                var userData = snapshot.val();
+                userData.level=1; userData.gems=0; userData.coins=0; userData.bestScores={}; userData.badges=""; userData.practiceLogs=[];
+                db.ref('approvedUsers/' + id).set(userData);
+                db.ref('joinRequests/' + id).remove();
+                alert("승인 완료!");
+            }
+        });
+    }
+
+    // [8] 초기화 버튼 (가장 중요한 부분)
+    function resetRank(subject) {
+        if(confirm(subject + "의 실시간 순위판을 초기화하시겠습니까?")) {
+            var keyMap = { 
+                '암산챔피언':'rank_championship', '덧셈초급':'rank_add_base', '덧셈중급':'rank_add_medium', 
+                '덧셈마스터':'rank_add_master', '10만들기':'rank_make10', '24만들기':'rank_make24', '슐태표':'rank_schulte',
+                '곱셈초급':'rank_mul_base', '곱셈중급':'rank_mul_medium', '곱셈마스터':'rank_mul_master',
+                '나눗셈초급':'rank_div_base', '나눗셈중급':'rank_div_medium', '나눗셈마스터':'rank_div_master'
+            };
+            if(subject === '전체대회') {
+                db.ref('rankings').remove().then(function() { alert("전체 초기화 완료"); });
+            } else if(keyMap[subject]) {
+                db.ref('rankings/' + keyMap[subject]).remove().then(function() { alert(subject + " 초기화 완료"); });
+            }
+        }
+    }
+
+    // [9] 기타 함수
+    function directRegister() {
+        var name = document.getElementById('reg-name').value;
+        var id = document.getElementById('reg-id').value;
+        var pw = document.getElementById('reg-pw').value;
+        var type = document.getElementById('reg-type').value;
+        var teacher = document.getElementById('reg-teacher-select').value;
+        if (userRole !== 'admin') { type = "학생"; teacher = loginName; }
+        if(!name || !id || !pw) return alert("정보를 모두 입력해주세요.");
+        db.ref('approvedUsers/' + id).set({ name:name, id:id, pw:pw, type:type, teacher:teacher, level: 1, gems: 0, coins: 0, bestScores: {}, badges: "", practiceLogs: [] })
+        .then(function() { alert("등록 완료!"); });
+    }
+
+    function deleteUser(id) { if(confirm("정말 삭제하시겠습니까?")) db.ref('approvedUsers/' + id).remove(); }
+    
+    function showDetail(id) {
+        db.ref('approvedUsers/' + id).once('value').then(function(snapshot) {
+            var user = snapshot.val();
+            if(!user) return;
+            document.getElementById('modal-user-name').innerText = "📊 " + user.name + " 학생 리포트";
+            document.getElementById('m-gem').innerText = user.gems || 0;
+            document.getElementById('m-coin').innerText = user.coins || 0;
+            document.getElementById('m-badges').innerText = user.badges || "없음";
+            var best = user.bestScores || {};
+            var html1 = ""; var html2 = "";
+            group1.forEach(function(sub) { html1 += '<div class="subject-card"><span>'+sub+'</span><span class="score-val">'+(best[sub]||'-')+'</span></div>'; });
+            group2.forEach(function(sub) { html2 += '<div class="subject-card"><span>'+sub+'</span><span class="score-val">'+(best[sub]||'-')+'</span></div>'; });
+            document.getElementById('col-1').innerHTML = html1;
+            document.getElementById('col-2').innerHTML = html2;
+            document.getElementById('record-modal').style.display = 'flex';
+        });
+    }
+    function closeModal() { document.getElementById('record-modal').style.display = 'none'; }
+    window.onclick = function(e) { if (e.target == document.getElementById('record-modal')) closeModal(); }
 </script>
 </body>
 </html>
