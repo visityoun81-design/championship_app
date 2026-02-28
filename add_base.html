@@ -12,9 +12,9 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="apple-touch-icon" href="dog.png">
 
-
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 
 <script>
   if ('serviceWorker' in navigator) {
@@ -394,13 +394,13 @@ function saveRecord(finished) {
     measurementId: "G-KLHCC95R2C"
   }
 
-    // Firebase 초기화 (한 번만 실행되도록 체크)
+    // Firebase 초기화
     if (!firebase.apps.length) {
         firebase.initializeApp(firebaseConfig);
     }
-    var db = firebase.database();
+    var db = firebase.database(); // db 변수 선언
 
-    // [2] 기존 로컬 저장 로직 (기존 기록 유지용)
+    // [2] 로컬 저장 로직
     let ranks = JSON.parse(localStorage.getItem('rank_add_base') || "[]"); 
     let idx = ranks.findIndex(r => r.name === playerName); 
     let record = { 
@@ -415,22 +415,23 @@ function saveRecord(finished) {
     if(idx === -1) ranks.push(record); else ranks[idx] = record; 
     localStorage.setItem('rank_add_base', JSON.stringify(ranks)); 
 
-// [수정된 테스트 코드] - 기존 코드를 잠시 이걸로 바꿔보세요
-var userLogId = localStorage.getItem('loginId') || "test_user_01"; // 아이디 없으면 임시이름 사용
+    // [3] ★ 서버 전송 (이 부분을 깔끔하게 고쳤습니다) ★
+    var userLogId = localStorage.getItem('loginId') || "guest_" + playerName; 
+    
+    // 알림창으로 전송 시도를 확인합니다.
+    console.log("서버 전송 시도중... ID:", userLogId);
 
-alert("저장 시도! 아이디: " + userLogId); // 이제 무조건 떠야 합니다!
-
-db.ref('rankings/rank_add_base/' + userLogId).set({
-    name: playerName || "무명학생",
-    score: totalScore || 0,
-    timeLeft: timeLeft || 0,
-    isPlaying: false,
-    lastActive: Date.now()
-}).then(() => {
-    alert("서버 저장 성공!!!"); // 성공하면 이 메시지가 뜹니다!
-}).catch((error) => {
-    alert("서버 저장 실패: " + error.message); // 실패하면 이유가 뜹니다!
-});
+    db.ref('rankings/rank_add_base/' + userLogId).set({
+        name: playerName,
+        score: totalScore,
+        timeLeft: timeLeft,
+        isPlaying: !finished,
+        lastActive: Date.now()
+    }).then(() => {
+        console.log("서버 저장 성공!");
+    }).catch((error) => {
+        console.error("서버 저장 실패:", error);
+    });
 
     if(finished) { 
         localStorage.setItem('userGems', (parseInt(localStorage.getItem('userGems')||0)) + totalScore); 
