@@ -129,41 +129,54 @@
         });
     } // <--- [수정] 이 중괄호가 빠져있어서 그동안 안 됐던 거예요!
 
-    // [로그인 로직]
-    function login() {
-        const idInput = document.getElementById('login-id').value.trim();
-        const pwInput = document.getElementById('login-pw').value.trim();
-        const activeBtn = document.querySelector('.role-selector .role-btn.active');
-        const roleBtn = activeBtn ? activeBtn.innerText : '학생';
+function login() {
+    const idInput = document.getElementById('login-id').value.trim();
+    const pwInput = document.getElementById('login-pw').value.trim();
+    const activeBtn = document.querySelector('.role-selector .role-btn.active');
+    const roleBtn = activeBtn ? activeBtn.innerText : '학생';
 
-        // 관리자 하이패스
-        if (roleBtn === '선생님' && idInput === 'admin' && pwInput === '1234') {
-            localStorage.setItem('userRole', 'admin');
-            localStorage.setItem('loginId', 'admin');
-            localStorage.setItem('userName', '마스터 관리자');
-            location.href = "mainpage.html";
-            return;
-        }
-
-        // 일반 유저 체크
-        db.ref('approvedUsers/' + idInput).once('value').then((snapshot) => {
-            const userData = snapshot.val();
-            if (userData) {
-                // 서버에 'password'로 저장되어 있는지, 'pw'로 되어있는지 꼭 확인하세요!
-                if (userData.password === pwInput || userData.pw === pwInput) {
-                    localStorage.setItem('userRole', 'student');
-                    localStorage.setItem('loginId', idInput);
-                    localStorage.setItem('userName', userData.name);
-                    alert(userData.name + "님 환영합니다!");
-                    location.href = "mainpage.html";
-                } else { 
-                    alert("비밀번호가 틀렸습니다."); 
-                }
-            } else { 
-                alert("승인되지 않았거나 없는 아이디입니다."); 
-            }
-        }).catch(err => alert("오류: " + err.message));
+    if (!idInput || !pwInput) {
+        alert("아이디와 비밀번호를 입력해주세요.");
+        return;
     }
+
+    // 1. 관리자(선생님) 하이패스 체크
+    if (roleBtn === '선생님' && idInput === 'admin' && pwInput === '1234') {
+        localStorage.setItem('userRole', 'admin');
+        localStorage.setItem('loginId', 'admin');
+        localStorage.setItem('userName', '마스터 관리자');
+        location.href = "mainpage.html";
+        return;
+    }
+
+    // 2. 일반 학생/유저 체크 (여기가 선생님이 헷갈려하신 부분입니다!)
+    db.ref('approvedUsers/' + idInput).once('value').then((snapshot) => {
+        const userData = snapshot.val();
+
+        if (userData) {
+            // [핵심!] 서버 장부에 password라고 적혀있든, pw라고 적혀있든 일단 가져옵니다.
+            const serverPw = userData.password || userData.pw; 
+
+            // 가져온 비밀번호(serverPw)와 내가 입력한 비밀번호(pwInput)를 비교합니다.
+            if (serverPw === pwInput) {
+                // 비밀번호가 맞았을 때 실행되는 곳
+                localStorage.setItem('userRole', 'student');
+                localStorage.setItem('loginId', idInput);
+                localStorage.setItem('userName', userData.name);
+                alert(userData.name + "님 환영합니다!");
+                location.href = "mainpage.html";
+            } else { 
+                // 비밀번호가 틀렸을 때
+                alert("비밀번호가 틀렸습니다."); 
+            }
+        } else { 
+            // 아이디가 장부에 없을 때
+            alert("승인되지 않았거나 없는 아이디입니다."); 
+        }
+    }).catch(err => {
+        alert("오류: " + err.message);
+    });
+}
 </script>
 
 </body>
