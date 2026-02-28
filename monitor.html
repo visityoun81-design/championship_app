@@ -237,8 +237,8 @@ let lastFirstPlaceName = ""; // 이전 1등 이름을 기억할 변수
         area.querySelector('#board-single').style.display = 'grid';
         area.querySelector('#board-single').style.gridTemplateColumns = 'repeat(5, 1fr)';
 
-        db.ref('rankings/' + subKey).off(); // 이전 감시 중단
-        db.ref('rankings/' + subKey).on('value', function(snapshot) {
+        db.ref('approvedusers/' + key).off(); // 여기 수정
+        db.ref('approvedusers/' + key).on('value', function(snapshot) {
             const data = snapshot.val() || {};
             const arr = Object.values(data).sort((a, b) => b.score - a.score || (b.timeLeft || 0) - (a.timeLeft || 0));
             renderList('board-single', arr, 50); // 상위 50명
@@ -264,11 +264,11 @@ let lastFirstPlaceName = ""; // 이전 1등 이름을 기억할 변수
         const subKeys = [ `rank_${type}_base`, `rank_${type}_medium`, `rank_${type}_master` ];
         
         subKeys.forEach((key, idx) => {
-            db.ref('rankings/' + key).off();
-            db.ref('rankings/' + key).on('value', function(snapshot) {
+        db.ref('approvedusers/' + key).off(); // 여기 수정
+        db.ref('approvedusers/' + key).on('value', function(snapshot) {
                 const data = snapshot.val() || {};
                 const arr = Object.values(data).sort((a, b) => b.score - a.score || (b.timeLeft || 0) - (a.timeLeft || 0));
-                renderList('b-' + (idx+1), arr, 15); // 각 열당 15명
+                renderList('b-' + (idx+1오후 3:42 2026-02-28(토)), arr, 15); // 각 열당 15명
             });
         });
     }
