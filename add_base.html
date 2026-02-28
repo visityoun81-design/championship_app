@@ -479,7 +479,7 @@ if (!firebase.apps.length) return; // 파이어베이스 미연결시 중단
     updateHallOfFame(); 
 }
 
-      function updateHallOfFame() { 
+function updateHallOfFame() { 
     // 과목명에 맞게 키값을 확인하세요
     const storageKey = 'rank_add_base'; 
     const ranks = JSON.parse(localStorage.getItem(storageKey) || "[]");
