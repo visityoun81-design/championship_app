@@ -578,6 +578,8 @@ function updateHallOfFame() {
             }
         }
 
+// [슐테표 & 블록게임 복구 코드 - 디자인 유지]
+
 function showSchulte(size, timeLimit) {
     if(isTimeUp) return; isGaming=true; busy=true; 
     
@@ -590,56 +592,126 @@ function showSchulte(size, timeLimit) {
     overlay.style.display='flex'; table.innerHTML=''; table.style.display='grid'; 
     msgArea.style.display='none'; header.style.display='flex';
 
-    // 슐테표 제목 위치: -80pxsms 위로 붙음
-    // 기본 위치 설정 (3x3, 4x4 용)
+    // 레이아웃 조정
     header.style.position = "relative";
-    header.style.top = "-10px"; 
-    table.style.marginTop = "0px";
+    header.style.top = (size === 5) ? "-40px" : "-10px";
+    if (size === 5) table.style.marginTop = "-40px";
 
-    // 마지막 5x5 슐테표만 특별히 더 위로 올리기
-    if (size === 5) {
-        header.style.top = "-40px";  // 제목을 더 위로 바짝 올림
-        table.style.marginTop = "-40px"; // 표 자체도 위로 끌어올림
+    document.getElementById('block-container').style.display='none'; 
+    document.getElementById('game-target-msg').innerText = `[슐테표 : 1부터 차례대로 누르기]`;
+    
+    table.style.gridTemplateColumns=`repeat(${size}, 1fr)`;
+    let next=1, max=size*size, nums=Array.from({length:max},(_,i)=>i+1).sort(()=>Math.random()-0.5);
+    
+    nums.forEach(n=>{ 
+        const cell=document.createElement('div'); 
+        cell.className='schulte-cell'; 
+        cell.innerText=n; 
+        cell.onpointerdown=(e)=>{ 
+            e.preventDefault(); 
+            if(n===next){ 
+                playSfx('click'); 
+                cell.style.visibility='hidden'; 
+                next++; 
+                if(next>max) finishSchulte(true); 
+            } 
+        }; 
+        table.appendChild(cell); 
+    });
+
+    let start=Date.now(); 
+    let si=setInterval(()=>{ 
+        let rem=Math.max(0,timeLimit-(Date.now()-start)); 
+        bar.style.width=(rem/timeLimit*100)+"%"; 
+        if(rem<=0||!isGaming||isTimeUp){ 
+            clearInterval(si); 
+            if(rem<=0&&isGaming&&!isTimeUp) finishSchulte(false); 
+        } 
+    },50);
+}
+
+function finishSchulte(success) { 
+    isGaming = false; 
+    const msg=document.getElementById('schulte-msg'), 
+          table=document.getElementById('schulte-table'), 
+          header=document.getElementById('mini-game-header'); 
+    table.style.display='none'; header.style.display='none'; msg.style.display='flex'; 
+    
+    if(success) { 
+        totalScore+=2; 
+        playSfx('bonus'); 
+        msg.innerHTML=`<div style="color:var(--green); font-size:2.5rem; font-weight:900;">성공 ! 보너스 +2점</div>`; 
+    } else { 
+        msg.innerHTML=`<div style="color:var(--red); font-size:2rem; font-weight:900;">시간 초과</div>`; 
     }
+    setTimeout(()=>{ 
+        document.getElementById('schulte-overlay').style.display='none'; 
+        msg.style.display='none'; 
+        busy=false; 
+        initGame(); 
+    },1500); 
+}
 
-            document.getElementById('block-container').style.display='none'; document.getElementById('game-target-msg').innerText = `[슐테표 : 1부터 차례대로 누르기]`;
-            table.style.gridTemplateColumns=`repeat(${size}, 1fr)`;
-            let next=1, max=size*size, nums=Array.from({length:max},(_,i)=>i+1).sort(()=>Math.random()-0.5);
-            nums.forEach(n=>{ const cell=document.createElement('div'); cell.className='schulte-cell'; cell.innerText=n; cell.onpointerdown=(e)=>{ e.preventDefault(); if(n===next){ playSfx('click'); cell.style.visibility='hidden'; next++; if(next>max) finishSchulte(true); } }; table.appendChild(cell); });
-            let start=Date.now(); let si=setInterval(()=>{ let rem=Math.max(0,timeLimit-(Date.now()-start)); bar.style.width=(rem/timeLimit*100)+"%"; if(rem<=0||!isGaming||isTimeUp){ clearInterval(si); if(rem<=0&&isGaming&&!isTimeUp) finishSchulte(false); } },50);
-        }
+// 블록게임(10만들기/20만들기) 복구
+function startBlockGame() {
+    if(isTimeUp) return; isGaming=true; busy=true; blockGameCount++;
+    const header=document.getElementById('mini-game-header'), 
+          area=document.getElementById('block-container'), 
+          bar=document.getElementById('schulte-timer-bar'), 
+          msgArea=document.getElementById('schulte-msg');
+    header.style.display='flex'; header.style.position = "absolute"; header.style.top = "40px";
+    document.getElementById('schulte-overlay').style.display='flex'; 
+    area.style.display='block'; area.innerHTML=""; 
+    document.getElementById('schulte-table').style.display='none';
+    
+    let targetSum = (blockGameCount===1)?10:20; 
+    document.getElementById('game-target-msg').innerText = `[${targetSum} 만들기]`;
+    
+    let bScore=0, bTime=30.0, sel=null, stackedBlocks=[]; 
+    const B_SIZE=60, cols = Math.floor(window.innerWidth / 70);
 
-        function finishSchulte(success) { 
-            isGaming = false; const msg=document.getElementById('schulte-msg'), table=document.getElementById('schulte-table'), header=document.getElementById('mini-game-header'); 
-            table.style.display='none'; header.style.display='none'; msg.style.display='flex'; 
-            if(success) { totalScore+=2; playSfx('bonus'); msg.innerHTML=`<div style="color:var(--green); font-size:2.5rem; font-weight:900;">성공 ! 보너스 +2점</div>`; }
-            else msg.innerHTML=`<div style="color:var(--red); font-size:2rem; font-weight:900;">시간 초과</div>`;
-            setTimeout(()=>{ document.getElementById('schulte-overlay').style.display='none'; msg.style.display='none'; busy=false; initGame(); },1500); 
-        }
-
-        function startBlockGame() {
-            if(isTimeUp) return; isGaming=true; busy=true; blockGameCount++;
-            const header=document.getElementById('mini-game-header'), area=document.getElementById('block-container'), bar=document.getElementById('schulte-timer-bar'), msgArea=document.getElementById('schulte-msg');
-            header.style.display='flex'; header.style.position = "absolute"; header.style.top = "40px"; header.style.zIndex = "17000";
-            document.getElementById('schulte-overlay').style.display='flex'; area.style.display='block'; area.innerHTML=""; document.getElementById('schulte-table').style.display='none';
-            let targetSum = (blockGameCount===1)?10:20; document.getElementById('game-target-msg').innerText = `[${targetSum} 만들기]`;
-            let bScore=0, bTime=30.0, sel=null, stackedBlocks=[]; const B_SIZE=60, cols = Math.floor(window.innerWidth / 70);
-            function spawnGroup() { 
-                if(!isGaming||isTimeUp) return; let count = 4 + Math.floor(Math.random()*2);
-                for(let i=0; i<count; i++) {
-                    let val = Math.floor(Math.random()*(targetSum-1))+1, col = Math.floor(Math.random()*cols); 
-                    const b=document.createElement('div'); b.className='block'; b.innerText=val; b.style.left=(col*70 + 10)+"px"; b.style.top="-80px"; 
-                    b.style.background=`linear-gradient(135deg, hsl(${Math.random()*360},70%,50%), hsl(${Math.random()*360},70%,30%))`; 
-                    b.onpointerdown=(e)=>{ e.preventDefault(); if(sel===b){ sel=null; b.style.border="none"; } else if(!sel){ sel=b; b.style.border="4px solid #fff"; } else { if(parseInt(sel.innerText)+parseInt(b.innerText)===targetSum){ playSfx('magic'); const s=sel; stackedBlocks=stackedBlocks.filter(x=>x!==s && x!==b); s.remove(); b.remove(); bScore++; sel=null; setTimeout(applyGravity, 50); } else { playSfx('click'); sel.style.border="none"; sel=b; b.style.border="4px solid #fff"; } } }; 
-                    area.appendChild(b); stackedBlocks.push(b); setTimeout(()=>updateBlockPos(b), 50);
+    function spawnGroup() { 
+        if(!isGaming||isTimeUp) return; 
+        let count = 4 + Math.floor(Math.random()*2);
+        for(let i=0; i<count; i++) {
+            let val = Math.floor(Math.random()*(targetSum-1))+1, col = Math.floor(Math.random()*cols); 
+            const b=document.createElement('div'); b.className='block'; b.innerText=val; b.style.left=(col*70 + 10)+"px"; b.style.top="-80px"; 
+            b.style.background=`linear-gradient(135deg, hsl(${Math.random()*360},70%,50%), hsl(${Math.random()*360},70%,30%))`; 
+            b.onpointerdown=(e)=>{
+                e.preventDefault();
+                if(sel===b){ sel=null; b.style.border="none"; }
+                else if(!sel){ sel=b; b.style.border="4px solid #fff"; }
+                else {
+                    if(parseInt(sel.innerText)+parseInt(b.innerText)===targetSum){
+                        playSfx('magic');
+                        stackedBlocks=stackedBlocks.filter(x=>x!==sel && x!==b);
+                        sel.remove(); b.remove(); bScore++; sel=null;
+                    } else {
+                        playSfx('click'); sel.style.border="none"; sel=b; b.style.border="4px solid #fff";
+                    }
                 }
-                if(isGaming) setTimeout(spawnGroup, 1200); 
-            }
-            function updateBlockPos(b) { if(!b.parentElement) return; let colX = parseInt(b.style.left), targetY = area.clientHeight - B_SIZE - 5; stackedBlocks.forEach(other => { if(other !== b && Math.abs(parseInt(other.style.left) - colX) < 10) { let otherY = parseInt(other.style.top); if(otherY > b.offsetTop) targetY = Math.min(targetY, otherY - B_SIZE - 2); } }); b.style.top = targetY + "px"; }
-            function applyGravity() { stackedBlocks.sort((a,b)=>b.offsetTop-a.offsetTop).forEach(b=>updateBlockPos(b)); }
-            function finishBlock(){ isGaming=false; area.style.display='none'; header.style.display='none'; let bonus = (bScore>=10)?2:(bScore>=5)?1:0; totalScore+=bonus; if(bonus>0) playSfx('bonus'); msgArea.style.display='flex'; msgArea.innerHTML=`<div style="font-size:2rem; font-weight:900; color:var(--gold); text-align:center;">맞춘 개수: ${bScore}개<br><span style="color:var(--green);">보너스 +${bonus}점</span></div>`; setTimeout(()=>{document.getElementById('schulte-overlay').style.display='none'; msgArea.style.display='none'; busy=false; initGame();},2500); } 
-            spawnGroup(); let ti=setInterval(()=>{ if(isTimeUp||!isGaming){clearInterval(ti); return;} bTime-=0.1; bar.style.width=(bTime/30*100)+"%"; if(bTime<=0){clearInterval(ti); finishBlock();} },100);
+            }; 
+            area.appendChild(b); stackedBlocks.push(b);
+            setTimeout(() => { b.style.top = (area.clientHeight - B_SIZE - 5) + "px"; }, 50);
         }
+        if(isGaming) setTimeout(spawnGroup, 1200); 
+    }
+    
+    function finishBlock(){ 
+        isGaming=false; area.style.display='none'; header.style.display='none'; 
+        let bonus = (bScore>=10)?2:(bScore>=5)?1:0; totalScore+=bonus; 
+        if(bonus>0) playSfx('bonus');
+        msgArea.style.display='flex'; 
+        msgArea.innerHTML=`<div style="font-size:2rem; font-weight:900; color:var(--gold); text-align:center;">맞춘 개수: ${bScore}개<br><span style="color:var(--green);">보너스 +${bonus}점</span></div>`; 
+        setTimeout(()=>{document.getElementById('schulte-overlay').style.display='none'; msgArea.style.display='none'; busy=false; initGame();},2500); 
+    } 
+    spawnGroup(); 
+    let ti=setInterval(()=>{ 
+        if(isTimeUp||!isGaming){clearInterval(ti); return;} 
+        bTime-=0.1; bar.style.width=(bTime/30*100)+"%"; 
+        if(bTime<=0){clearInterval(ti); finishBlock();} 
+    },100);
+}
 
         function showTimeOver() { isTimeUp = true; const tos = document.getElementById('time-over-screen'); tos.style.display = 'flex'; playSfx('finish'); setTimeout(() => { tos.style.display = 'none'; showFinalResult(); }, 2000); }
 
@@ -709,6 +781,26 @@ function showFinalResult() {
         msgArea.style.display='flex';
     });
 }
+// 키보드 입력을 감시해서 숫자키, 엔터, 백스페이스를 작동하게 합니다.
+window.addEventListener('keydown', (e) => { 
+    // 게임 중이 아니거나 시간이 다 됐으면 작동 안 함
+    if(busy || isTimeUp) return; 
+    
+    if(e.key >= '0' && e.key <= '9') {
+        fnIn(e.key); // 숫자 입력
+    } else if(e.key === 'Enter') {
+        fnOk(); // 확인 버튼
+    } else if(e.key === 'Backspace') {
+        fnIn('back'); // 지우기
+    } else if(e.key === 'Escape') {
+        fnIn('AC'); // 전체 지우기
+    } 
+});
+
+// 3초마다 랭킹판을 자동으로 새로고침해서 친구들 점수를 가져옵니다.
+setInterval(updateHallOfFame, 3000);
+
+
 </script>
 </body>
 </html>
