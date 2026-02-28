@@ -386,19 +386,25 @@
 
 
 function loadAllStudentRecords() {
-    // 서버의 'users' 방(보석, 코인 등이 저장된 곳)을 읽어옵니다.
+    const displayArea = document.getElementById('admin-record-list');
+    // 로딩 중일 때 디자인이 깨지지 않게 안내 문구만 살짝 띄웁니다.
+    displayArea.innerHTML = "<p style='color:#a855f7; grid-column: 1/-1;'>기록을 불러오는 중입니다...</p>";
+
+    // 서버의 'users' 방을 읽어옵니다.
     firebase.database().ref('users').once('value', function(snapshot) {
         const users = snapshot.val();
-        const displayArea = document.getElementById('admin-record-list');
         
         if (!users) {
-            displayArea.innerHTML = "<p style='color:#94a3b8;'>아직 쌓인 기록이 없습니다. 아이들이 게임을 끝까지 완료해야 기록이 생깁니다.</p>";
+            displayArea.innerHTML = "<p style='color:#94a3b8; grid-column: 1/-1;'>아직 쌓인 기록이 없습니다. 아이들이 게임을 끝까지 완료해야 기록이 생깁니다.</p>";
             return;
         }
 
         let html = "";
+        // 데이터를 하나씩 꺼내서 선생님의 디자인 바구니에 담습니다.
         for (let id in users) {
             const u = users[id];
+            
+            // 선생님이 만드신 디자인 그대로 유지 (수정 금지 영역)
             html += `
                 <div class="student-record-card" style="background: rgba(0,0,0,0.3); border: 1px solid #a855f7; padding: 15px; border-radius: 12px; text-align: left;">
                     <div style="border-bottom: 1px solid rgba(168, 85, 247, 0.3); padding-bottom: 8px; margin-bottom: 10px;">
