@@ -65,6 +65,25 @@
         <div id="request-list" style="font-size: 0.8rem;"></div>
     </section>
 
+<div id="admin-only-top" style="display: none;">
+    <section style="border: 1px solid var(--red); padding: 15px; margin-bottom: 20px;">
+        <h2 style="color:var(--red)">📩 가입 승인 대기</h2>
+        <div id="request-list" style="font-size: 0.8rem;"></div>
+    </section>
+
+    <section id="admin-record-section" style="padding: 20px; background: rgba(255,255,255,0.05); border-radius: 15px; border: 1px solid #a855f7;">
+        <h2 style="color: #a855f7;">👤 학생별 누적 기록 관리</h2>
+        <button onclick="loadAllStudentRecords()" style="padding: 10px 20px; background: #a855f7; border: none; color: white; border-radius: 8px; cursor: pointer; font-weight: bold; margin-bottom: 15px;">
+            기록 새로고침 🔄
+        </button>
+        
+        <div id="admin-record-list" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 15px;">
+            <p style="color: #94a3b8;">"기록 새로고침" 버튼을 눌러주세요.</p>
+        </div>
+    </section>
+</div>
+
+
     <section>
         <h2>🏆 챔피언십 컨트롤</h2>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
@@ -364,6 +383,43 @@
     }
     function closeModal() { document.getElementById('record-modal').style.display = 'none'; }
     window.onclick = function(e) { if (e.target == document.getElementById('record-modal')) closeModal(); }
+
+
+function loadAllStudentRecords() {
+    // 서버의 'users' 방(보석, 코인 등이 저장된 곳)을 읽어옵니다.
+    firebase.database().ref('users').once('value', function(snapshot) {
+        const users = snapshot.val();
+        const displayArea = document.getElementById('admin-record-list');
+        
+        if (!users) {
+            displayArea.innerHTML = "<p style='color:#94a3b8;'>아직 쌓인 기록이 없습니다. 아이들이 게임을 끝까지 완료해야 기록이 생깁니다.</p>";
+            return;
+        }
+
+        let html = "";
+        for (let id in users) {
+            const u = users[id];
+            html += `
+                <div class="student-record-card" style="background: rgba(0,0,0,0.3); border: 1px solid #a855f7; padding: 15px; border-radius: 12px; text-align: left;">
+                    <div style="border-bottom: 1px solid rgba(168, 85, 247, 0.3); padding-bottom: 8px; margin-bottom: 10px;">
+                        <strong style="font-size: 1.1rem; color: #d8b4fe;">${u.name || '이름없음'}</strong> 
+                        <span style="font-size: 0.8rem; color: #94a3b8;">(${id})</span>
+                    </div>
+                    <div style="font-size: 0.9rem; color: #eee; line-height: 1.6;">
+                        <div>💎 보석: <strong>${u.gems || 0}개</strong></div>
+                        <div>🪙 코인: <strong>${u.coins || 0}원</strong></div>
+                        <div>🏆 최고점: <strong>${u.bestScore || 0}점</strong></div>
+                        <div style="color: #94a3b8; font-size: 0.8rem; margin-top: 5px;">📅 최근: ${u.lastDate || '-'}</div>
+                    </div>
+                </div>`;
+        }
+        displayArea.innerHTML = html;
+    });
+}
+
+
+
+
 </script>
 </body>
 </html>
