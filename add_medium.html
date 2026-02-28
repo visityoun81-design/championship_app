@@ -482,6 +482,27 @@
         function playSfx(type) { if(!audioCtx) return; if(audioCtx.state==='suspended') audioCtx.resume(); const now = audioCtx.currentTime; if(type==='magic' || type==='bonus'){ [880, 1318].forEach((f, i) => { const osc = audioCtx.createOscillator(), gain = audioCtx.createGain(); osc.type = 'sine'; osc.connect(gain); gain.connect(audioCtx.destination); osc.frequency.setValueAtTime(f, now + i*0.05); gain.gain.setValueAtTime(0, now + i*0.05); gain.gain.linearRampToValueAtTime(0.06, now + i*0.05 + 0.02); gain.gain.exponentialRampToValueAtTime(0.001, now + i*0.05 + 0.3); osc.start(now + i*0.05); osc.stop(now + i*0.05 + 0.4); }); } else if(type==='click'){ const o=audioCtx.createOscillator(), g=audioCtx.createGain(); o.connect(g); g.connect(audioCtx.destination); o.frequency.setValueAtTime(1000,now); g.gain.setValueAtTime(0.05,now); o.start(); o.stop(now+0.05); } else if(type==='correct'){ const o=audioCtx.createOscillator(), g=audioCtx.createGain(); o.connect(g); g.connect(audioCtx.destination); o.frequency.setValueAtTime(600,now); g.gain.setValueAtTime(0.1,now); o.start(); o.stop(now+0.2); } else if(type==='wrong'){ const o=audioCtx.createOscillator(), g=audioCtx.createGain(); o.connect(g); g.connect(audioCtx.destination); o.frequency.setValueAtTime(220,now); g.gain.setValueAtTime(0.05,now); o.start(); o.stop(now+0.15); if(window.navigator.vibrate) window.navigator.vibrate(200); } else if(type==='typechange'){ [880, 1109, 1318].forEach((f, i) => { const o=audioCtx.createOscillator(), g=audioCtx.createGain(); o.connect(g); g.connect(audioCtx.destination); o.frequency.setValueAtTime(f, now+i*0.1); g.gain.setValueAtTime(0.02, now+i*0.1); o.start(now+i*0.1); o.stop(now+i*0.1+0.3); }); } else if(type==='finish'){ [440, 554, 659, 880].forEach((f, i) => { const o=audioCtx.createOscillator(), g=audioCtx.createGain(); o.connect(g); g.connect(audioCtx.destination); o.type='sine'; o.frequency.setValueAtTime(f, now+i*0.15); g.gain.setValueAtTime(0.1, now+i*0.15); o.start(now+i*0.15); o.stop(now+i*0.15+0.8); }); } }
         function handleAutoFullscreen() { if(!document.fullscreenElement && mainTimer) document.documentElement.requestFullscreen().catch(()=>{}); }
 
+// 페이지가 열리자마자 실행되는 부분
+window.onload = function() {
+    // 1. 로그인 시 저장했던 이름을 가져옵니다.
+    const savedName = localStorage.getItem('userName');
+    
+    if (savedName) {
+        // 이름이 있으면 입력창에 미리 넣습니다.
+        const nameInput = document.getElementById('user-name');
+        if(nameInput) nameInput.value = savedName;
+        
+        // 환영 메시지를 바꿉니다.
+        const titleH1 = document.querySelector('#fs-trigger h1');
+        if(titleH1) titleH1.innerText = savedName + "님, 환영합니다!";
+    }
+    
+    // 시작 전에도 랭킹판을 한 번 미리 보여줍니다.
+    updateHallOfFame();
+};
+
+
+
        function goFullScreen() { 
     const savedName = localStorage.getItem('userName') || "게스트"; 
     playerName = typeof setUniqueName === 'function' ? setUniqueName(savedName) : savedName;
@@ -503,6 +524,7 @@
 
 
         function setUniqueName(name) { let ranks = JSON.parse(localStorage.getItem('rank_add_medium') || "[]"); let count = ranks.filter(r => r.realName === name).length; return count > 0 ? `${name}${count + 1}` : name; }
+
         function startTimer() { mainTimer = setInterval(() => { if(isTimeUp) return; timeLeft--; let m = Math.floor(timeLeft/60), s = timeLeft%60; document.getElementById('timer-display').innerText = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`; saveRecord(false); if(timeLeft <= 0) { isTimeUp = true; clearInterval(mainTimer); showTimeOver(); } }, 1000); }
         function getFormattedDate() { const now = new Date(); const year = String(now.getFullYear()).slice(-2); const month = String(now.getMonth() + 1).padStart(2, '0'); const day = String(now.getDate()).padStart(2, '0'); const hours = String(now.getHours()).padStart(2, '0'); const minutes = String(now.getMinutes()).padStart(2, '0'); return `${year}.${month}.${day} ${hours}:${minutes}`; }
 
