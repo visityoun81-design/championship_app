@@ -9,6 +9,7 @@
 
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 
 <script>
   if ('serviceWorker' in navigator) {
@@ -533,14 +534,14 @@ function saveRecord(finished) {
     measurementId: "G-KLHCC95R2C"
   };
 
-    // Firebase 초기화 (한 번만 실행되도록 체크)
+    // Firebase 초기화
     if (!firebase.apps.length) {
         firebase.initializeApp(firebaseConfig);
     }
-    var db = firebase.database();
+    var db = firebase.database(); // db 변수 선언
 
-    // [2] 기존 로컬 저장 로직 (기존 기록 유지용)
-    let ranks = JSON.parse(localStorage.getItem('rank_add_base') || "[]"); 
+    // [2] 로컬 저장 로직
+    let ranks = JSON.parse(localStorage.getItem('rank_add_championship') || "[]"); 
     let idx = ranks.findIndex(r => r.name === playerName); 
     let record = { 
         name: playerName, 
@@ -552,25 +553,31 @@ function saveRecord(finished) {
         timeLeft: timeLeft 
     }; 
     if(idx === -1) ranks.push(record); else ranks[idx] = record; 
-    localStorage.setItem('rank_add_base', JSON.stringify(ranks)); 
+    localStorage.setItem('rank_add_championship', JSON.stringify(ranks)); 
 
-    // [3] ★ Firebase 실시간 전송 (전광판 연동용) ★
-    var userLogId = localStorage.getItem('loginId'); // 관리자 페이지에서 만든 ID
-    if(userLogId) {
-        db.ref('rankings/rank_championship/' + userLogId).set({
-            name: playerName,
-            score: totalScore,
-            timeLeft: timeLeft,
-            isPlaying: !finished,
-            lastActive: Date.now()
-        });
-    }
+    // [3] ★ 서버 전송 (이 부분을 깔끔하게 고쳤습니다) ★
+    var userLogId = localStorage.getItem('loginId') || "guest_" + playerName; 
+    
+    // 알림창으로 전송 시도를 확인합니다.
+    console.log("서버 전송 시도중... ID:", userLogId);
+
+    db.ref('rankings/rank_championship/' + userLogId).set({
+        name: playerName,
+        score: totalScore,
+        timeLeft: timeLeft,
+        isPlaying: !finished,
+        lastActive: Date.now()
+    }).then(() => {
+        console.log("서버 저장 성공!");
+    }).catch((error) => {
+        console.error("서버 저장 실패:", error);
+    });
 
     if(finished) { 
         localStorage.setItem('userGems', (parseInt(localStorage.getItem('userGems')||0)) + totalScore); 
         localStorage.setItem('userCoins', (parseInt(localStorage.getItem('userCoins')||0)) + 100); 
     }
-    updateHallOfFameRealtime();
+    updateHallOfFame(); 
 }
 
 // 옆면 랭킹 실시간 업데이트 함수 추가
