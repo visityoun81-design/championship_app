@@ -231,22 +231,16 @@ function showSingleLeague(subKey, title, btn) {
     document.getElementById('main-title').innerText = title;
     const area = document.getElementById('dynamic-board-area');
     area.innerHTML = `<div id="board-single" class="rank-board"></div>`; 
+    
     area.querySelector('#board-single').style.display = 'grid';
     area.querySelector('#board-single').style.gridTemplateColumns = 'repeat(5, 1fr)';
 
-    // rankings/subKey 대신 approvedusers 전체를 감시
-    db.ref('approvedusers').on('value', function(snapshot) {
+    // 아이들 앱이 보내는 'rankings/과목코드' 경로를 직접 감시합니다.
+    db.ref('rankings/' + subKey).off(); 
+    db.ref('rankings/' + subKey).on('value', function(snapshot) {
         const data = snapshot.val() || {};
-        // 전체 유저 중 해당 과목(subKey) 점수가 있는 유저만 추출
-        const arr = Object.values(data)
-            .filter(user => user[subKey] !== undefined || user.score !== undefined) 
-            .map(user => ({
-                name: user.name,
-                score: user[subKey] || user.score || 0, // 해당 과목 점수 가져오기
-                isPlaying: user.isPlaying
-            }))
-            .sort((a, b) => b.score - a.score);
-
+        // 데이터를 배열로 만들고 점수 높은 순으로 정렬
+        const arr = Object.values(data).sort((a, b) => b.score - a.score || (b.timeLeft || 0) - (a.timeLeft || 0));
         renderList('board-single', arr, 50); 
     });
 }
@@ -258,6 +252,7 @@ function showSingleLeague(subKey, title, btn) {
     activateButton(btn);
     const titles = { 'add': 'ADDITION LEAGUE', 'mul': 'MULTIPLICATION LEAGUE', 'div': 'DIVISION LEAGUE' };
     document.getElementById('main-title').innerText = titles[type];
+    
     const area = document.getElementById('dynamic-board-area');
     area.innerHTML = `
         <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;">
@@ -266,23 +261,15 @@ function showSingleLeague(subKey, title, btn) {
             <div><h2 style="text-align:center; color:#f87171;">MASTER</h2><div id="b-3" class="rank-board-column"></div></div>
         </div>`;
 
-    // 아이들 앱에서 사용하는 실제 과목 필드명 (예: add_base, add_medium...)
-    const subKeys = [ `${type}_base`, `${type}_medium`, `${type}_master` ];
+    // 아이들 앱 저장 형식인 rank_add_base 등과 일치시킵니다.
+    const subKeys = [ `rank_${type}_base`, `rank_${type}_medium`, `rank_${type}_master` ];
     
-    db.ref('approvedusers').on('value', function(snapshot) {
-        const data = snapshot.val() || {};
-        const allUsers = Object.values(data);
-
-        subKeys.forEach((key, idx) => {
-            const arr = allUsers
-                .filter(user => user[key] !== undefined) // 해당 난이도 점수가 있는 유저만
-                .map(user => ({
-                    name: user.name,
-                    score: user[key],
-                    isPlaying: user.isPlaying
-                }))
-                .sort((a, b) => b.score - a.score);
-
+    subKeys.forEach((key, idx) => {
+        db.ref('rankings/' + key).off();
+        db.ref('rankings/' + key).on('value', function(snapshot) {
+            const data = snapshot.val() || {};
+            const arr = Object.values(data).sort((a, b) => b.score - a.score || (b.timeLeft || 0) - (a.timeLeft || 0));
+            // b-1, b-2, b-3 영역에 순서대로 그립니다.
             renderList('b-' + (idx + 1), arr, 15); 
         });
     });
