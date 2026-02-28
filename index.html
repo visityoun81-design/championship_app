@@ -29,10 +29,10 @@
 <div class="login-container">
     <div class="logo-text">CHAMPIONSHIP</div>
 
-    <div class="role-selector">
-        <button type="button" class="role-btn active" onclick="setRole('학생', this)">학생</button>
-        <button type="button" class="role-btn" onclick="setRole('선생님', this)">선생님</button>
-    </div>
+   <div class="role-selector">
+    <button type="button" class="role-btn active" onclick="setRole('학생', this)">학생</button>
+    <button type="button" class="role-btn" onclick="setRole('선생님', this)">선생님</button>
+</div>
 
     <form id="loginForm" onsubmit="event.preventDefault(); login();">
         <div class="input-group">
@@ -52,11 +52,12 @@
 <div id="join-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); backdrop-filter:blur(10px); z-index:10000; justify-content:center; align-items:center;">
     <div style="background:linear-gradient(145deg, #1e293b, #0f172a); width:90%; max-width:400px; padding:30px; border-radius:24px; border:2px solid #a855f7; box-shadow:0 0 50px rgba(168,85,247,0.3);">
         <h2 style="color:#a855f7; margin-top:0; text-align:center;">JOIN REQUEST</h2>
-        <div style="display:flex; flex-direction:column; gap:15px;">
-            <div style="display:flex; gap:10px;">
-                <button type="button" id="type-student" class="role-btn active" onclick="setRequestType('학생', this)">학생</button>
-                <button type="button" id="type-teacher" class="role-btn" onclick="setRequestType('선생님', this)">선생님</button>
-            </div>
+     
+          <div style="display:flex; flex-direction:column; gap:15px;">
+           <div style="display:flex; gap:10px;">
+            <button type="button" id="type-student" class="role-btn active" onclick="setRequestType('학생', this)">학생</button>
+    <button type="button" id="type-teacher" class="role-btn" onclick="setRequestType('선생님', this)">선생님</button>
+</div>
             <input type="text" id="req-name" placeholder="이름">
             <input type="text" id="req-id" placeholder="희망 아이디">
             <input type="password" id="req-pw" placeholder="비밀번호">
@@ -85,17 +86,21 @@
 
     let selectedRequestType = '학생';
 
-    // 역할 선택 함수 (active 클래스 이동 완벽 처리)
+    // [로그인 화면용] 역할 선택
     function setRole(role, element) {
-        document.querySelectorAll('.role-selector .role-btn').forEach(btn => btn.classList.remove('active'));
+        const btns = document.querySelectorAll('.role-selector .role-btn');
+        btns.forEach(btn => btn.classList.remove('active'));
         element.classList.add('active');
+        console.log("선택된 로그인 역할:", role);
     }
 
-    // 가입 요청 타입 선택
+    // [가입 모달창용] 타입 선택
     function setRequestType(type, element) {
         selectedRequestType = type;
-        document.querySelectorAll('#join-modal .role-btn').forEach(btn => btn.classList.remove('active'));
+        const modalBtns = document.querySelectorAll('#join-modal .role-btn');
+        modalBtns.forEach(btn => btn.classList.remove('active'));
         element.classList.add('active');
+        console.log("가입 요청 타입:", type);
     }
 
     function openJoinModal() { document.getElementById('join-modal').style.display = 'flex'; }
@@ -111,22 +116,28 @@
 
         db.ref('joinRequests/' + id).set({
             type: selectedRequestType,
-            name: name, id: id, password: pw, phone: phone,
+            name: name,
+            id: id,
+            password: pw, 
+            phone: phone,
             date: new Date().toLocaleString()
         }).then(() => {
             alert("가입 요청 완료! 선생님의 승인을 기다려주세요.");
             document.getElementById('join-modal').style.display = 'none';
+        }).catch((error) => {
+            alert("오류 발생: " + error.message);
         });
-    }
+    } // <--- [수정] 이 중괄호가 빠져있어서 그동안 안 됐던 거예요!
 
     // [로그인 로직]
     function login() {
-        const id = document.getElementById('login-id').value.trim();
-        const pw = document.getElementById('login-pw').value.trim();
-        const roleBtn = document.querySelector('.role-selector .role-btn.active').innerText;
+        const idInput = document.getElementById('login-id').value.trim();
+        const pwInput = document.getElementById('login-pw').value.trim();
+        const activeBtn = document.querySelector('.role-selector .role-btn.active');
+        const roleBtn = activeBtn ? activeBtn.innerText : '학생';
 
         // 관리자 하이패스
-        if (roleBtn === '선생님' && id === 'admin' && pw === '1234') {
+        if (roleBtn === '선생님' && idInput === 'admin' && pwInput === '1234') {
             localStorage.setItem('userRole', 'admin');
             localStorage.setItem('loginId', 'admin');
             localStorage.setItem('userName', '마스터 관리자');
@@ -135,17 +146,22 @@
         }
 
         // 일반 유저 체크
-        db.ref('approvedUsers/' + id).once('value').then((snapshot) => {
+        db.ref('approvedUsers/' + idInput).once('value').then((snapshot) => {
             const userData = snapshot.val();
             if (userData) {
-                if (userData.password === pw) {
+                // 서버에 'password'로 저장되어 있는지, 'pw'로 되어있는지 꼭 확인하세요!
+                if (userData.password === pwInput || userData.pw === pwInput) {
                     localStorage.setItem('userRole', 'student');
-                    localStorage.setItem('loginId', id);
+                    localStorage.setItem('loginId', idInput);
                     localStorage.setItem('userName', userData.name);
                     alert(userData.name + "님 환영합니다!");
                     location.href = "mainpage.html";
-                } else { alert("비밀번호가 틀렸습니다."); }
-            } else { alert("승인되지 않았거나 없는 아이디입니다."); }
+                } else { 
+                    alert("비밀번호가 틀렸습니다."); 
+                }
+            } else { 
+                alert("승인되지 않았거나 없는 아이디입니다."); 
+            }
         }).catch(err => alert("오류: " + err.message));
     }
 </script>
