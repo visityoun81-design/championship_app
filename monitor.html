@@ -225,7 +225,7 @@ let lastFirstPlaceName = ""; // 이전 1등 이름을 기억할 변수
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     var db = firebase.database();
 
-    // [함수 1] 단독 과목 화면 (암산챔피언 등)
+// [함수 1] 단독 과목 화면 (암산챔피언 등)
 function showSingleLeague(subKey, title, btn) {
     activateButton(btn);
     document.getElementById('main-title').innerText = title;
@@ -235,20 +235,18 @@ function showSingleLeague(subKey, title, btn) {
     area.querySelector('#board-single').style.display = 'grid';
     area.querySelector('#board-single').style.gridTemplateColumns = 'repeat(5, 1fr)';
 
-    // 아이들 앱이 보내는 'rankings/과목코드' 경로를 직접 감시합니다.
+    // 아이들 앱이 사용하는 'rankings/' 경로를 실시간 감시합니다.
     db.ref('rankings/' + subKey).off(); 
     db.ref('rankings/' + subKey).on('value', function(snapshot) {
         const data = snapshot.val() || {};
-        // 데이터를 배열로 만들고 점수 높은 순으로 정렬
+        // 점수 높은 순 -> 남은 시간 많은 순으로 정렬
         const arr = Object.values(data).sort((a, b) => b.score - a.score || (b.timeLeft || 0) - (a.timeLeft || 0));
-        renderList('board-single', arr, 50); 
+        renderList('board-single', arr); 
     });
 }
 
-
-
-    // [함수 2] 3개 과목 동시 화면 (덧셈, 곱셈, 나눗셈)
- function showTripleLeague(type, btn) {
+// [함수 2] 3개 과목 동시 화면 (덧셈, 곱셈, 나눗셈)
+function showTripleLeague(type, btn) {
     activateButton(btn);
     const titles = { 'add': 'ADDITION LEAGUE', 'mul': 'MULTIPLICATION LEAGUE', 'div': 'DIVISION LEAGUE' };
     document.getElementById('main-title').innerText = titles[type];
@@ -261,7 +259,7 @@ function showSingleLeague(subKey, title, btn) {
             <div><h2 style="text-align:center; color:#f87171;">MASTER</h2><div id="b-3" class="rank-board-column"></div></div>
         </div>`;
 
-    // 아이들 앱 저장 형식인 rank_add_base 등과 일치시킵니다.
+    // 아이들 앱의 저장 키(rank_add_base 등)와 전광판 버튼을 연결합니다.
     const subKeys = [ `rank_${type}_base`, `rank_${type}_medium`, `rank_${type}_master` ];
     
     subKeys.forEach((key, idx) => {
@@ -269,37 +267,32 @@ function showSingleLeague(subKey, title, btn) {
         db.ref('rankings/' + key).on('value', function(snapshot) {
             const data = snapshot.val() || {};
             const arr = Object.values(data).sort((a, b) => b.score - a.score || (b.timeLeft || 0) - (a.timeLeft || 0));
-            // b-1, b-2, b-3 영역에 순서대로 그립니다.
-            renderList('b-' + (idx + 1), arr, 15); 
+            renderList('b-' + (idx + 1), arr); 
         });
     });
 }
 
-// [함수 3] 공통 그리기 함수
+// [함수 3] 공통 그리기 함수 (1등 효과 포함)
 function renderList(targetId, arr) {
     const board = document.getElementById(targetId);
     if (!board) return;
 
-    // 1. 데이터가 없을 때 처리
     if (!arr || arr.length === 0) {
         board.innerHTML = "<div style='text-align:center; color:#555; padding:20px;'>참가자 없음</div>";
         return; 
     }
 
-    // 2. 1등 변경 감지 및 폭죽/소리 실행
+    // 1등 변경 시 폭죽 효과
     const currentFirstPlace = arr[0].name;
     if (lastFirstPlaceName !== "" && lastFirstPlaceName !== currentFirstPlace) {
-        triggerWinnerEffect(); // 폭죽 + 1등 변경 소리 실행
+        triggerWinnerEffect(); 
     }
     lastFirstPlaceName = currentFirstPlace;
 
-    // 3. 리스트 그리기 시작
     let html = "";
     for (let i = 0; i < arr.length; i++) {
         const r = arr[i];
         const rankNum = i + 1;
-        
-        // 순위별 아이콘 설정
         let icon = "";
         if(rankNum === 1) icon = "👑";
         else if(rankNum === 2) icon = "🥈";
@@ -309,8 +302,6 @@ function renderList(targetId, arr) {
 
         const medalClass = rankNum <= 5 ? "medal-" + rankNum : "";
         const playingClass = r.isPlaying ? "is-playing" : "";
-        
-        // ★ [여기가 핵심] 1위에게만 특별 클래스(반짝임 효과) 추가
         const firstPlaceClass = (rankNum === 1) ? "first-place-new" : "";
 
         html += `
