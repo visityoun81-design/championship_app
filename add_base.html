@@ -433,49 +433,93 @@ function saveRecord(finished) {
         console.error("서버 저장 실패:", error);
     });
 
-    if(finished) { 
-        localStorage.setItem('userGems', (parseInt(localStorage.getItem('userGems')||0)) + totalScore); 
-        localStorage.setItem('userCoins', (parseInt(localStorage.getItem('userCoins')||0)) + 100); 
+// [새로운 보상 로직]
+if (finished || isTimeUp) {
+    // 1. 보석 계산: 10문제 풀 때마다 1개
+    let earnedGems = Math.floor(totalScore / 10);
+    
+    // 2. 코인 계산: 내 '초급' 최고 점수보다 높을 때만 100코인
+    let oldBest = parseInt(localStorage.getItem('myBestScore_base') || 0);
+    let earnedCoins = 0;
+    
+    if (totalScore > oldBest) {
+        earnedCoins = 100;
+        localStorage.setItem('myBestScore_base', totalScore); // 최고 점수 갱신
+        alert("🎊 최고 기록 경신! 명예의 전당 100코인 획득!");
     }
+
+    // 3. 내 지갑 업데이트 (기존 지갑 + 새로 얻은 것)
+    let totalGems = (parseInt(localStorage.getItem('userGems') || 0)) + earnedGems;
+    let totalCoins = (parseInt(localStorage.getItem('userCoins') || 0)) + earnedCoins;
+    
+    localStorage.setItem('userGems', totalGems);
+    localStorage.setItem('userCoins', totalCoins);
+
+    // 4. 서버(Firebase) 'users' 방에 저장 (선생님이 관리자 페이지에서 볼 데이터)
+    const userLogId = localStorage.getItem('loginId');
+    if (userLogId && userLogId !== 'admin') {
+        firebase.database().ref('users/' + userLogId).update({
+            name: playerName,
+            gems: totalGems,
+            coins: totalCoins,
+            bestScore: Math.max(oldBest, totalScore),
+            lastDate: new Date().toLocaleString()
+        });
+    }
+}
     updateHallOfFame(); 
 }
 
-        function updateHallOfFame() { 
-    // 과목명에 맞게 키값을 확인하세요
-    const storageKey = 'rank_add_base'; 
-    const ranks = JSON.parse(localStorage.getItem(storageKey) || "[]");
-    
-    // 1. 다중 조건 정렬 (점수 -> 시간)
-    ranks.sort((a, b) => {
-        if (b.score !== a.score) return b.score - a.score;
-        return (b.timeLeft || 0) - (a.timeLeft || 0);
+function updateHallOfFame() {
+    // 1. 서버(Firebase)의 'rankings/rank_add_base'에서 전체 데이터를 가져옵니다.
+    firebase.database().ref('rankings/rank_add_base').once('value', function(snapshot) {
+        const data = snapshot.val() || {};
+        const ranks = Object.values(data); // 서버 데이터를 리스트로 변환
+        
+        // 2. 정렬 로직 (선생님 기존 로직 그대로)
+        ranks.sort((a, b) => {
+            if (b.score !== a.score) return b.score - a.score;
+            return (b.timeLeft || 0) - (a.timeLeft || 0);
+        });
+
+        let html = ""; 
+        const medals = ["🥇", "🥈", "🥉", "🏅", "🎖️"]; 
+        let displayRank = 0;
+        let lastScore = -1;
+        let lastTime = -1;
+        const currentTime = Date.now();
+
+        for(let i = 0; i < ranks.length; i++) { 
+            let r = ranks[i]; 
+            
+            // 순위 부여 로직 (선생님 기존 로직 그대로)
+            if (r.score !== lastScore || (r.timeLeft || 0) !== lastTime) {
+                displayRank++;
+            }
+            lastScore = r.score;
+            lastTime = (r.timeLeft || 0);
+
+            // [기능 유지] 내 이름 빨간 테두리 + 3분 활동 체크 + 번개 표시
+            let isMeClass = (r.name === playerName) ? 'my-record' : ''; // CSS에 설정된 빨간테두리
+            
+            // 3분 이내 활동 중일 때만 번개와 반짝임 효과
+            let isActive = r.isPlaying && r.lastActive && (currentTime - r.lastActive < 180000);
+            let playingClass = isActive ? 'is-playing' : ''; 
+            
+            // [디자인 유지] 선생님이 쓰시던 HTML 구조 그대로!
+            let rankDecor = (displayRank === 1) ? '<span class="trophy-move">🏆</span>' : displayRank;
+
+            html += `<div class="rank-item color-${displayRank<=5?displayRank:'other'} ${playingClass} ${isMeClass}">
+                        <span>${displayRank<=5 ? medals[displayRank-1] : ''}${rankDecor}.${r.name}${isActive ? ' ⚡' : ''}</span>
+                        <span style="font-family:'Orbitron'; font-weight:900;">${r.score}</span>
+                    </div>`; 
+        } 
+        
+        // 최종적으로 화면에 뿌려줌 (스크롤 가능하게)
+        const container = document.getElementById('hall-of-fame');
+        container.innerHTML = html;
+        container.style.overflowY = "auto"; 
     });
-
-    let html = ""; 
-    const medals = ["🥇", "🥈", "🥉", "🏅", "🎖️"]; 
-    let displayRank = 0;
-    let lastScore = -1;
-    let lastTime = -1;
-
-    for(let i = 0; i < ranks.length; i++) { 
-        let r = ranks[i]; 
-        
-        // 2. 건너뛰기 없는 순위 부여 (점수와 시간 모두 체크)
-        if (r.score !== lastScore || (r.timeLeft || 0) !== lastTime) {
-            displayRank++;
-        }
-        lastScore = r.score;
-        lastTime = (r.timeLeft || 0);
-
-        let isMeClass = (r.name === playerName) ? 'my-record' : '';
-        let playingClass = r.isPlaying ? 'is-playing' : '';
-        
-        html += `<div class="rank-item color-${displayRank<=5?displayRank:'other'} ${playingClass} ${isMeClass}">
-                    <span>${displayRank<=5?medals[displayRank-1]:''}${displayRank}.${r.name}</span>
-                    <span style="font-family:'Orbitron'; font-weight:900;">${r.score}</span>
-                </div>`; 
-    } 
-    document.getElementById('hall-of-fame').innerHTML = html;
 }
 
 
