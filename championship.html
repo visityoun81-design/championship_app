@@ -498,14 +498,15 @@
         function handleAutoFullscreen() { if(!document.fullscreenElement && mainTimer) document.documentElement.requestFullscreen().catch(()=>{}); }
 
 function goFullScreen() { 
-    const savedName = document.getElementById('user-name').value || "게스트"; 
-    playerName = savedName;
-    localStorage.setItem('userName', playerName); // 이름 저장
+    // 입력한 이름 가져오기
+    const inputName = document.getElementById('user-name').value;
+    if(!inputName) { alert("이름을 입력해 주세요!"); return; }
     
+    playerName = inputName;
+    localStorage.setItem('userName', playerName); 
+
     initAudio(); 
-    if (audioCtx && audioCtx.state === 'suspended') {
-        audioCtx.resume(); 
-    }
+    if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume(); 
 
     document.documentElement.requestFullscreen().catch(()=>{}); 
     document.getElementById('fs-trigger').style.display = 'none'; 
@@ -513,8 +514,9 @@ function goFullScreen() {
     if(!mainTimer) { 
         startTimer(); 
         updateHallOfFame(); 
-        // [수정] 게임 시작! 3x3 슐테표 호출
-        isGaming = true;
+        
+        // [중요] 슐테표 화면을 먼저 보여주고 함수를 실행합니다.
+        document.getElementById('schulte-overlay').style.display = 'flex';
         showSchulte(3, 15000); 
     } 
 }
