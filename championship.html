@@ -699,16 +699,22 @@ function updateHallOfFame() {
 
 
 function showSchulte(size, timeLimit) {
-    if(isTimeUp) return; isGaming=true; busy=true; 
+    if(isTimeUp) return; 
+    isGaming = true; 
+    busy = true; 
     
-    const overlay=document.getElementById('schulte-overlay');
-    const table=document.getElementById('schulte-table');
-    const bar=document.getElementById('schulte-timer-bar');
-    const msgArea=document.getElementById('schulte-msg');
-    const header=document.getElementById('mini-game-header');
+    const overlay = document.getElementById('schulte-overlay');
+    const table = document.getElementById('schulte-table');
+    const bar = document.getElementById('schulte-timer-bar');
+    const msgArea = document.getElementById('schulte-msg');
+    const header = document.getElementById('mini-game-header');
 
-    overlay.style.display='flex'; table.innerHTML=''; table.style.display='grid'; 
-    msgArea.style.display='none'; header.style.display='flex';
+    // [중요] 모든 요소를 보이게 설정
+    overlay.style.display = 'flex'; 
+    table.style.display = 'grid'; 
+    header.style.display = 'flex';
+    msgArea.style.display = 'none';
+    table.innerHTML = '';
 
     // 슐테표 제목 위치: -80pxsms 위로 붙음
     // 기본 위치 설정 (3x3, 4x4 용)
