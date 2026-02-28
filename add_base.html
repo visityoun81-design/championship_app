@@ -479,43 +479,43 @@ if (!firebase.apps.length) return; // 파이어베이스 미연결시 중단
     updateHallOfFame(); 
 }
 
-// [3] 랭킹판 업데이트 (선생님 코드 보완)
-function updateHallOfFame() {
-    if (!firebase.apps.length) return;
-    firebase.database().ref('rankings/rank_add_base').once('value', function(snapshot) {
-        const data = snapshot.val() || {};
-        const ranks = Object.values(data).sort((a, b) => b.score - a.score || (b.timeLeft || 0) - (a.timeLeft || 0));
-
-        let html = ""; 
-        const medals = ["🥇", "🥈", "🥉", "🏅", "🎖️"]; 
-        let displayRank = 0;
-        let lastScore = -1;
-        let lastTime = -1;
-        const currentTime = Date.now();
-
-        ranks.forEach((r, i) => {
-            if (r.score !== lastScore || (r.timeLeft || 0) !== lastTime) displayRank++;
-            lastScore = r.score;
-            lastTime = (r.timeLeft || 0);
-
-            let isMeClass = (r.name === playerName) ? 'my-record' : ''; 
-            let isActive = r.isPlaying && r.lastActive && (currentTime - r.lastActive < 180000);
-            
-            // updateHallOfFame 함수 안의 html 만드는 부분 확인
-html += `
-    <div class="rank-item color-${displayRank<=5?displayRank:'other'} ${isActive ? 'is-playing' : ''} ${isMeClass}">
-        <div style="display:flex; align-items:center; gap:5px;">
-            <span>${displayRank<=5 ? medals[displayRank-1] : ''} ${displayRank}. ${r.name}</span>
-            ${isActive ? '<span style="font-size:1.1rem; filter:drop-shadow(0 0 2px gold);">⚡</span>' : ''}
-        </div>
-        <span style="font-family:'Orbitron'; font-weight:900;">${r.score}</span>
-    </div>`;
-        });
-        const container = document.getElementById('hall-of-fame');
-        if(container) container.innerHTML = html;
+      function updateHallOfFame() { 
+    // 과목명에 맞게 키값을 확인하세요
+    const storageKey = 'rank_add_base'; 
+    const ranks = JSON.parse(localStorage.getItem(storageKey) || "[]");
+    
+    // 1. 다중 조건 정렬 (점수 -> 시간)
+    ranks.sort((a, b) => {
+        if (b.score !== a.score) return b.score - a.score;
+        return (b.timeLeft || 0) - (a.timeLeft || 0);
     });
-}
 
+    let html = ""; 
+    const medals = ["🥇", "🥈", "🥉", "🏅", "🎖️"]; 
+    let displayRank = 0;
+    let lastScore = -1;
+    let lastTime = -1;
+
+    for(let i = 0; i < ranks.length; i++) { 
+        let r = ranks[i]; 
+        
+        // 2. 건너뛰기 없는 순위 부여 (점수와 시간 모두 체크)
+        if (r.score !== lastScore || (r.timeLeft || 0) !== lastTime) {
+            displayRank++;
+        }
+        lastScore = r.score;
+        lastTime = (r.timeLeft || 0);
+
+        let isMeClass = (r.name === playerName) ? 'my-record' : '';
+        let playingClass = r.isPlaying ? 'is-playing' : '';
+        
+        html += `<div class="rank-item color-${displayRank<=5?displayRank:'other'} ${playingClass} ${isMeClass}">
+                    <span>${displayRank<=5?medals[displayRank-1]:''}${displayRank}.${r.name}</span>
+                    <span style="font-family:'Orbitron'; font-weight:900;">${r.score}</span>
+                </div>`; 
+    } 
+    document.getElementById('hall-of-fame').innerHTML = html;
+}
 
         function showPracticeLogs() { 
     const list = document.getElementById('my-log-list'); 
