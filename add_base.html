@@ -418,6 +418,7 @@ function saveRecord(finished) {
     // [3] ★ Firebase 실시간 전송 (전광판 연동용) ★
     var userLogId = localStorage.getItem('loginId'); // 관리자 페이지에서 만든 ID
     if(userLogId) {
+alert("지금부터 서버에 저장을 시도합니다! 아이디: " + userLogId);
         db.ref('rankings/rank_add_base/' + userLogId).set({
             name: playerName,
             score: totalScore,
