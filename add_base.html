@@ -415,18 +415,22 @@ function saveRecord(finished) {
     if(idx === -1) ranks.push(record); else ranks[idx] = record; 
     localStorage.setItem('rank_add_base', JSON.stringify(ranks)); 
 
-    // [3] ★ Firebase 실시간 전송 (전광판 연동용) ★
-    var userLogId = localStorage.getItem('loginId'); // 관리자 페이지에서 만든 ID
-    if(userLogId) {
-alert("지금부터 서버에 저장을 시도합니다! 아이디: " + userLogId);
-        db.ref('rankings/rank_add_base/' + userLogId).set({
-            name: playerName,
-            score: totalScore,
-            timeLeft: timeLeft,
-            isPlaying: !finished,
-            lastActive: Date.now()
-        });
-    }
+// [수정된 테스트 코드] - 기존 코드를 잠시 이걸로 바꿔보세요
+var userLogId = localStorage.getItem('loginId') || "test_user_01"; // 아이디 없으면 임시이름 사용
+
+alert("저장 시도! 아이디: " + userLogId); // 이제 무조건 떠야 합니다!
+
+db.ref('rankings/rank_add_base/' + userLogId).set({
+    name: playerName || "무명학생",
+    score: totalScore || 0,
+    timeLeft: timeLeft || 0,
+    isPlaying: false,
+    lastActive: Date.now()
+}).then(() => {
+    alert("서버 저장 성공!!!"); // 성공하면 이 메시지가 뜹니다!
+}).catch((error) => {
+    alert("서버 저장 실패: " + error.message); // 실패하면 이유가 뜹니다!
+});
 
     if(finished) { 
         localStorage.setItem('userGems', (parseInt(localStorage.getItem('userGems')||0)) + totalScore); 
