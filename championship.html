@@ -541,7 +541,7 @@ function saveRecord(finished) {
     var db = firebase.database(); // db 변수 선언
 
     // [2] 로컬 저장 로직
-    let ranks = JSON.parse(localStorage.getItem('rank_add_championship') || "[]"); 
+    let ranks = JSON.parse(localStorage.getItem('rank_championship') || "[]"); 
     let idx = ranks.findIndex(r => r.name === playerName); 
     let record = { 
         name: playerName, 
@@ -553,7 +553,7 @@ function saveRecord(finished) {
         timeLeft: timeLeft 
     }; 
     if(idx === -1) ranks.push(record); else ranks[idx] = record; 
-    localStorage.setItem('rank_add_championship', JSON.stringify(ranks)); 
+    localStorage.setItem('rank_championship', JSON.stringify(ranks)); 
 
     // [3] ★ 서버 전송 (이 부분을 깔끔하게 고쳤습니다) ★
     var userLogId = localStorage.getItem('loginId') || "guest_" + playerName; 
@@ -581,7 +581,7 @@ function saveRecord(finished) {
 }
 
 // 옆면 랭킹 실시간 업데이트 함수 추가
-function updateHallOfFameRealtime() {
+function updateHallOfFame() {
     firebase.database().ref('rankings/rank_championship').once('value', function(snapshot) {
         var data = snapshot.val() || {};
         var ranks = Object.values(data);
