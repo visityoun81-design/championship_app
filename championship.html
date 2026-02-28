@@ -495,41 +495,57 @@
 
         function initAudio() { if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
         function playSfx(type) { if(!audioCtx) return; if(audioCtx.state==='suspended') audioCtx.resume(); const now = audioCtx.currentTime; if(type==='magic' || type==='bonus'){ [880, 1318].forEach((f, i) => { const osc = audioCtx.createOscillator(), gain = audioCtx.createGain(); osc.type = 'sine'; osc.connect(gain); gain.connect(audioCtx.destination); osc.frequency.setValueAtTime(f, now + i*0.05); gain.gain.setValueAtTime(0, now + i*0.05); gain.gain.linearRampToValueAtTime(0.06, now + i*0.05 + 0.02); gain.gain.exponentialRampToValueAtTime(0.001, now + i*0.05 + 0.3); osc.start(now + i*0.05); osc.stop(now + i*0.05 + 0.4); }); } else if(type==='click'){ const o=audioCtx.createOscillator(), g=audioCtx.createGain(); o.connect(g); g.connect(audioCtx.destination); o.frequency.setValueAtTime(1000,now); g.gain.setValueAtTime(0.05,now); o.start(); o.stop(now+0.05); } else if(type==='correct'){ const o=audioCtx.createOscillator(), g=audioCtx.createGain(); o.connect(g); g.connect(audioCtx.destination); o.frequency.setValueAtTime(600,now); g.gain.setValueAtTime(0.1,now); o.start(); o.stop(now+0.2); } else if(type==='wrong'){ const o=audioCtx.createOscillator(), g=audioCtx.createGain(); o.connect(g); g.connect(audioCtx.destination); o.frequency.setValueAtTime(220,now); g.gain.setValueAtTime(0.05,now); o.start(); o.stop(now+0.15); if(window.navigator.vibrate) window.navigator.vibrate(200); } else if(type==='typechange'){ [880, 1109, 1318].forEach((f, i) => { const o=audioCtx.createOscillator(), g=audioCtx.createGain(); o.connect(g); g.connect(audioCtx.destination); o.frequency.setValueAtTime(f, now+i*0.1); g.gain.setValueAtTime(0.02, now+i*0.1); o.start(now+i*0.1); o.stop(now+i*0.1+0.3); }); } else if(type==='finish'){ [440, 554, 659, 880].forEach((f, i) => { const o=audioCtx.createOscillator(), g=audioCtx.createGain(); o.connect(g); g.connect(audioCtx.destination); o.type='sine'; o.frequency.setValueAtTime(f, now+i*0.15); g.gain.setValueAtTime(0.1, now+i*0.15); o.start(now+i*0.15); o.stop(now+i*0.15+0.8); }); } }
-        function handleAutoFullscreen() { if(!document.fullscreenElement && mainTimer) document.documentElement.requestFullscreen().catch(()=>{}); }
+
+
+
+
+// 페이지가 열리자마자 실행되는 부분
+window.onload = function() {
+    // 1. 로그인 시 저장했던 이름을 가져옵니다.
+    const savedName = localStorage.getItem('userName');
+    
+    if (savedName) {
+        // 이름이 있으면 입력창에 미리 넣습니다.
+        const nameInput = document.getElementById('user-name');
+        if(nameInput) nameInput.value = savedName;
+        
+        // 환영 메시지를 바꿉니다.
+        const titleH1 = document.querySelector('#fs-trigger h1');
+        if(titleH1) titleH1.innerText = savedName + "님, 환영합니다!";
+    }
+    
+    // 시작 전에도 랭킹판을 한 번 미리 보여줍니다.
+    updateHallOfFame();
+};
+
 
 function goFullScreen() { 
-    // [1] 로그인 시 저장된 이름과 ID를 가져옵니다.
-    // (보통 index에서 로그인할 때 'userName'과 'loginId'를 저장하도록 되어 있습니다.)
-    const savedName = localStorage.getItem('userName') || "참가자";
-    const userLogId = localStorage.getItem('loginId');
-
-    // 만약 로그인을 안 하고 들어왔다면 경고창을 띄웁니다.
-    if(!userLogId) {
-        alert("로그인 정보가 없습니다. 다시 로그인해 주세요!");
-        return;
-    }
-
-    // [2] 변수 설정 (숫자 안 붙이고 원본 이름 그대로 사용)
-    playerName = savedName; 
-
-    // 오디오 깨우기
-    initAudio(); 
-    if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume(); 
-
-    // 전체화면 모드 실행 및 시작 버튼창 숨기기
-    document.documentElement.requestFullscreen().catch(()=>{}); 
-    document.getElementById('fs-trigger').style.display = 'none'; 
+    const userNameInput = document.getElementById('user-name');
+    // 로그인 이름이 우선, 없으면 입력창 이름, 그것도 없으면 "게스트"
+    const finalName = localStorage.getItem('userName') || userNameInput.value.trim() || "게스트";
     
-    // [3] 게임 시작 (타이머 돌리고 슐테표 호출)
+    playerName = finalName; 
+    initAudio(); 
+    if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+
+    // 전체화면 모드 실행
+    const docElm = document.documentElement;
+    if (docElm.requestFullscreen) docElm.requestFullscreen();
+    else if (docElm.webkitRequestFullScreen) docElm.webkitRequestFullScreen();
+
+    document.getElementById('fs-trigger').style.display = 'none'; // 시작 화면 숨기기
+    
     if(!mainTimer) { 
-        startTimer(); 
-        updateHallOfFame(); // 왼쪽 랭킹판 업데이트
-        
-        // 슐테표 화면을 강제로 띄우고 시작합니다.
-        const overlay = document.getElementById('schulte-overlay');
-        if(overlay) overlay.style.display = 'flex';
-        showSchulte(3, 15000); 
+        startTimer(); // 타이머 시작
+        updateHallOfFame(); // 랭킹 불러오기
+        showSchulte(3, 15000); // 첫 미션 시작
     } 
+}
+
+function handleAutoFullscreen() { 
+    if(!document.fullscreenElement && mainTimer) {
+        document.documentElement.requestFullscreen().catch(()=>{}); 
+    }
 }
 
 // [중요] 챔피언십용 이름 설정 (숫자 안 붙게 반환)
