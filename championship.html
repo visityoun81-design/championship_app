@@ -498,10 +498,10 @@
         function handleAutoFullscreen() { if(!document.fullscreenElement && mainTimer) document.documentElement.requestFullscreen().catch(()=>{}); }
 
 function goFullScreen() { 
-    // 입력한 이름 가져오기
     const inputName = document.getElementById('user-name').value;
     if(!inputName) { alert("이름을 입력해 주세요!"); return; }
     
+    // [수정] 챔피언십은 숫자를 붙이지 않고 입력한 이름 그대로 사용합니다.
     playerName = inputName;
     localStorage.setItem('userName', playerName); 
 
@@ -515,13 +515,16 @@ function goFullScreen() {
         startTimer(); 
         updateHallOfFame(); 
         
-        // [중요] 슐테표 화면을 먼저 보여주고 함수를 실행합니다.
-        document.getElementById('schulte-overlay').style.display = 'flex';
+        // 슐테표 화면을 강제로 띄우고 시작
+        const overlay = document.getElementById('schulte-overlay');
+        if(overlay) overlay.style.display = 'flex';
         showSchulte(3, 15000); 
     } 
 }
 
-        function setUniqueName(name) { let ranks = JSON.parse(localStorage.getItem('rank_championship') || "[]"); let count = ranks.filter(r => r.realName === name).length; return count > 0 ? `${name}${count + 1}` : name; }
+// [중요] 챔피언십용 이름 설정 (숫자 안 붙게 반환)
+function setUniqueName(name) { return name; }
+
         function startTimer() { mainTimer = setInterval(() => { if(isTimeUp) return; timeLeft--; let m = Math.floor(timeLeft/60), s = timeLeft%60; document.getElementById('timer-display').innerText = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`; saveRecord(false); if(timeLeft <= 0) { isTimeUp = true; clearInterval(mainTimer); showTimeOver(); } }, 1000); }
         function getFormattedDate() { const now = new Date(); const year = String(now.getFullYear()).slice(-2); const month = String(now.getMonth() + 1).padStart(2, '0'); const day = String(now.getDate()).padStart(2, '0'); const hours = String(now.getHours()).padStart(2, '0'); const minutes = String(now.getMinutes()).padStart(2, '0'); return `${year}.${month}.${day} ${hours}:${minutes}`; }
 
@@ -537,7 +540,7 @@ function saveRecord(finished) {
     messagingSenderId: "118704807417",
     appId: "1:118704807417:web:b1cacb9636d51a38d67128",
     measurementId: "G-KLHCC95R2C"
-  };
+ };
 
     // Firebase 초기화
     if (!firebase.apps.length) {
@@ -545,7 +548,7 @@ function saveRecord(finished) {
     }
     var db = firebase.database(); // db 변수 선언
 
-    // [2] 로컬 저장 로직
+// 로컬 저장 (rank_championship 으로 통일)
     let ranks = JSON.parse(localStorage.getItem('rank_championship') || "[]"); 
     let idx = ranks.findIndex(r => r.name === playerName); 
     let record = { 
@@ -560,22 +563,14 @@ function saveRecord(finished) {
     if(idx === -1) ranks.push(record); else ranks[idx] = record; 
     localStorage.setItem('rank_championship', JSON.stringify(ranks)); 
 
-    // [3] ★ 서버 전송 (이 부분을 깔끔하게 고쳤습니다) ★
+    // 서버 전송
     var userLogId = localStorage.getItem('loginId') || "guest_" + playerName; 
-    
-    // 알림창으로 전송 시도를 확인합니다.
-    console.log("서버 전송 시도중... ID:", userLogId);
-
     db.ref('rankings/rank_championship/' + userLogId).set({
         name: playerName,
         score: totalScore,
         timeLeft: timeLeft,
         isPlaying: !finished,
         lastActive: Date.now()
-    }).then(() => {
-        console.log("서버 저장 성공!");
-    }).catch((error) => {
-        console.error("서버 저장 실패:", error);
     });
 
     if(finished) { 
@@ -698,6 +693,7 @@ function updateHallOfFame() {
         }
 
 
+// 3. 슐테표 함수 (안정화 버전)
 function showSchulte(size, timeLimit) {
     if(isTimeUp) return; 
     isGaming = true; 
@@ -706,49 +702,47 @@ function showSchulte(size, timeLimit) {
     const overlay = document.getElementById('schulte-overlay');
     const table = document.getElementById('schulte-table');
     const bar = document.getElementById('schulte-timer-bar');
-    const msgArea = document.getElementById('schulte-msg');
     const header = document.getElementById('mini-game-header');
+    const msgArea = document.getElementById('schulte-msg');
 
-    // [중요] 모든 요소를 보이게 설정
     overlay.style.display = 'flex'; 
     table.style.display = 'grid'; 
     header.style.display = 'flex';
     msgArea.style.display = 'none';
     table.innerHTML = '';
 
-    // 슐테표 제목 위치: -80pxsms 위로 붙음
-    // 기본 위치 설정 (3x3, 4x4 용)
-    header.style.position = "relative";
-    header.style.top = "-10px"; 
-    table.style.marginTop = "0px";
+    table.style.gridTemplateColumns = `repeat(${size}, 1fr)`;
+    table.style.gridTemplateRows = `repeat(${size}, 1fr)`;
+    
+    let next = 1; 
+    let max = size * size;
+    let nums = Array.from({length: max}, (_, i) => i + 1).sort(() => Math.random() - 0.5);
 
-    // 마지막 5x5 슐테표만 특별히 더 위로 올리기
-    if (size === 5) {
-        header.style.top = "-40px";  // 제목을 더 위로 바짝 올림
-        table.style.marginTop = "-40px"; // 표 자체도 위로 끌어올림
-    }
-
-
-    document.getElementById('block-container').style.display='none'; 
-    document.getElementById('game-target-msg').innerText = `[슐테표 : 1부터 차례대로 누르기]`;
-
-    table.style.gridTemplateColumns=`repeat(${size}, 1fr)`;
-    table.style.gridTemplateRows=`repeat(${size}, 1fr)`;
-    let next=1; 
-    let max=size*size, nums=Array.from({length:max},(_,i)=>i+1).sort(()=>Math.random()-0.5);
-    nums.forEach(n=>{ 
-        const cell=document.createElement('div'); cell.className='schulte-cell'; cell.innerText=n; 
-        cell.onpointerdown=(e)=>{ 
+    nums.forEach(n => { 
+        const cell = document.createElement('div'); 
+        cell.className = 'schulte-cell'; 
+        cell.innerText = n; 
+        cell.onpointerdown = (e) => { 
             e.preventDefault(); 
-            if(n===next){ playSfx('click'); cell.style.backgroundColor='#444'; cell.style.visibility='hidden'; next++; if(next>max) finishSchulte(true); } 
+            if(n === next){ 
+                playSfx('click'); 
+                cell.style.visibility = 'hidden'; 
+                next++; 
+                if(next > max) finishSchulte(true); 
+            } 
         };
         table.appendChild(cell); 
     });
-    let start=Date.now(); 
-    let si=setInterval(()=>{ 
-        let rem=Math.max(0,timeLimit-(Date.now()-start)); bar.style.width=(rem/timeLimit*100)+"%"; 
-        if(rem<=0||!isGaming||isTimeUp){ clearInterval(si); if(rem<=0&&isGaming&&!isTimeUp) finishSchulte(false); }
-    },50);
+
+    let start = Date.now(); 
+    let si = setInterval(() => { 
+        let rem = Math.max(0, timeLimit - (Date.now() - start)); 
+        bar.style.width = (rem / timeLimit * 100) + "%"; 
+        if(rem <= 0 || !isGaming || isTimeUp){ 
+            clearInterval(si); 
+            if(rem <= 0 && isGaming && !isTimeUp) finishSchulte(false); 
+        }
+    }, 50);
 }
 
 
