@@ -226,53 +226,67 @@ let lastFirstPlaceName = ""; // 이전 1등 이름을 기억할 변수
     var db = firebase.database();
 
     // [함수 1] 단독 과목 화면 (암산챔피언 등)
-    function showSingleLeague(subKey, title, btn) {
-        activateButton(btn);
-        document.getElementById('main-title').innerText = title;
-        document.getElementById('main-title').innerText = title;
-        const area = document.getElementById('dynamic-board-area');
-        area.innerHTML = `<div id="board-single" class="rank-board"></div>`; // 기존 스타일 사용
-        
-        // 기존 5열 그리드 스타일을 위해 클래스 조정
-        area.querySelector('#board-single').style.display = 'grid';
-        area.querySelector('#board-single').style.gridTemplateColumns = 'repeat(5, 1fr)';
+function showSingleLeague(subKey, title, btn) {
+    activateButton(btn);
+    document.getElementById('main-title').innerText = title;
+    const area = document.getElementById('dynamic-board-area');
+    area.innerHTML = `<div id="board-single" class="rank-board"></div>`; 
+    area.querySelector('#board-single').style.display = 'grid';
+    area.querySelector('#board-single').style.gridTemplateColumns = 'repeat(5, 1fr)';
 
-        db.ref('approvedusers/' + subKey).off(); 
-    db.ref('approvedusers/' + subKey).on('value', function(snapshot) {
+    // rankings/subKey 대신 approvedusers 전체를 감시
+    db.ref('approvedusers').on('value', function(snapshot) {
         const data = snapshot.val() || {};
-            const arr = Object.values(data).sort((a, b) => b.score - a.score || (b.timeLeft || 0) - (a.timeLeft || 0));
-            renderList('board-single', arr, 50); // 상위 50명
-        });
-    }
+        // 전체 유저 중 해당 과목(subKey) 점수가 있는 유저만 추출
+        const arr = Object.values(data)
+            .filter(user => user[subKey] !== undefined || user.score !== undefined) 
+            .map(user => ({
+                name: user.name,
+                score: user[subKey] || user.score || 0, // 해당 과목 점수 가져오기
+                isPlaying: user.isPlaying
+            }))
+            .sort((a, b) => b.score - a.score);
+
+        renderList('board-single', arr, 50); 
+    });
+}
 
 
 
     // [함수 2] 3개 과목 동시 화면 (덧셈, 곱셈, 나눗셈)
-    function showTripleLeague(type, btn) {
-        activateButton(btn);
-        const titles = { 'add': 'ADDITION LEAGUE', 'mul': 'MULTIPLICATION LEAGUE', 'div': 'DIVISION LEAGUE' };
-        document.getElementById('main-title').innerText = titles[type];
-        
-        const area = document.getElementById('dynamic-board-area');
-        area.innerHTML = `
-            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;">
-                <div><h2 style="text-align:center; color:#4ade80;">BASE</h2><div id="b-1" class="rank-board-column"></div></div>
-                <div><h2 style="text-align:center; color:#fbbf24;">MEDIUM</h2><div id="b-2" class="rank-board-column"></div></div>
-                <div><h2 style="text-align:center; color:#f87171;">MASTER</h2><div id="b-3" class="rank-board-column"></div></div>
-            </div>`;
+ function showTripleLeague(type, btn) {
+    activateButton(btn);
+    const titles = { 'add': 'ADDITION LEAGUE', 'mul': 'MULTIPLICATION LEAGUE', 'div': 'DIVISION LEAGUE' };
+    document.getElementById('main-title').innerText = titles[type];
+    const area = document.getElementById('dynamic-board-area');
+    area.innerHTML = `
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;">
+            <div><h2 style="text-align:center; color:#4ade80;">BASE</h2><div id="b-1" class="rank-board-column"></div></div>
+            <div><h2 style="text-align:center; color:#fbbf24;">MEDIUM</h2><div id="b-2" class="rank-board-column"></div></div>
+            <div><h2 style="text-align:center; color:#f87171;">MASTER</h2><div id="b-3" class="rank-board-column"></div></div>
+        </div>`;
 
-        const subKeys = [ `rank_${type}_base`, `rank_${type}_medium`, `rank_${type}_master` ];
-        
+    // 아이들 앱에서 사용하는 실제 과목 필드명 (예: add_base, add_medium...)
+    const subKeys = [ `${type}_base`, `${type}_medium`, `${type}_master` ];
+    
+    db.ref('approvedusers').on('value', function(snapshot) {
+        const data = snapshot.val() || {};
+        const allUsers = Object.values(data);
+
         subKeys.forEach((key, idx) => {
-// 테스트용: approvedusers 전체를 그냥 다 가져와보기
-db.ref('approvedusers').on('value', function(snapshot) {
-    const data = snapshot.val() || {};
-    console.log("데이터 들어옴!!", data); // F12 콘솔에서 확인용
-    const arr = Object.values(data);
-    renderList('b-1', arr, 15); 
-});
+            const arr = allUsers
+                .filter(user => user[key] !== undefined) // 해당 난이도 점수가 있는 유저만
+                .map(user => ({
+                    name: user.name,
+                    score: user[key],
+                    isPlaying: user.isPlaying
+                }))
+                .sort((a, b) => b.score - a.score);
+
+            renderList('b-' + (idx + 1), arr, 15); 
         });
-    }
+    });
+}
 
 // [함수 3] 공통 그리기 함수
 function renderList(targetId, arr) {
