@@ -79,7 +79,14 @@
         }
 
         @keyframes thunder-bolt { from { transform: scale(1); opacity: 0.7; } to { transform: scale(1.3); opacity: 1; } }
+
+/* 큰 번개 반짝임 애니메이션 */
+@keyframes flash {
+    from { opacity: 1; transform: scale(1); }
+    to { opacity: 0.5; transform: scale(1.2); }
+}
         @keyframes trophy-bounce { from { transform: translateY(0); } to { transform: translateY(-3px); } }
+
         /* 역전 알림이 부드럽게 나타났다 사라지는 효과 */
         @keyframes fade-up { 0% { opacity: 0; transform: translateY(5px); } 20% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-5px); } }
 
@@ -358,26 +365,41 @@
 
         function initAudio() { if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
         function playSfx(type) { if(!audioCtx) return; if(audioCtx.state==='suspended') audioCtx.resume(); const now = audioCtx.currentTime; if(type==='magic' || type==='bonus'){ [880, 1318].forEach((f, i) => { const osc = audioCtx.createOscillator(), gain = audioCtx.createGain(); osc.type = 'sine'; osc.connect(gain); gain.connect(audioCtx.destination); osc.frequency.setValueAtTime(f, now + i*0.05); gain.gain.setValueAtTime(0, now + i*0.05); gain.gain.linearRampToValueAtTime(0.06, now + i*0.05 + 0.02); gain.gain.exponentialRampToValueAtTime(0.001, now + i*0.05 + 0.3); osc.start(now + i*0.05); osc.stop(now + i*0.05 + 0.4); }); } else if(type==='click'){ const o=audioCtx.createOscillator(), g=audioCtx.createGain(); o.connect(g); g.connect(audioCtx.destination); o.frequency.setValueAtTime(1000,now); g.gain.setValueAtTime(0.05,now); o.start(); o.stop(now+0.05); } else if(type==='correct'){ const o=audioCtx.createOscillator(), g=audioCtx.createGain(); o.connect(g); g.connect(audioCtx.destination); o.frequency.setValueAtTime(600,now); g.gain.setValueAtTime(0.1,now); o.start(); o.stop(now+0.2); } else if(type==='wrong'){ const o=audioCtx.createOscillator(), g=audioCtx.createGain(); o.connect(g); g.connect(audioCtx.destination); o.frequency.setValueAtTime(220,now); g.gain.setValueAtTime(0.05,now); o.start(); o.stop(now+0.15); if(window.navigator.vibrate) window.navigator.vibrate(200); } else if(type==='typechange'){ [880, 1109, 1318].forEach((f, i) => { const o=audioCtx.createOscillator(), g=audioCtx.createGain(); o.connect(g); g.connect(audioCtx.destination); o.frequency.setValueAtTime(f, now+i*0.1); g.gain.setValueAtTime(0.02, now+i*0.1); o.start(now+i*0.1); o.stop(now+i*0.1+0.3); }); } else if(type==='finish'){ [440, 554, 659, 880].forEach((f, i) => { const o=audioCtx.createOscillator(), g=audioCtx.createGain(); o.connect(g); g.connect(audioCtx.destination); o.type='sine'; o.frequency.setValueAtTime(f, now+i*0.15); g.gain.setValueAtTime(0.1, now+i*0.15); o.start(now+i*0.15); o.stop(now+i*0.15+0.8); }); } }
-        function handleAutoFullscreen() { if(!document.fullscreenElement && mainTimer) document.documentElement.requestFullscreen().catch(()=>{}); }
 
-        function goFullScreen() { 
-    const savedName = localStorage.getItem('userName') || "게스트"; 
-    playerName = typeof setUniqueName === 'function' ? setUniqueName(savedName) : savedName;
-    
-    // [보완] 소리 시스템을 준비시키고 강제로 깨웁니다.
-    initAudio(); 
-    if (audioCtx && audioCtx.state === 'suspended') {
-        audioCtx.resume(); 
+function goFullScreen() { 
+    const userNameInput = document.getElementById('user-name');
+    if (!userNameInput.value.trim()) {
+        alert("이름을 입력해주세요!");
+        return;
     }
+    
+    playerName = userNameInput.value.trim(); // 입력한 이름 저장
+    initAudio(); // 소리 시스템 준비
+    
+    if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume(); 
 
-    document.documentElement.requestFullscreen().catch(()=>{}); 
-    document.getElementById('fs-trigger').style.display = 'none'; 
+    // 전체화면 모드 실행
+    const docElm = document.documentElement;
+    if (docElm.requestFullscreen) docElm.requestFullscreen();
+    else if (docElm.webkitRequestFullScreen) docElm.webkitRequestFullScreen();
+
+    document.getElementById('fs-trigger').style.display = 'none'; // 시작 화면 숨기기
+    
     if(!mainTimer) { 
-        startTimer(); 
-        updateHallOfFame(); 
-        showSchulte(3, 15000); 
+        startTimer(); // 타이머 시작
+        updateHallOfFame(); // 랭킹 불러오기
+        showSchulte(3, 15000); // 첫 미션 시작
     } 
 }
+
+function handleAutoFullscreen() { 
+    if(!document.fullscreenElement && mainTimer) {
+        document.documentElement.requestFullscreen().catch(()=>{}); 
+    }
+}
+
+
+
         function startTimer() { mainTimer = setInterval(() => { if(isTimeUp) return; timeLeft--; let m = Math.floor(timeLeft/60), s = timeLeft%60; document.getElementById('timer-display').innerText = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`; saveRecord(false); if(timeLeft <= 0) { isTimeUp = true; clearInterval(mainTimer); showTimeOver(); } }, 1000); }
         function getFormattedDate() { const now = new Date(); return `${String(now.getFullYear()).slice(-2)}.${String(now.getMonth()+1).padStart(2,'0')}.${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`; }
 
@@ -394,93 +416,55 @@ function saveRecord(finished) {
     measurementId: "G-KLHCC95R2C"
   }
 
-    // Firebase 초기화
-    if (!firebase.apps.length) {
-        firebase.initializeApp(firebaseConfig);
-    }
-    var db = firebase.database(); // db 변수 선언
+if (!firebase.apps.length) return; // 파이어베이스 미연결시 중단
+    var db = firebase.database();
+    var userLogId = localStorage.getItem('loginId') || "guest_" + playerName; 
 
-    // [2] 로컬 저장 로직
-    let ranks = JSON.parse(localStorage.getItem('rank_add_base') || "[]"); 
-    let idx = ranks.findIndex(r => r.name === playerName); 
     let record = { 
         name: playerName, 
-        realName: playerName.replace(/[0-9]/g, ''), 
         score: totalScore, 
         lastActive: Date.now(), 
         isPlaying: !finished, 
         fullDate: getFormattedDate(), 
         timeLeft: timeLeft 
     }; 
-    if(idx === -1) ranks.push(record); else ranks[idx] = record; 
-    localStorage.setItem('rank_add_base', JSON.stringify(ranks)); 
 
-    // [3] ★ 서버 전송 (이 부분을 깔끔하게 고쳤습니다) ★
-    var userLogId = localStorage.getItem('loginId') || "guest_" + playerName; 
-    
-    // 알림창으로 전송 시도를 확인합니다.
-    console.log("서버 전송 시도중... ID:", userLogId);
+    // 실시간 랭킹판용 저장
+    db.ref('rankings/rank_add_base/' + userLogId).set(record);
 
-    db.ref('rankings/rank_add_base/' + userLogId).set({
-        name: playerName,
-        score: totalScore,
-        timeLeft: timeLeft,
-        isPlaying: !finished,
-        lastActive: Date.now()
-    }).then(() => {
-        console.log("서버 저장 성공!");
-    }).catch((error) => {
-        console.error("서버 저장 실패:", error);
-    });
+    // 완주 시 보상 및 관리자 기록 저장
+    if (finished || isTimeUp) {
+        let earnedGems = Math.floor(totalScore / 10);
+        let oldBest = parseInt(localStorage.getItem('myBestScore_base') || 0);
+        let earnedCoins = (totalScore > oldBest) ? 100 : 0;
+        
+        if (earnedCoins > 0) localStorage.setItem('myBestScore_base', totalScore);
 
-// [새로운 보상 로직]
-if (finished || isTimeUp) {
-    // 1. 보석 계산: 10문제 풀 때마다 1개
-    let earnedGems = Math.floor(totalScore / 10);
-    
-    // 2. 코인 계산: 내 '초급' 최고 점수보다 높을 때만 100코인
-    let oldBest = parseInt(localStorage.getItem('myBestScore_base') || 0);
-    let earnedCoins = 0;
-    
-    if (totalScore > oldBest) {
-        earnedCoins = 100;
-        localStorage.setItem('myBestScore_base', totalScore); // 최고 점수 갱신
-        alert("🎊 최고 기록 경신! 명예의 전당 100코인 획득!");
+        let totalGems = (parseInt(localStorage.getItem('userGems') || 0)) + earnedGems;
+        let totalCoins = (parseInt(localStorage.getItem('userCoins') || 0)) + earnedCoins;
+        
+        localStorage.setItem('userGems', totalGems);
+        localStorage.setItem('userCoins', totalCoins);
+
+        if (userLogId && userLogId !== 'admin') {
+            db.ref('users/' + userLogId).update({
+                name: playerName,
+                gems: totalGems,
+                coins: totalCoins,
+                bestScore: Math.max(oldBest, totalScore),
+                lastDate: new Date().toLocaleString()
+            });
+        }
     }
-
-    // 3. 내 지갑 업데이트 (기존 지갑 + 새로 얻은 것)
-    let totalGems = (parseInt(localStorage.getItem('userGems') || 0)) + earnedGems;
-    let totalCoins = (parseInt(localStorage.getItem('userCoins') || 0)) + earnedCoins;
-    
-    localStorage.setItem('userGems', totalGems);
-    localStorage.setItem('userCoins', totalCoins);
-
-    // 4. 서버(Firebase) 'users' 방에 저장 (선생님이 관리자 페이지에서 볼 데이터)
-    const userLogId = localStorage.getItem('loginId');
-    if (userLogId && userLogId !== 'admin') {
-        firebase.database().ref('users/' + userLogId).update({
-            name: playerName,
-            gems: totalGems,
-            coins: totalCoins,
-            bestScore: Math.max(oldBest, totalScore),
-            lastDate: new Date().toLocaleString()
-        });
-    }
-}
     updateHallOfFame(); 
 }
 
+// [3] 랭킹판 업데이트 (선생님 코드 보완)
 function updateHallOfFame() {
-    // 1. 서버(Firebase)의 'rankings/rank_add_base'에서 전체 데이터를 가져옵니다.
+    if (!firebase.apps.length) return;
     firebase.database().ref('rankings/rank_add_base').once('value', function(snapshot) {
         const data = snapshot.val() || {};
-        const ranks = Object.values(data); // 서버 데이터를 리스트로 변환
-        
-        // 2. 정렬 로직 (선생님 기존 로직 그대로)
-        ranks.sort((a, b) => {
-            if (b.score !== a.score) return b.score - a.score;
-            return (b.timeLeft || 0) - (a.timeLeft || 0);
-        });
+        const ranks = Object.values(data).sort((a, b) => b.score - a.score || (b.timeLeft || 0) - (a.timeLeft || 0));
 
         let html = ""; 
         const medals = ["🥇", "🥈", "🥉", "🏅", "🎖️"]; 
@@ -489,39 +473,27 @@ function updateHallOfFame() {
         let lastTime = -1;
         const currentTime = Date.now();
 
-        for(let i = 0; i < ranks.length; i++) { 
-            let r = ranks[i]; 
-            
-            // 순위 부여 로직 (선생님 기존 로직 그대로)
-            if (r.score !== lastScore || (r.timeLeft || 0) !== lastTime) {
-                displayRank++;
-            }
+        ranks.forEach((r, i) => {
+            if (r.score !== lastScore || (r.timeLeft || 0) !== lastTime) displayRank++;
             lastScore = r.score;
             lastTime = (r.timeLeft || 0);
 
-            // [기능 유지] 내 이름 빨간 테두리 + 3분 활동 체크 + 번개 표시
-            let isMeClass = (r.name === playerName) ? 'my-record' : ''; // CSS에 설정된 빨간테두리
-            
-            // 3분 이내 활동 중일 때만 번개와 반짝임 효과
+            let isMeClass = (r.name === playerName) ? 'my-record' : ''; 
             let isActive = r.isPlaying && r.lastActive && (currentTime - r.lastActive < 180000);
-            let playingClass = isActive ? 'is-playing' : ''; 
             
-            // [디자인 유지] 선생님이 쓰시던 HTML 구조 그대로!
-            let rankDecor = (displayRank === 1) ? '<span class="trophy-move">🏆</span>' : displayRank;
-
-            html += `<div class="rank-item color-${displayRank<=5?displayRank:'other'} ${playingClass} ${isMeClass}">
-                        <span>${displayRank<=5 ? medals[displayRank-1] : ''}${rankDecor}.${r.name}${isActive ? ' ⚡' : ''}</span>
-                        <span style="font-family:'Orbitron'; font-weight:900;">${r.score}</span>
-                    </div>`; 
-        } 
-        
-        // 최종적으로 화면에 뿌려줌 (스크롤 가능하게)
+            html += `
+                <div class="rank-item color-${displayRank<=5?displayRank:'other'} ${isActive ? 'is-playing' : ''} ${isMeClass}">
+                    <div style="display:flex; align-items:center; gap:5px;">
+                        <span>${displayRank<=5 ? medals[displayRank-1] : ''} ${displayRank}. ${r.name}</span>
+                        ${isActive ? '<span style="font-size:1.1rem; filter:drop-shadow(0 0 2px gold);">⚡</span>' : ''}
+                    </div>
+                    <span style="font-family:'Orbitron'; font-weight:900;">${r.score}</span>
+                </div>`;
+        });
         const container = document.getElementById('hall-of-fame');
-        container.innerHTML = html;
-        container.style.overflowY = "auto"; 
+        if(container) container.innerHTML = html;
     });
 }
-
 
 
         function showPracticeLogs() { 
@@ -671,34 +643,72 @@ function showSchulte(size, timeLimit) {
 
         function showTimeOver() { isTimeUp = true; const tos = document.getElementById('time-over-screen'); tos.style.display = 'flex'; playSfx('finish'); setTimeout(() => { tos.style.display = 'none'; showFinalResult(); }, 2000); }
 
-        function showFinalResult() { 
-            saveRecord(true); const msgArea = document.getElementById('schulte-msg'), spent = 480 - timeLeft;
-            const timeDisplay = (spent >= 480) ? "08:00 (Time Over)" : `${Math.floor(spent/60)}:${String(spent%60).padStart(2,'0')}`;
-            let allRanks = JSON.parse(localStorage.getItem('rank_add_base') || "[]").sort((a,b)=>b.score - a.score || (b.timeLeft - a.timeLeft));
-            let myRank = allRanks.findIndex(r => r.name === playerName) + 1;
-            const realNameOnly = playerName.replace(/[0-9]/g, ''); 
-            let bestRecords = {}; allRanks.forEach(r => { if(!bestRecords[r.realName] || bestRecords[r.realName].score < r.score) bestRecords[r.realName] = r; });
-            let sortedBests = Object.values(bestRecords).sort((a,b)=>b.score - a.score);
-            msgArea.innerHTML = `
-                <div class="result-card">
-                    <h2 style="color:var(--green); margin:0 0 5px 0; font-size:1.1rem;">${realNameOnly}님 결과</h2>
-                    <div style="font-size:1.2rem; color:var(--gold); font-weight:900;">현재 순위: ${myRank}위</div>
-                    <h1 style="font-size:3rem; margin:5px 0; color:white; text-shadow:0 0 10px var(--purple);">${totalScore}점</h1>
-                    <div style="background:rgba(74, 222, 128, 0.1); padding:8px; border-radius:10px; margin-bottom:10px; border:1px solid var(--green);"><span style="font-size:0.75rem; color:var(--green);">이번 게임 보상:</span><span style="font-weight:900; margin-left:10px;">💎 ${totalScore}  🪙 100</span></div>
-                    <div style="background:rgba(255,255,255,0.08); padding:10px; border-radius:12px; margin-bottom:12px; display:flex; justify-content:space-around; align-items:center;">
-                        <div><div style="color:var(--gold); font-size:0.7rem;">누적 보석</div><div style="font-size:1.2rem; font-weight:900;">💎 ${parseInt(localStorage.getItem('userGems')||0)}</div></div>
-                        <div style="width:1px; height:25px; background:#444;"></div>
-                        <div><div style="color:var(--purple); font-size:0.7rem;">누적 코인</div><div style="font-size:1.2rem; font-weight:900;">🪙 ${parseInt(localStorage.getItem('userCoins')||0)}</div></div>
-                    </div>
-                    <div style="font-weight:900; color:var(--gold); font-size:0.8rem; margin-bottom:8px; border-bottom:1px solid #333; padding-bottom:5px;">🏆 명예의 전당 🏆</div>
-                    <div class="history-list">${sortedBests.map((r, i) => `<div class="history-item"><span style="color:var(--gold); font-weight:900;">${i<5?["🏆 1위", "🥈 2위", "🥉 3위", "🏅 4위", "🎖️ 5위"][i]:(i+1)+'.'}</span><span style="color:#fff; font-weight:700;">${r.realName}</span><span style="color:#888; font-size:0.55rem; text-align:center;">${r.fullDate}</span><span style="text-align:right; font-weight:900; color:var(--green);">${r.score}</span></div>`).join('')}</div>
-                    <div style="display:flex; gap:10px; margin-top:15px;"><button onclick="location.reload()" style="flex:1; padding:12px; background:var(--green); border:none; font-weight:900; border-radius:10px; cursor:pointer;">다시 시작</button><button onclick="location.reload()" style="flex:1; padding:12px; background:var(--purple); color:white; border:none; font-weight:900; border-radius:10px; cursor:pointer; font-size:1.1rem; box-shadow:0 4px #7c3aed;">다시 도전하기!</button></div>
-                </div>`; 
-            document.getElementById('schulte-overlay').style.display='flex'; document.getElementById('mini-game-header').style.display='none'; document.getElementById('schulte-table').style.display='none'; document.getElementById('block-container').style.display='none'; msgArea.style.display='flex';
-        }
+function showFinalResult() { 
+    saveRecord(true); 
+    const msgArea = document.getElementById('schulte-msg');
+    const spent = 480 - timeLeft;
+    const timeDisplay = (spent >= 480) ? "08:00 (Time Over)" : `${Math.floor(spent/60)}:${String(spent%60).padStart(2,'0')}`;
 
-        window.addEventListener('keydown', (e) => { if(busy || isTimeUp) return; if(e.key >= '0' && e.key <= '9') fnIn(e.key); else if(e.key === 'Enter') fnOk(); else if(e.key === 'Backspace') fnIn('back'); else if(e.key === 'Escape') fnIn('AC'); });
-        setInterval(updateHallOfFame, 3000);
-    </script>
+    // [핵심 수정] 서버에서 전체 데이터를 가져와서 결과창을 만듭니다.
+    firebase.database().ref('rankings/rank_add_base').once('value', function(snapshot) {
+        const data = snapshot.val() || {};
+        const allRanks = Object.values(data).sort((a,b) => b.score - a.score || (b.timeLeft - a.timeLeft));
+        
+        // 내 순위 계산
+        let myRank = allRanks.findIndex(r => r.name === playerName) + 1;
+        const realNameOnly = playerName.replace(/[0-9]/g, ''); 
+
+        // [명예의 전당] 실시간 전체 랭킹 데이터 정리
+        let html = "";
+        allRanks.forEach((r, i) => {
+            const displayRank = i + 1;
+            const medals = ["🏆 1위", "🥈 2위", "🥉 3위", "🏅 4위", "🎖️ 5위"];
+            const rankLabel = i < 5 ? medals[i] : (i + 1) + '.';
+            
+            html += `
+                <div class="history-item">
+                    <span style="color:var(--gold); font-weight:900;">${rankLabel}</span>
+                    <span style="color:#fff; font-weight:700;">${r.name}</span>
+                    <span style="color:#888; font-size:0.55rem; text-align:center;">${r.fullDate || ''}</span>
+                    <span style="text-align:right; font-weight:900; color:var(--green);">${r.score}</span>
+                </div>`;
+        });
+
+        // 결과창 화면 구성
+        msgArea.innerHTML = `
+            <div class="result-card">
+                <h2 style="color:var(--green); margin:0 0 5px 0; font-size:1.1rem;">${realNameOnly}님 결과</h2>
+                <div style="font-size:1.2rem; color:var(--gold); font-weight:900;">현재 순위: ${myRank}위</div>
+                <h1 style="font-size:3rem; margin:5px 0; color:white; text-shadow:0 0 10px var(--purple);">${totalScore}점</h1>
+                
+                <div style="background:rgba(74, 222, 128, 0.1); padding:8px; border-radius:10px; margin-bottom:10px; border:1px solid var(--green);">
+                    <span style="font-size:0.75rem; color:var(--green);">이번 게임 보상:</span>
+                    <span style="font-weight:900; margin-left:10px;">💎 ${Math.floor(totalScore/10)}  🪙 ${totalScore > parseInt(localStorage.getItem('myBestScore_base')||0) ? 100 : 0}</span>
+                </div>
+
+                <div style="background:rgba(255,255,255,0.08); padding:10px; border-radius:12px; margin-bottom:12px; display:flex; justify-content:space-around; align-items:center;">
+                    <div><div style="color:var(--gold); font-size:0.7rem;">누적 보석</div><div style="font-size:1.2rem; font-weight:900;">💎 ${localStorage.getItem('userGems')||0}</div></div>
+                    <div style="width:1px; height:25px; background:#444;"></div>
+                    <div><div style="color:var(--purple); font-size:0.7rem;">누적 코인</div><div style="font-size:1.2rem; font-weight:900;">🪙 ${localStorage.getItem('userCoins')||0}</div></div>
+                </div>
+
+                <div style="font-weight:900; color:var(--gold); font-size:0.8rem; margin-bottom:8px; border-bottom:1px solid #333; padding-bottom:5px;">🏆 명예의 전당 (실시간) 🏆</div>
+                <div class="history-list" style="max-height:150px; overflow-y:auto;">${html}</div>
+                
+                <div style="display:flex; gap:10px; margin-top:15px;">
+                    <button onclick="location.reload()" style="flex:1; padding:12px; background:var(--green); border:none; font-weight:900; border-radius:10px; cursor:pointer;">다시 시작</button>
+                    <button onclick="location.reload()" style="flex:1; padding:12px; background:var(--purple); color:white; border:none; font-weight:900; border-radius:10px; cursor:pointer; font-size:1.1rem; box-shadow:0 4px #7c3aed;">다시 도전하기!</button>
+                </div>
+            </div>`; 
+
+        // 화면 전환
+        document.getElementById('schulte-overlay').style.display='flex'; 
+        document.getElementById('mini-game-header').style.display='none'; 
+        document.getElementById('schulte-table').style.display='none'; 
+        document.getElementById('block-container').style.display='none'; 
+        msgArea.style.display='flex';
+    });
+}
+</script>
 </body>
 </html>
