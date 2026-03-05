@@ -821,6 +821,15 @@ window.addEventListener('keydown', (e) => {
 // 3초마다 랭킹판을 자동으로 새로고침해서 친구들 점수를 가져옵니다.
 setInterval(updateHallOfFame, 3000);
 
+// 게임 결과 처리 함수 안에서
+if (score === 100 || score === 10) { // 만점 기준에 따라 수정
+    let badges = JSON.parse(localStorage.getItem('myBadges') || '[]');
+    if (!badges.includes('badge-perfect')) {
+        badges.push('badge-perfect');
+        localStorage.setItem('myBadges', JSON.stringify(badges));
+        alert("💯 완벽한 마법사 뱃지를 획득했습니다!");
+    }
+}
 
 </script>
 </body>
