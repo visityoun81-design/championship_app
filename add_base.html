@@ -896,6 +896,32 @@ checkAndAwardBadges('덧셈초급', score);
 // add_master.html 이라면:
 // checkAndAwardBadges('덧셈마스터', score);
 
+
+
+
+
+    // [마지막 줄에 추가] 서버(Firebase)로 데이터 전송
+    const loginId = localStorage.getItem('loginId'); // 로그인 시 저장한 ID
+    if (loginId && db) { // db는 Firebase 데이터베이스 객체
+        db.ref('approvedUsers/' + loginId).update({
+            gems: gems,
+            coins: coins,
+            myBadges: myBadges, // 획득한 뱃지 목록 전송
+            lastActivity: new Date().toLocaleString()
+        });
+        
+        // 상세 기록(로그)도 서버에 한 줄 추가
+        db.ref('approvedUsers/' + loginId + '/practiceLogs').push({
+            date: new Date().toLocaleString(),
+            subject: level,
+            score: currentScore,
+            earnedGems: (currentScore >= 90 ? 1 : 0) // 예시: 90점 이상이면 보석 1개
+        });
+    }
+
+    localStorage.setItem('myBadges', JSON.stringify(myBadges));
+}
+
 </script>
 </body>
 </html>
