@@ -50,6 +50,20 @@
 
         .log-list { background: #020617; border-radius: 10px; padding: 10px; max-height: 150px; overflow-y: auto; font-size: 0.7rem; }
         .reset-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+
+/* 뱃지 전용 스타일 추가 */
+        .m-badge-area { 
+            background: rgba(0,0,0,0.3); 
+            padding: 10px; 
+            border-radius: 12px; 
+            margin-bottom: 15px; 
+            display: flex; 
+            flex-wrap: wrap; 
+            gap: 8px; 
+            border: 1px solid rgba(168, 85, 247, 0.2);
+        }
+        .m-badge-item { font-size: 1.5rem; filter: drop-shadow(0 0 5px rgba(255,255,255,0.2)); }
+
     </style>
 </head>
 <body>
@@ -191,7 +205,28 @@
             <div style="background:rgba(0,0,0,0.2); padding:10px; border-radius:10px; border:1px solid #334155;">
                 <span style="color:var(--gold)">🪙 코인:</span> <span id="m-coin">0</span>
             </div>
-            <div style="background:rgba(0,0,0,0.2); padding:10px; border-radius:10px; border:1px solid #334155; grid-column: span 2;">
+        </div>
+
+        <div style="font-size:0.8rem; color:var(--gold); margin-bottom:5px; font-weight:bold;">🏆 획득 명예 뱃지</div>
+        <div id="m-badges" class="m-badge-area" style="background:rgba(0,0,0,0.3); padding:10px; border-radius:12px; margin-bottom:15px; display:flex; flex-wrap:wrap; gap:8px; border:1px solid rgba(168,85,247,0.2); min-height:40px;">
+            </div>
+
+        <h4 style="margin: 10px 0; font-size:0.9rem; color:var(--purple);">🏆 과목별 최고 기록</h4>
+        <div class="report-grid">
+            <div class="report-column" id="col-1"></div>
+            <div class="report-column" id="col-2"></div>
+        </div>
+
+        <h4 style="margin: 10px 0; font-size:0.8rem; color:var(--gold);">📜 최근 연습 내역</h4>
+        <div id="m-log-list" class="log-list" style="background: #020617; border-radius: 10px; padding: 10px; max-height: 150px; overflow-y: auto; font-size: 0.7rem;">
+            </div>
+
+        <button class="btn btn-delete" style="width:100%; margin-top:15px;" onclick="closeModal()">닫기</button>
+    </div>
+</div>
+
+
+
                 <span style="color:var(--green)">🎖️ 획득 뱃지:</span> <span id="m-badges" style="color:#fff; margin-left:5px;">없음</span>
             </div>
         </div>
@@ -364,23 +399,65 @@
 
     function deleteUser(id) { if(confirm("정말 삭제하시겠습니까?")) db.ref('approvedUsers/' + id).remove(); }
     
-    function showDetail(id) {
-        db.ref('approvedUsers/' + id).once('value').then(function(snapshot) {
-            var user = snapshot.val();
-            if(!user) return;
-            document.getElementById('modal-user-name').innerText = "📊 " + user.name + " 학생 리포트";
-            document.getElementById('m-gem').innerText = user.gems || 0;
-            document.getElementById('m-coin').innerText = user.coins || 0;
-            document.getElementById('m-badges').innerText = user.badges || "없음";
-            var best = user.bestScores || {};
-            var html1 = ""; var html2 = "";
-            group1.forEach(function(sub) { html1 += '<div class="subject-card"><span>'+sub+'</span><span class="score-val">'+(best[sub]||'-')+'</span></div>'; });
-            group2.forEach(function(sub) { html2 += '<div class="subject-card"><span>'+sub+'</span><span class="score-val">'+(best[sub]||'-')+'</span></div>'; });
-            document.getElementById('col-1').innerHTML = html1;
-            document.getElementById('col-2').innerHTML = html2;
-            document.getElementById('record-modal').style.display = 'flex';
-        });
-    }
+function showDetail(id) {
+    db.ref('approvedUsers/' + id).once('value').then((snap) => {
+        const u = snap.val();
+        if (!u) return;
+
+        // 1. 이름 및 기본 재화 표시
+        document.getElementById('modal-user-name').innerText = `📊 ${u.name} 학생 리포트`;
+        document.getElementById('m-gem').innerText = u.gems || 0;
+        document.getElementById('m-coin').innerText = u.coins || 0;
+
+        // 2. [추가] 뱃지 표시 로직
+        const badgeList = u.myBadges || [];
+        const badgeIcons = {
+            'badge-add-1': '🥇', 'badge-add-2': '🏆', 'badge-add-3': '👑', // 덧셈 메달,트로피,왕관
+            'badge-mul-1': '🥈', 'badge-mul-2': '💎', 'badge-mul-3': '🔮', // 곱셈 메달,트로피,마스터
+            'badge-div-1': '🥉', 'badge-div-2': '🔱', 'badge-div-3': '🌌', // 나눗셈 메달,트로피,마스터
+            'badge-fire': '🔥', 'badge-calendar': '🗓️', 'badge-perfect': '💯' // 특별 뱃지
+        };
+        
+        let badgeHtml = badgeList.map(bId => `
+            <span title="${bId}" style="font-size:24px; margin-right:5px;">${badgeIcons[bId] || '⭐'}</span>
+        `).join('');
+        
+        // 만약 관리자 페이지 HTML에 뱃지를 넣을 공간(id="m-badges")이 없다면 하나 만드셔야 합니다.
+        if(document.getElementById('m-badges')) {
+            document.getElementById('m-badges').innerHTML = badgeHtml || "획득 뱃지 없음";
+        }
+
+        // 3. 최고 점수 카드 표시 (과목 리스트 업데이트)
+        const subs = [
+            '암산챔피언', '10만들기', '24만들기', '슐태표',
+            '덧셈초급', '덧셈중급', '덧셈마스터',
+            '곱셈초급', '곱셈중급', '곱셈마스터',
+            '나눗셈초급', '나눗셈중급', '나눗셈마스터'
+        ];
+        const best = u.bestScores || {};
+        let h = subs.map(s => `
+            <div class="subject-card">
+                <span>${s}</span>
+                <span class="score-val">${best[s] !== undefined ? best[s] : '-'}</span>
+            </div>
+        `).join('');
+        document.getElementById('col-1').innerHTML = h;
+
+        // 4. [추가] 최근 연습 로그 표시 (데이터가 있을 경우)
+        if(u.practiceLogs && document.getElementById('m-log-list')) {
+            const logArray = Object.values(u.practiceLogs).reverse(); // 최신순
+            let logHtml = logArray.slice(0, 10).map(log => `
+                <div style="font-size:12px; border-bottom:1px solid #eee; padding:3px 0; display:flex; justify-content:space-between;">
+                    <span>${log.date.split(' ')[0]} ${log.subject}</span>
+                    <span style="font-weight:bold;">${log.score}점</span>
+                </div>
+            `).join('');
+            document.getElementById('m-log-list').innerHTML = logHtml;
+        }
+
+        document.getElementById('record-modal').style.display = 'flex';
+    });
+}
     function closeModal() { document.getElementById('record-modal').style.display = 'none'; }
     window.onclick = function(e) { if (e.target == document.getElementById('record-modal')) closeModal(); }
 
