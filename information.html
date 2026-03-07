@@ -4,6 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CHAMPIONSHIP - MY INFO</title>
+
+
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+
+
     <style>
         body { background-color: #12122b; color: white; font-family: 'Pretendard', sans-serif; display: flex; flex-direction: column; align-items: center; padding: 20px; margin: 0; }
         .info-card { width: 100%; max-width: 420px; background: #1e1e3f; border-radius: 30px; padding: 25px; box-shadow: 0 20px 40px rgba(0,0,0,0.3); text-align: center; box-sizing: border-box; }
@@ -166,75 +173,111 @@
         </div>
     </div>
 
+
+
     <script>
-        let gems = parseInt(localStorage.getItem('userGems') || "0");
-        let coins = parseInt(localStorage.getItem('userCoins') || "0");
-        let fireballs = parseInt(localStorage.getItem('fireballCount') || "0");
-        let purchased = JSON.parse(localStorage.getItem('purchasedItems') || '["dog.png"]');
-        let myBadges = JSON.parse(localStorage.getItem('myBadges') || '[]');
 
-        window.onload = function() {
-            document.getElementById('user-display-name').innerText = localStorage.getItem('userName') || "윤석화";
-            updateUI();
-            loadLook();
-            refreshBadges();
-            renderLogs();
-        };
 
-        function updateUI() {
-            document.getElementById('current-gems').innerText = gems;
-            document.getElementById('current-coins').innerText = coins;
-            document.getElementById('fireball-count').innerText = fireballs;
-            document.querySelectorAll('.item-btn').forEach(btn => {
-                const attr = btn.getAttribute('onclick');
-                if (attr) {
-                    const file = attr.split("'")[3];
-                    if (purchased.includes(file)) {
-                        btn.classList.remove('locked');
-                        btn.innerText = btn.innerText.replace('❓ ', '');
-                    }
+    // Firebase 설정 및 초기화
+    const firebaseConfig = {
+    apiKey: "AIzaSyCbhFq8vcLem8DoMdlsXpC-ZRYELhJSFHU",
+    authDomain: "championship-8f923.firebaseapp.com",
+    databaseURL: "https://championship-8f923-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "championship-8f923",
+    storageBucket: "championship-8f923.firebasestorage.app",
+    messagingSenderId: "118704807417",
+    appId: "1:118704807417:web:b1cacb9636d51a38d67128",
+    measurementId: "G-KLHCC95R2C"
+  };
+
+// Firebase 초기화 (중복 방지)
+    if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+    }
+
+
+
+  const db = firebase.database();
+    const userId = localStorage.getItem('loginId'); // 로그인된 아이디
+
+    // 데이터를 담을 바구니 (전역 변수)
+    let gems = 0;
+    let coins = 0;
+    let fireballs = 0;
+    let purchased = ["dog.png"];
+    let myBadges = [];
+
+    // [핵심] 페이지 로드 시 실시간 데이터 연결
+    window.onload = function() {
+        if (!userId) {
+            alert("로그인 정보가 없습니다. 다시 로그인 해주세요.");
+            location.href = "index.html";
+            return;
+        }
+
+        // 서버에서 내 정보를 실시간으로 감시 (onValue)
+        db.ref('approvedUsers/' + userId).on('value', (snapshot) => {
+            const userData = snapshot.val();
+            if (userData) {
+                // 1. 서버 값으로 변수 업데이트
+                gems = userData.gems || 0;
+                coins = userData.coins || 0;
+                fireballs = userData.fireballCount || 0;
+                purchased = userData.purchasedItems || ["dog.png"];
+                myBadges = userData.myBadges || [];
+
+                // 2. 화면 UI 업데이트
+                updateUI();       // 보석, 코인 숫자 표시
+                loadLook();       // 저장된 꾸미기 아이템 적용
+                refreshBadges();  // 획득한 뱃지 불 켜기
+                renderLogs(userData.practiceLogs); // 공부 기록 출력
+                
+                document.getElementById('user-display-name').innerText = userData.name || "마법사";
+            }
+        });
+    };
+
+    // UI 숫자 업데이트
+    function updateUI() {
+        document.getElementById('current-gems').innerText = gems;
+        document.getElementById('current-coins').innerText = coins;
+        document.getElementById('fireball-count').innerText = fireballs;
+
+        // 아이템 버튼 상태 업데이트 (구매한 것은 ❓ 제거)
+        document.querySelectorAll('.item-btn').forEach(btn => {
+            const attr = btn.getAttribute('onclick');
+            if (attr) {
+                const file = attr.split("'")[3];
+                if (purchased.includes(file)) {
+                    btn.classList.remove('locked');
+                    btn.innerText = btn.innerText.replace('❓ ', '');
                 }
-            });
-        }
-
-        function exchangeFireball() {
-            if (fireballs <= 0) return alert("교환할 파이어볼이 없어요! 🔥");
-            if (confirm("파이어볼 1개를 보석 30개로 교환할까요?")) {
-                fireballs -= 1;
-                gems += 30;
-                localStorage.setItem('fireballCount', fireballs);
-                localStorage.setItem('userGems', gems);
-                updateUI();
-                alert("💎 보석 30개를 획득했습니다!");
             }
-        }
+        });
+    }
 
-        function openTab(evt, tabName) {
-            document.querySelectorAll(".content-section").forEach(s => s.style.display = "none");
-            document.querySelectorAll(".tab-btn").forEach(t => t.classList.remove("active"));
-            document.getElementById('character-section').style.display = (tabName === 'decor') ? 'block' : 'none';
-            document.getElementById(tabName).style.display = "block";
-            evt.currentTarget.classList.add("active");
-            if(tabName === 'study') renderLogs();
-        }
-
-        function buyOrApply(type, file, price, btn) {
-            if (!purchased.includes(file)) {
-                if (gems < price) return alert("보석이 부족해요! 💎");
-                if (confirm(`보석 ${price}개를 사용하여 구매할까요?`)) {
-                    gems -= price;
-                    purchased.push(file);
-                    localStorage.setItem('userGems', gems);
-                    localStorage.setItem('purchasedItems', JSON.stringify(purchased));
-                    updateUI();
-                } else return;
+    // 아이템 구매 또는 착용
+    function buyOrApply(type, file, price, btn) {
+        if (!purchased.includes(file)) {
+            // 미구매 아이템인 경우
+            if (gems < price) return alert("보석이 부족해요! 💎");
+            if (confirm(`보석 ${price}개를 사용하여 구매할까요?`)) {
+                const newPurchased = [...purchased, file];
+                db.ref('approvedUsers/' + userId).update({
+                    gems: gems - price,
+                    purchasedItems: newPurchased
+                }).then(() => alert("구매 완료!"));
             }
+        } else {
+            // 이미 구매한 아이템인 경우 착용 로직
             const img = document.getElementById(type);
+            // 이미 착용 중이면 해제 (캐릭터 제외)
             if (img.style.display === 'block' && img.src.includes(file) && type !== 'character') {
                 img.style.display = 'none';
                 localStorage.removeItem('my' + type.charAt(0).toUpperCase() + type.slice(1));
                 btn.classList.remove('active');
             } else {
+                // 새로 착용
                 img.src = file;
                 img.style.display = 'block';
                 btn.parentElement.querySelectorAll('.item-btn').forEach(b => b.classList.remove('active'));
@@ -242,43 +285,75 @@
                 localStorage.setItem('my' + type.charAt(0).toUpperCase() + type.slice(1), file);
             }
         }
+    }
 
-        function loadLook() {
-            ['Character','Wing','Cape','Shield','Staff','Pet'].forEach(t => {
-                const saved = localStorage.getItem('my' + t);
-                if (saved) {
-                    const el = document.getElementById(t.toLowerCase());
-                    el.src = saved; el.style.display = 'block';
-                    document.querySelectorAll('.item-btn').forEach(btn => {
-                        if (btn.getAttribute('onclick') && btn.getAttribute('onclick').includes(`'${saved}'`)) btn.classList.add('active');
-                    });
+    // 저장된 외형 불러오기
+    function loadLook() {
+        ['Character','Wing','Cape','Shield','Staff','Pet'].forEach(t => {
+            const saved = localStorage.getItem('my' + t);
+            if (saved) {
+                const el = document.getElementById(t.toLowerCase());
+                if(el) {
+                    el.src = saved; 
+                    el.style.display = 'block';
                 }
-            });
-        }
-
-        function renderLogs() {
-            const logs = JSON.parse(localStorage.getItem('practiceLogs') || "[]").reverse();
-            const body = document.getElementById('study-logs-body');
-            if (logs.length === 0) {
-                body.innerHTML = "<tr><td colspan='4' style='padding:20px; color:#666;'>공부 기록이 없습니다.</td></tr>";
-                return;
+                // 버튼에 불 켜기
+                document.querySelectorAll('.item-btn').forEach(btn => {
+                    if (btn.getAttribute('onclick') && btn.getAttribute('onclick').includes(`'${saved}'`)) {
+                        btn.classList.add('active');
+                    }
+                });
             }
-            body.innerHTML = logs.slice(0, 15).map(log => `
-                <tr>
-                    <td>${log.date ? log.date.split(' ')[0].slice(5) : '-'}</td>
-                    <td>${log.subject || '-'}</td>
-                    <td>${log.score || 0}</td>
-                    <td style="color:#fbbf24">+${log.earnedGems || 0}</td>
-                </tr>
-            `).join('');
-        }
+        });
+    }
 
-        function refreshBadges() {
-            myBadges.forEach(id => {
-                const el = document.getElementById(id);
-                if (el) el.classList.add('owned');
+    // 파이어볼 교환
+    function exchangeFireball() {
+        if (fireballs <= 0) return alert("교환할 파이어볼이 없어요! 🔥");
+        if (confirm("파이어볼 1개를 보석 30개로 교환할까요?")) {
+            db.ref('approvedUsers/' + userId).update({
+                fireballCount: fireballs - 1,
+                gems: gems + 30
             });
         }
-    </script>
+    }
+
+    // 공부 기록 렌더링
+    function renderLogs(logsObj) {
+        const body = document.getElementById('study-logs-body');
+        if (!logsObj) {
+            body.innerHTML = "<tr><td colspan='4' style='padding:20px; color:#666;'>공부 기록이 없습니다.</td></tr>";
+            return;
+        }
+        
+        // Firebase 객체를 배열로 변환 후 역순 정렬
+        const logs = Object.values(logsObj).reverse();
+        body.innerHTML = logs.slice(0, 15).map(log => `
+            <tr>
+                <td>${log.date ? log.date.split(' ')[0].slice(5) : '-'}</td>
+                <td>${log.subject || '-'}</td>
+                <td>${log.score || 0}</td>
+                <td style="color:#fbbf24">+${log.earnedGems || 0}</td>
+            </tr>
+        `).join('');
+    }
+
+    // 뱃지 상태 업데이트
+    function refreshBadges() {
+        myBadges.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.classList.add('owned');
+        });
+    }
+
+    // 탭 전환 함수
+    function openTab(evt, tabName) {
+        document.querySelectorAll(".content-section").forEach(s => s.style.display = "none");
+        document.querySelectorAll(".tab-btn").forEach(t => t.classList.remove("active"));
+        document.getElementById('character-section').style.display = (tabName === 'decor') ? 'block' : 'none';
+        document.getElementById(tabName).style.display = "block";
+        evt.currentTarget.classList.add("active");
+    }
+</script>
 </body>
 </html>
