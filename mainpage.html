@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CHAMPIONSHIP LOBBY</title>
 
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
 
     <link rel="manifest" href="manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -89,13 +92,18 @@ setInterval(function() {
 <body>
 
 
+
 <div class="header">
     <div class="profile-btn" onclick="location.href='information.html'" style="display: flex; align-items: center; gap: 12px; cursor: pointer;">
+
         <div class="char-circle" id="lobby-char-container" style="position: relative; overflow: hidden; background: #2d2d5a; width: 50px; height: 50px; border-radius: 50%; border: 2px solid white; display: flex; align-items: center; justify-content: center;">
             <img id="l-wing" src="" style="position:absolute; width:100%; height:100%; top:50%; left:50%; transform:translate(-50%, -50%); display:none; z-index:1;">
             <img id="l-char" src="dog.png" style="position:absolute; width:80%; height:80%; top:50%; left:50%; transform:translate(-50%, -50%); z-index:2;">
             <img id="l-pet" src="" style="position:absolute; width:35%; height:35%; top:75%; left:75%; transform:translate(-50%, -50%); display:none; z-index:3;">
         </div>
+
+
+
         <div class="user-text">
             <span id="display-user-name" style="font-weight: bold; font-size: 1rem;">윤석화 〉</span>
         </div>
@@ -111,8 +119,8 @@ setInterval(function() {
 
 <div class="section">
     <span class="section-title">🏆 나의 황금 배지 컬렉션</span>
-    <div class="badge-row">
-        <div class="badge-slot">🥇</div><div class="badge-slot">🔥</div><div class="badge-slot">📅</div><div class="badge-slot" style="opacity:0.3">❓</div><div class="badge-slot" style="opacity:0.3">❓</div>
+    <div class="badge-row" id="main-badge-container">
+        <div style="color: #475569; font-size: 0.8rem; padding: 10px;">데이터를 불러오는 중...</div>
     </div>
 </div>
 
@@ -144,9 +152,9 @@ setInterval(function() {
 </div>
 
 <div class="mini-grid">
-    <div class="mini-btn">🎈 10만들기</div>
-    <div class="mini-btn">🧱 24만들기</div>
-    <div class="mini-btn">🔢 슐테표</div>
+    <div class="mini-btn  lv-locked">🎈 10만들기🔒</div>
+    <div class="mini-btn  lv-locked">🧱 24만들기🔒</div>
+    <div class="mini-btn  lv-locked">🔢 슐테표🔒</div>
 </div>
 
 <div class="championship-banner">
@@ -162,8 +170,32 @@ setInterval(function() {
 <div id="game-start-banner">GAME START!!</div>
 <div class="settings-btn" onclick="handleSettingsClick()">⚙️</div>
 
+
+
+
 <script>
+
+    // Firebase 설정 및 초기화
+    const firebaseConfig = {
+    apiKey: "AIzaSyCbhFq8vcLem8DoMdlsXpC-ZRYELhJSFHU",
+    authDomain: "championship-8f923.firebaseapp.com",
+    databaseURL: "https://championship-8f923-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "championship-8f923",
+    storageBucket: "championship-8f923.firebasestorage.app",
+    messagingSenderId: "118704807417",
+    appId: "1:118704807417:web:b1cacb9636d51a38d67128",
+    measurementId: "G-KLHCC95R2C"
+  };
+
+// Firebase 초기화 (중복 방지)
+    if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+    }
+    const db = firebase.database();
+
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+
 
     function playClickSound() {
         if (audioCtx.state === 'suspended') audioCtx.resume();
@@ -243,39 +275,91 @@ setTimeout(() => {
     }
 
 window.addEventListener('load', function() {
-    const userName = localStorage.getItem('userName') || "윤석화";
-    const gems = localStorage.getItem('userGems') || "0";
-    const coins = localStorage.getItem('userCoins') || "0";
+    const loginId = localStorage.getItem('loginId'); 
+    const userName = localStorage.getItem('userName') || "사용자";
 
     document.getElementById('display-user-name').innerText = userName + " 〉";
-    document.getElementById('display-gems').innerText = `💎 ${gems}`;
-    document.getElementById('display-coins').innerText = `🪙 ${coins}`;
 
-    const savedChar = localStorage.getItem('myChar') || "dog.png";
-    const savedWing = localStorage.getItem('myWing'); 
-    const savedPet = localStorage.getItem('myPet');
+    if (loginId) {
+        // 실시간 데이터 감시
+        db.ref('approvedUsers/' + loginId).on('value', (snapshot) => {
+            const userData = snapshot.val();
+            if (userData) {
+                // 1. 보석 및 코인 표시 (값이 없을 경우를 대비해 0으로 설정)
+                const currentGems = userData.gems || 0;
+                const currentCoins = userData.coins || 0;
+                
+                // HTML 요소가 존재하는지 확인 후 업데이트
+                if(document.getElementById('display-gems'))
+                    document.getElementById('display-gems').innerText = `💎 ${currentGems}`;
+                if(document.getElementById('display-coins'))
+                    document.getElementById('display-coins').innerText = `🪙 ${currentCoins}`;
 
-    document.getElementById('l-char').src = savedChar;
+                // 2. 뱃지 표시 로직
+                const myBadges = userData.myBadges || []; 
+                const badgeContainer = document.getElementById('main-badge-container');
+                
+                const badgeEmojis = {
+                    'badge-fire': '🔥', 'badge-calendar': '🗓️', 'badge-perfect': '💯',
+                    'badge-add-1': '🥇', 'badge-add-2': '🏆', 'badge-add-3': '👑',
+                    'badge-mul-1': '🥈', 'badge-mul-2': '💎', 'badge-mul-3': '🔮',
+                    'badge-div-1': '🥉', 'badge-div-2': '🔱', 'badge-div-3': '🌌'
+                };
 
-    if (savedWing && savedWing !== "") {
-        const wingImg = document.getElementById('l-wing');
-        wingImg.src = savedWing;
-        wingImg.style.display = 'block';
+                if (badgeContainer) {
+                    badgeContainer.innerHTML = ""; // 기존의 가짜 뱃지들 싹 비우기
+
+                    // 만약 획득한 뱃지가 하나도 없다면 (배열이 비어있다면)
+                    if (myBadges.length === 0) {
+                        badgeContainer.innerHTML = '<div style="color: #475569; font-size: 0.8rem; padding: 10px;">획득한 뱃지가 없습니다.</div>';
+                    } else {
+                        // 획득한 뱃지가 있다면 하나씩 생성
+                        myBadges.forEach(badgeId => {
+                            const emoji = badgeEmojis[badgeId];
+                            if (emoji) {
+                                const slot = document.createElement('div');
+                                slot.className = "badge-slot"; // CSS의 badge-slot 스타일 적용
+                                slot.innerText = emoji;
+                                badgeContainer.appendChild(slot);
+                            }
+                        });
+                    }
+                }
+
+                // 브라우저 저장소 업데이트
+                localStorage.setItem('userGems', currentGems);
+                localStorage.setItem('userCoins', currentCoins);
+            }
+        });
     }
 
-    if (savedPet && savedPet !== "") {
-        const petImg = document.getElementById('l-pet');
-        petImg.src = savedPet;
-        petImg.style.display = 'block';
-    }
 
-    document.querySelectorAll('.level-btn.lv-basic, .mini-btn, .championship-banner').forEach(btn => {
-        btn.onclick = function() {
-            const title = this.innerText.split('\n')[0].trim();
-            startCountdown(title);
-        };
+
+   // --- 캐릭터 설정 로직 (기존 그대로 유지) ---
+        const savedChar = localStorage.getItem('myChar') || "dog.png";
+        const savedWing = localStorage.getItem('myWing'); 
+        const savedPet = localStorage.getItem('myPet');
+        document.getElementById('l-char').src = savedChar;
+
+        if (savedWing && savedWing !== "") {
+            const wingImg = document.getElementById('l-wing');
+            wingImg.src = savedWing;
+            wingImg.style.display = 'block';
+        }
+        if (savedPet && savedPet !== "") {
+            const petImg = document.getElementById('l-pet');
+            petImg.src = savedPet;
+            petImg.style.display = 'block';
+        }
+
+        document.querySelectorAll('.level-btn.lv-basic, .mini-btn, .championship-banner').forEach(btn => {
+            btn.onclick = function() {
+                const title = this.innerText.split('\n')[0].trim();
+                startCountdown(title);
+            };
+        });
     });
-});
 </script>
+
 </body>
 </html>
