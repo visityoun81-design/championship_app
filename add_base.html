@@ -426,7 +426,7 @@ function handleAutoFullscreen() {
 function saveRecord(finished) { 
     // [1] Firebase 설정 (선생님의 설정값으로 채우세요)
   const firebaseConfig = {
-    apiKey: "AIzaSyCbhFq8vcLem8DoMdlsXpC-ZRYELhJSFHU",
+     apiKey: "AIzaSyCbhFq8vcLem8DoMdlsXpC-ZRYELhJSFHU",
     authDomain: "championship-8f923.firebaseapp.com",
     databaseURL: "https://championship-8f923-default-rtdb.asia-southeast1.firebasedatabase.app",
     projectId: "championship-8f923",
@@ -436,12 +436,29 @@ function saveRecord(finished) {
     measurementId: "G-KLHCC95R2C"
   }
 
-if (!firebase.apps.length) return; // 파이어베이스 미연결시 중단
-    var db = firebase.database();
-    var userLogId = localStorage.getItem('loginId') || "guest_" + playerName; 
+if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+    }
+var db = firebase.database();
+    
+    // 1. 기본 로그인 ID 가져오기 (없으면 guest_이름)
+    var baseId = localStorage.getItem('loginId') || "guest_" + playerName; 
+
+    // 2. 현재까지 몇 번 연습했는지 체크 (로컬스토리지 활용)
+    let practiceCount = parseInt(localStorage.getItem('practiceCount_' + baseId) || 0);
+    
+    // 3. 이번 연습 번호 부여 (연습이 끝났을 때만 번호 증가)
+    if (finished) {
+        practiceCount++;
+        localStorage.setItem('practiceCount_' + baseId, practiceCount);
+    }
+
+    // 4. 새로운 고유 ID 생성 (예: 박보검1, 박보검2...)
+    // 연습 중일 때는 현재 번호로, 끝났을 때는 증가된 번호로 저장
+    var userLogId = baseId + (practiceCount > 0 ? practiceCount : "");
 
     let record = { 
-        name: playerName, 
+        name: playerName + (practiceCount > 0 ? practiceCount : ""), // 이름 뒤에도 숫자 표시
         score: totalScore, 
         lastActive: Date.now(), 
         isPlaying: !finished, 
@@ -449,7 +466,7 @@ if (!firebase.apps.length) return; // 파이어베이스 미연결시 중단
         timeLeft: timeLeft 
     }; 
 
-    // 실시간 랭킹판용 저장
+    // 5. 실시간 랭킹판용 저장 (기존 기록을 덮어쓰지 않고 새로운 경로에 저장)
     db.ref('rankings/rank_add_base/' + userLogId).set(record);
 
     // 완주 시 보상 및 관리자 기록 저장
@@ -480,41 +497,58 @@ if (!firebase.apps.length) return; // 파이어베이스 미연결시 중단
 }
 
 function updateHallOfFame() { 
-    // 과목명에 맞게 키값을 확인하세요
-    const storageKey = 'rank_add_base'; 
-    const ranks = JSON.parse(localStorage.getItem(storageKey) || "[]");
-    
-    // 1. 다중 조건 정렬 (점수 -> 시간)
-    ranks.sort((a, b) => {
-        if (b.score !== a.score) return b.score - a.score;
-        return (b.timeLeft || 0) - (a.timeLeft || 0);
+    // 파이어베이스 연결 확인
+    if (typeof firebase === 'undefined' || !firebase.apps.length) return;
+    var db = firebase.database();
+
+    // 1. 서버(Firebase)에서 실시간 랭킹 데이터를 가져옵니다.
+    db.ref('rankings/rank_add_base').once('value', function(snapshot) {
+        const data = snapshot.val() || {};
+        let ranks = Object.values(data);
+        const now = Date.now(); // 현재 시간 (밀리초)
+
+        // 2. 정렬 (점수 높은 순 -> 남은 시간 많은 순)
+        ranks.sort((a, b) => {
+            if (b.score !== a.score) return b.score - a.score;
+            return (b.timeLeft || 0) - (a.timeLeft || 0);
+        });
+
+        let html = ""; 
+        const medals = ["🥇", "🥈", "🥉", "🏅", "🎖️"]; 
+        let displayRank = 0;
+        let lastScore = -1;
+        let lastTime = -1;
+
+        // 3. 랭킹 생성 루프
+        for(let i = 0; i < ranks.length; i++) { 
+            let r = ranks[i]; 
+            
+            // 공동 순위 계산
+            if (r.score !== lastScore || (r.timeLeft || 0) !== lastTime) {
+                displayRank++;
+            }
+            lastScore = r.score;
+            lastTime = (r.timeLeft || 0);
+
+            // [중요] 3분(180,000ms) 체크 로직
+            // 마지막 활동 시간(lastActive)과 현재 시간(now)을 비교합니다.
+            let isActiveRecently = (now - (r.lastActive || 0)) < 180000;
+            
+            // 본인 강조 클래스
+            let isMeClass = (r.name === playerName) ? 'my-record' : '';
+            
+            // 진행 중(반짝이) 클래스: r.isPlaying이 true이면서 + 3분 이내에 활동했을 때만 추가
+            let playingClass = (r.isPlaying && isActiveRecently) ? 'is-playing' : '';
+            
+            html += `<div class="rank-item color-${displayRank<=5?displayRank:'other'} ${playingClass} ${isMeClass}">
+                        <span>${displayRank<=5?medals[displayRank-1]:''}${displayRank}.${r.name}</span>
+                        <span style="font-family:'Orbitron'; font-weight:900;">${r.score}</span>
+                    </div>`; 
+        } 
+        
+        // 4. 화면에 반영
+        document.getElementById('hall-of-fame').innerHTML = html;
     });
-
-    let html = ""; 
-    const medals = ["🥇", "🥈", "🥉", "🏅", "🎖️"]; 
-    let displayRank = 0;
-    let lastScore = -1;
-    let lastTime = -1;
-
-    for(let i = 0; i < ranks.length; i++) { 
-        let r = ranks[i]; 
-        
-        // 2. 건너뛰기 없는 순위 부여 (점수와 시간 모두 체크)
-        if (r.score !== lastScore || (r.timeLeft || 0) !== lastTime) {
-            displayRank++;
-        }
-        lastScore = r.score;
-        lastTime = (r.timeLeft || 0);
-
-        let isMeClass = (r.name === playerName) ? 'my-record' : '';
-        let playingClass = r.isPlaying ? 'is-playing' : '';
-        
-        html += `<div class="rank-item color-${displayRank<=5?displayRank:'other'} ${playingClass} ${isMeClass}">
-                    <span>${displayRank<=5?medals[displayRank-1]:''}${displayRank}.${r.name}</span>
-                    <span style="font-family:'Orbitron'; font-weight:900;">${r.score}</span>
-                </div>`; 
-    } 
-    document.getElementById('hall-of-fame').innerHTML = html;
 }
 
         function showPracticeLogs() { 
@@ -738,6 +772,7 @@ function startBlockGame() {
 
 function showFinalResult() { 
     saveRecord(true); 
+    checkAndAwardBadges('덧셈초급', totalScore);
     const msgArea = document.getElementById('schulte-msg');
     const spent = 480 - timeLeft;
     const timeDisplay = (spent >= 480) ? "08:00 (Time Over)" : `${Math.floor(spent/60)}:${String(spent%60).padStart(2,'0')}`;
@@ -819,38 +854,26 @@ window.addEventListener('keydown', (e) => {
 });
 
 // 3초마다 랭킹판을 자동으로 새로고침해서 친구들 점수를 가져옵니다.
-setInterval(updateHallOfFame, 3000);
+if (typeof updateHallOfFame === 'function') {
+    setInterval(updateHallOfFame, 3000);
+}
 
-// --- 뱃지 지급 함수 (이 부분은 모든 파일 공통입니다) ---
+// --- 뱃지 지급 및 기록 저장 함수 통합 ---
 function checkAndAwardBadges(level, currentScore) {
+    // 1. 필요한 정보 가져오기
     let myBadges = JSON.parse(localStorage.getItem('myBadges') || "[]");
-    let logs = JSON.parse(localStorage.getItem('practiceLogs') || "[]");
+    let gems = parseInt(localStorage.getItem('userGems') || 0);
+    let coins = parseInt(localStorage.getItem('userCoins') || 0);
+    let logs = JSON.parse(localStorage.getItem('practiceLogs') || "[]"); // 출석 확인용
     
     let badgeId = "";
     let badgeName = "";
 
-    // [1] 난이도 및 과목별 뱃지 조건 설정
-    // level 예시: '덧셈초급', '곱셈마스터' 등
-    
-    // 1. 초급 메달 (95점 이상)
+    // 2. 점수별 뱃지 판정 (초급/마스터)
     if (currentScore >= 95) {
         if (level === '덧셈초급') { badgeId = 'badge-add-1'; badgeName = '덧셈 메달'; }
-        else if (level === '곱셈초급') { badgeId = 'badge-mul-1'; badgeName = '곱셈 메달'; }
-        else if (level === '나눗셈초급') { badgeId = 'badge-div-1'; badgeName = '나눗셈 메달'; }
-    }
-
-    // 2. 중급 트로피 (95점 이상)
-    if (currentScore >= 95) {
-        if (level === '덧셈중급') { badgeId = 'badge-add-2'; badgeName = '덧셈 트로피'; }
-        else if (level === '곱셈중급') { badgeId = 'badge-mul-2'; badgeName = '곱셈 트로피'; }
-        else if (level === '나눗셈중급') { badgeId = 'badge-div-2'; badgeName = '나눗셈 트로피'; }
-    }
-
-    // 3. 마스터 왕관 (90점 이상으로 하향 조정)
-    if (currentScore >= 90) {
+    } else if (currentScore >= 90) {
         if (level === '덧셈마스터') { badgeId = 'badge-add-3'; badgeName = '덧셈 왕관'; }
-        else if (level === '곱셈마스터') { badgeId = 'badge-mul-3'; badgeName = '곱셈 마스터'; }
-        else if (level === '나눗셈마스터') { badgeId = 'badge-div-3'; badgeName = '나눗셈 마스터'; }
     }
 
     // 뱃지 획득 처리
@@ -859,68 +882,65 @@ function checkAndAwardBadges(level, currentScore) {
         alert(`🎊 축하합니다! ${badgeName}을(를) 획득했습니다!`);
     }
 
-    // [2] 출석 기반 뱃지 (7일/30일) - 기존 로직 유지
-    let studyDates = [...new Set(logs.map(log => log.date.split(' ')[0]))].sort();
-    if (!myBadges.includes('badge-fire')) {
-        let continuousDays = 1;
-        for (let i = 1; i < studyDates.length; i++) {
-            let prev = new Date(studyDates[i-1]);
-            let curr = new Date(studyDates[i]);
-            if ((curr - prev) / (1000 * 60 * 60 * 24) === 1) continuousDays++;
-            else continuousDays = 1;
-            if (continuousDays >= 7) { myBadges.push('badge-fire'); alert("🔥 7일 연속 열공! 파이어볼 뱃지 획득!"); break; }
+    // 3. 출석 기반 뱃지 (7일/30일)
+    if (logs && logs.length > 0) {
+        let studyDates = [...new Set(logs.map(log => log.date ? log.date.split(' ')[0] : ""))].filter(d => d !== "").sort();
+        
+        // 7일 연속 출석 확인
+        if (!myBadges.includes('badge-fire')) {
+            let continuousDays = 1;
+            for (let i = 1; i < studyDates.length; i++) {
+                let prev = new Date(studyDates[i-1]);
+                let curr = new Date(studyDates[i]);
+                if ((curr - prev) / (1000 * 60 * 60 * 24) === 1) continuousDays++;
+                else continuousDays = 1;
+                
+                if (continuousDays >= 7) { 
+                    myBadges.push('badge-fire'); 
+                    alert("🔥 7일 연속 열공! 파이어볼 뱃지 획득!"); 
+                    break; 
+                }
+            }
+        }
+        
+        // 30일 누적 출석 확인
+        if (!myBadges.includes('badge-calendar') && studyDates.length >= 30) {
+            myBadges.push('badge-calendar');
+            alert("🗓️ 30일 출석 달성! 황금달력 뱃지 획득!");
         }
     }
-    if (!myBadges.includes('badge-calendar') && studyDates.length >= 30) {
-        myBadges.push('badge-calendar');
-        alert("🗓️ 30일 출석 달성! 황금달력 뱃지 획득!");
-    }
 
-    // [3] 만점 뱃지 (100점일 때)
+    // 4. 만점 뱃지 (100점일 때)
     if (currentScore === 100 && !myBadges.includes('badge-perfect')) {
         myBadges.push('badge-perfect');
         alert("💯 만점 달성! '완벽한 마법사' 뱃지 획득!");
     }
 
+    // 5. 로컬 및 서버 저장소 업데이트
     localStorage.setItem('myBadges', JSON.stringify(myBadges));
-}
 
-// --- [중요] 파일마다 아래 호출 함수를 다르게 적어주세요! ---
-
-// add_base.html 이라면:
-checkAndAwardBadges('덧셈초급', score);
-
-// add_medium.html 이라면:
-// checkAndAwardBadges('덧셈중급', score);
-
-// add_master.html 이라면:
-// checkAndAwardBadges('덧셈마스터', score);
-
-
-
-
-
-    // [마지막 줄에 추가] 서버(Firebase)로 데이터 전송
-    const loginId = localStorage.getItem('loginId'); // 로그인 시 저장한 ID
-    if (loginId && db) { // db는 Firebase 데이터베이스 객체
+    const loginId = localStorage.getItem('loginId');
+    // Firebase가 초기화되어 있고 로그인이 된 경우에만 서버 저장
+    if (loginId && typeof firebase !== 'undefined' && firebase.apps.length > 0) {
+        const db = firebase.database();
         db.ref('approvedUsers/' + loginId).update({
             gems: gems,
             coins: coins,
-            myBadges: myBadges, // 획득한 뱃지 목록 전송
+            myBadges: myBadges,
             lastActivity: new Date().toLocaleString()
         });
         
-        // 상세 기록(로그)도 서버에 한 줄 추가
+        // 상세 기록 저장
         db.ref('approvedUsers/' + loginId + '/practiceLogs').push({
             date: new Date().toLocaleString(),
             subject: level,
             score: currentScore,
-            earnedGems: (currentScore >= 90 ? 1 : 0) // 예시: 90점 이상이면 보석 1개
+            earnedGems: (currentScore >= 90 ? 1 : 0)
         });
     }
-
-    localStorage.setItem('myBadges', JSON.stringify(myBadges));
 }
+// 함수 정의가 끝났습니다.
+
 
 </script>
 </body>
