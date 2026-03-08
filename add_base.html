@@ -55,30 +55,28 @@
         .color-1 { background: #ffd700; } .color-2 { background: #ff85a2; } .color-3 { background: #4ea8de; } .color-4 { background: #9d4edd; } .color-5 { background: #ff9100; } .color-other { background: var(--green); }
         
         /* 화려한 무지개 반짝이 효과 (중급과 동일) */
-        .is-playing { 
-            animation: rainbow-super-shine 0.6s infinite alternate; 
-            position: relative;
-            border: 2px solid #fff !important;
-            transform: scale(1.05); 
-            z-index: 5;
-        }
+       .is-playing {  
+    animation: gentle-glow 1.5s infinite alternate; /* 속도도 1.5s로 늦추면 더 눈이 편해요 */
+    position: relative;
+    border: 2px solid #fff !important;
+    transform: scale(1.02); /* 크기도 너무 커지지 않게 살짝 줄였습니다 */
+    z-index: 5;
+}
+
         .is-playing::after { 
             content: "⚡"; 
             position: absolute; 
             right: 20px; 
-            font-size: 1rem; 
-            text-shadow: 0 0 5px white;
-            animation: thunder-bolt 0.3s infinite alternate; 
+            font-size: 0.8rem; 
+            text-shadow: 0 0 3px white;
+            /*animation: thunder-bolt 0.3s infinite alternate; */
         }
 
-        @keyframes rainbow-super-shine { 
-            0% { box-shadow: 0 0 5px #ff0000, inset 0 0 5px #ff0000; filter: brightness(1.2); } 
-            33% { box-shadow: 0 0 7px #00e1ff, inset 0 0 5px #00e1ff; filter: brightness(1.3); }
-            66% { box-shadow: 0 0 10px #ffea00, inset 0 0 5px #ffea00; filter: brightness(1.4); }
-            100% { box-shadow: 0 0 13px #ff00ff, inset 0 0 5px #ff00ff; filter: brightness(1.5); } 
-        }
+        @keyframes gentle-glow {
+          0% { box-shadow: 0 0 5px #ffd700; filter: brightness(1.1); }
+          100% { box-shadow: 0 0 10px #ffd700; filter: brightness(1.2); }
+          }
 
-        @keyframes thunder-bolt { from { transform: scale(1); opacity: 0.7; } to { transform: scale(1.3); opacity: 1; } }
 
 /* 큰 번개 반짝임 애니메이션 */
 @keyframes flash {
