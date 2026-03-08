@@ -367,22 +367,32 @@
         });
     }
 
-    // [8] 초기화 버튼 (가장 중요한 부분)
-    function resetRank(subject) {
-        if(confirm(subject + "의 실시간 순위판을 초기화하시겠습니까?")) {
-            var keyMap = { 
-                '암산챔피언':'rank_championship', '덧셈초급':'rank_add_base', '덧셈중급':'rank_add_medium', 
-                '덧셈마스터':'rank_add_master', '10만들기':'rank_make10', '24만들기':'rank_make24', '슐태표':'rank_schulte',
-                '곱셈초급':'rank_mul_base', '곱셈중급':'rank_mul_medium', '곱셈마스터':'rank_mul_master',
-                '나눗셈초급':'rank_div_base', '나눗셈중급':'rank_div_medium', '나눗셈마스터':'rank_div_master'
-            };
-            if(subject === '전체대회') {
-                db.ref('rankings').remove().then(function() { alert("전체 초기화 완료"); });
-            } else if(keyMap[subject]) {
-                db.ref('rankings/' + keyMap[subject]).remove().then(function() { alert(subject + " 초기화 완료"); });
-            }
+    // [8] 초기화 버튼 (수정 버전)
+function resetRank(subject) {
+    if(confirm(subject + "의 실시간 순위판을 초기화하시겠습니까?")) {
+        var keyMap = { 
+            '암산챔피언':'rank_championship', '덧셈초급':'rank_add_base', '덧셈중급':'rank_add_medium', 
+            '덧셈마스터':'rank_add_master', '10만들기':'rank_make10', '24만들기':'rank_make24', '슐태표':'rank_schulte',
+            '곱셈초급':'rank_mul_base', '곱셈중급':'rank_mul_medium', '곱셈마스터':'rank_mul_master',
+            '나눗셈초급':'rank_div_base', '나눗셈중급':'rank_div_medium', '나눗셈마스터':'rank_div_master'
+        };
+
+        if(subject === '전체대회') {
+            db.ref('rankings').remove().then(function() { 
+                // 전체 로컬스토리지 청소 (필요시)
+                Object.values(keyMap).forEach(k => localStorage.removeItem(k));
+                alert("전체 서버 및 로컬 초기화 완료"); 
+            });
+        } else if(keyMap[subject]) {
+            const targetKey = keyMap[subject];
+            db.ref('rankings/' + targetKey).remove().then(function() { 
+                // [추가] 내 컴퓨터에 남아있는 해당 과목 순위 데이터도 삭제
+                localStorage.removeItem(targetKey);
+                alert(subject + " 서버 및 로컬 초기화 완료"); 
+            });
         }
     }
+}
 
     // [9] 기타 함수
     function directRegister() {
