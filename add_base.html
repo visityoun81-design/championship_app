@@ -787,18 +787,38 @@ function showFinalResult() {
     const spent = 480 - timeLeft;
     const timeDisplay = (spent >= 480) ? "08:00 (Time Over)" : `${Math.floor(spent/60)}:${String(spent%60).padStart(2,'0')}`;
 
-    // [핵심 수정] 서버에서 전체 데이터를 가져와서 결과창을 만듭니다.
+    // [핵심 수정] 서버에서 데이터를 가져와 중복을 제거하고 최고점만 남깁니다.
     firebase.database().ref('rankings/rank_add_base').once('value', function(snapshot) {
         const data = snapshot.val() || {};
-        const allRanks = Object.values(data).sort((a,b) => b.score - a.score || (b.timeLeft - a.timeLeft));
+        const allRawRanks = Object.values(data);
         
-        // 내 순위 계산
-        let myRank = allRanks.findIndex(r => r.name === playerName) + 1;
-        const realNameOnly = playerName.replace(/[0-9]/g, ''); 
+        // 1. 이름에서 숫자를 제거하고 최고점수만 필터링
+        let bestRanksMap = {};
+        allRawRanks.forEach(r => {
+            // 이름 뒤의 숫자 제거 (박보검1 -> 박보검)
+            let realName = r.name.replace(/[0-9]/g, ''); 
+            
+            // 해당 이름의 기록이 없거나, 현재 점수가 기존 기록보다 높으면 교체
+            if (!bestRanksMap[realName] || r.score > bestRanksMap[realName].score) {
+                bestRanksMap[realName] = {
+                    name: realName,
+                    score: r.score,
+                    fullDate: r.fullDate,
+                    timeLeft: r.timeLeft
+                };
+            }
+        });
 
-        // [명예의 전당] 실시간 전체 랭킹 데이터 정리
+        // 2. 최고점수들만 모아서 내림차순 정렬
+        let finalBestRanks = Object.values(bestRanksMap).sort((a,b) => b.score - a.score || b.timeLeft - a.timeLeft);
+
+        // 3. 내 순위 계산 (숫자 뗀 진짜 이름 기준)
+        const realNameOnly = playerName.replace(/[0-9]/g, ''); 
+        let myRank = finalBestRanks.findIndex(r => r.name === realNameOnly) + 1;
+
+        // 4. 명예의 전당 HTML 생성
         let html = "";
-        allRanks.forEach((r, i) => {
+        finalBestRanks.forEach((r, i) => {
             const displayRank = i + 1;
             const medals = ["🏆 1위", "🥈 2위", "🥉 3위", "🏅 4위", "🎖️ 5위"];
             const rankLabel = i < 5 ? medals[i] : (i + 1) + '.';
@@ -812,11 +832,11 @@ function showFinalResult() {
                 </div>`;
         });
 
-        // 결과창 화면 구성
+        // 5. 결과창 화면 구성
         msgArea.innerHTML = `
             <div class="result-card">
                 <h2 style="color:var(--green); margin:0 0 5px 0; font-size:1.1rem;">${realNameOnly}님 결과</h2>
-                <div style="font-size:1.2rem; color:var(--gold); font-weight:900;">현재 순위: ${myRank}위</div>
+                <div style="font-size:1.2rem; color:var(--gold); font-weight:900;">최고 순위: ${myRank}위</div>
                 <h1 style="font-size:3rem; margin:5px 0; color:white; text-shadow:0 0 10px var(--purple);">${totalScore}점</h1>
                 
                 <div style="background:rgba(74, 222, 128, 0.1); padding:8px; border-radius:10px; margin-bottom:10px; border:1px solid var(--green);">
@@ -830,7 +850,7 @@ function showFinalResult() {
                     <div><div style="color:var(--purple); font-size:0.7rem;">누적 코인</div><div style="font-size:1.2rem; font-weight:900;">🪙 ${localStorage.getItem('userCoins')||0}</div></div>
                 </div>
 
-                <div style="font-weight:900; color:var(--gold); font-size:0.8rem; margin-bottom:8px; border-bottom:1px solid #333; padding-bottom:5px;">🏆 명예의 전당 (실시간) 🏆</div>
+                <div style="font-weight:900; color:var(--gold); font-size:0.8rem; margin-bottom:8px; border-bottom:1px solid #333; padding-bottom:5px;">🏆 명예의 전당 (중복 제거) 🏆</div>
                 <div class="history-list" style="max-height:150px; overflow-y:auto;">${html}</div>
                 
                 <div style="display:flex; gap:10px; margin-top:15px;">
@@ -839,7 +859,6 @@ function showFinalResult() {
                 </div>
             </div>`; 
 
-        // 화면 전환
         document.getElementById('schulte-overlay').style.display='flex'; 
         document.getElementById('mini-game-header').style.display='none'; 
         document.getElementById('schulte-table').style.display='none'; 
