@@ -750,33 +750,67 @@ function startBlockGame() {
     
     let bScore=0, bTime=30.0, sel=null, stackedBlocks=[]; const B_SIZE=60; 
     const cols = Math.floor(window.innerWidth / 70);
+let columnHeights = new Array(cols).fill(0); // 각 열에 쌓인 블록 개수를 저장하는 창고
 
     function spawnGroup() { 
-        if(!isGaming||isTimeUp) return; 
-        let count = 4 + Math.floor(Math.random()*2);
-        for(let i=0; i<count; i++) {
-            let val = Math.floor(Math.random()*(targetSum-1))+1, col = Math.floor(Math.random()*cols); 
-            const b=document.createElement('div'); b.className='block'; b.innerText=val; b.style.left=(col*70 + 10)+"px"; b.style.top="-80px"; 
-            b.style.background=`linear-gradient(135deg, hsl(${Math.random()*360},70%,50%), hsl(${Math.random()*360},70%,30%))`; 
-            b.onpointerdown=(e)=>{
-                e.preventDefault();
-                if(sel===b){ sel=null; b.style.border="none"; }
-                else if(!sel){ sel=b; b.style.border="4px solid #fff"; }
-                else {
-                    if(parseInt(sel.innerText)+parseInt(b.innerText)===targetSum){
-                        playSfx('magic');
-                        stackedBlocks=stackedBlocks.filter(x=>x!==sel && x!==b);
-                        sel.remove(); b.remove(); bScore++; sel=null;
-                    } else {
-                        playSfx('click'); sel.style.border="none"; sel=b; b.style.border="4px solid #fff";
-                    }
+    if(!isGaming || isTimeUp) return; 
+    let count = 4 + Math.floor(Math.random() * 2);
+    
+    for(let i = 0; i < count; i++) {
+        let val = Math.floor(Math.random() * (targetSum - 1)) + 1;
+        let col = Math.floor(Math.random() * cols); 
+        
+        const b = document.createElement('div');
+        b.className = 'block';
+        b.innerText = val;
+        
+        // 1. 위치 및 디자인 설정
+        b.style.left = (col * 70 + 10) + "px";
+        b.style.top = "-80px"; 
+        b.style.background = `linear-gradient(135deg, hsl(${Math.random()*360},70%,50%), hsl(${Math.random()*360},70%,30%))`; 
+        b.style.pointerEvents = "auto"; // [중요] 클릭이 가능하도록 설정
+        b.style.zIndex = "100"; // 블록이 다른 요소 뒤로 숨지 않게 설정
+
+        // 2. 클릭(선택) 이벤트 로직
+        b.onpointerdown = (e) => {
+            e.preventDefault();
+            e.stopPropagation(); // [중요] 이벤트 겹침 방지
+
+            if (sel === b) { 
+                sel = null; 
+                b.style.border = "none"; 
+            } else if (!sel) { 
+                sel = b; 
+                b.style.border = "4px solid #fff"; 
+            } else {
+                if (parseInt(sel.innerText) + parseInt(b.innerText) === targetSum) {
+                    playSfx('magic');
+                    // 제거 시 해당 기둥 높이 1 줄임
+                    columnHeights[col] = Math.max(0, columnHeights[col] - 1); 
+                    sel.remove(); 
+                    b.remove(); 
+                    bScore++; 
+                    sel = null;
+                } else {
+                    playSfx('click'); 
+                    sel.style.border = "none"; 
+                    sel = b; 
+                    b.style.border = "4px solid #fff";
                 }
-            }; 
-            area.appendChild(b); stackedBlocks.push(b);
-            setTimeout(() => { b.style.top = (area.clientHeight - B_SIZE - 5) + "px"; }, 50);
-        }
-        if(isGaming) setTimeout(spawnGroup, 1200); 
+            }
+        };
+
+        area.appendChild(b);
+
+        // 3. 블록을 차곡차곡 쌓는 이동 로직
+        setTimeout(() => {
+            let stackPos = columnHeights[col] * 65; 
+            b.style.top = (area.clientHeight - 65 - stackPos) + "px";
+            columnHeights[col]++; 
+        }, 50);
     }
+    if(isGaming) setTimeout(spawnGroup, 1500); 
+}
     
     function finishBlock(){ 
         isGaming=false; area.style.display='none'; header.style.display='none'; 
