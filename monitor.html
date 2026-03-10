@@ -174,7 +174,7 @@
 }
 .first-place-new {
     animation: gold-glow 1s ease-in-out 3; /* 3번 번쩍임 */
-    border: 3px solid #ffd700 !important;
+    border: 1px solid #ffd700 !important;
     background: rgba(255, 215, 0, 0.2) !important;
 }
 
@@ -263,7 +263,7 @@ function showTripleLeague(type, btn) {
     });
 }
 
-// [함수 3] 공통 그리기 함수 (1등 효과 포함)
+// [함수 3] 공통 그리기 함수 (1등 효과 및 3분 잠수 체크 포함)
 function renderList(targetId, arr) {
     const board = document.getElementById(targetId);
     if (!board) return;
@@ -281,6 +281,8 @@ function renderList(targetId, arr) {
     lastFirstPlaceName = currentFirstPlace;
 
     let html = "";
+    const now = Date.now(); // 🌟 현재 시간 가져오기
+
     for (let i = 0; i < arr.length; i++) {
         const r = arr[i];
         const rankNum = i + 1;
@@ -292,8 +294,14 @@ function renderList(targetId, arr) {
         else if(rankNum === 5) icon = "🎖️";
 
         const medalClass = rankNum <= 5 ? "medal-" + rankNum : "";
-        const playingClass = r.isPlaying ? "is-playing" : "";
         const firstPlaceClass = (rankNum === 1) ? "first-place-new" : "";
+
+        // 🌟 [핵심 수정] 3분(180,000밀리초) 잠수 체크 로직!
+        // 마지막 활동 시간(lastActive)과 지금 시간(now)을 비교합니다.
+        let isActiveRecently = (now - (r.lastActive || 0)) < 180000;
+        
+        // 데이터베이스에는 isPlaying이 true로 되어있더라도, 3분이 지났으면 강제로 불을 끕니다.
+        const playingClass = (r.isPlaying && isActiveRecently) ? "is-playing" : "";
 
         html += `
             <div class="rank-item ${playingClass} ${firstPlaceClass}">
