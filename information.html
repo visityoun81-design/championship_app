@@ -66,6 +66,40 @@
             background: white; color: #ef4444; border: none; padding: 5px 12px; 
             border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 11px;
         }
+
+/* 🌟 추가된 스타일: 공부기록 테이블 코인 폭 조정 */
+        .history-table th:nth-child(1) { width: 30%; } /* 날짜 칸 넓게 */
+        .history-table th { font-size: 10px; }
+
+        /* 🌟 추가된 스타일: 뱃지 말풍선(툴팁) 효과 */
+        .badge-item.owned { position: relative; cursor: pointer; }
+        .badge-item.owned:hover::after,
+        .badge-item.owned:active::after {
+            content: attr(data-date); /* 자바스크립트가 넣어줄 글자 */
+            position: absolute;
+            bottom: 115%; left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.9);
+            color: #4ade80; /* 밝은 초록색 */
+            padding: 6px 10px;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: bold;
+            white-space: nowrap;
+            z-index: 100;
+            border: 1px solid #4ade80;
+            box-shadow: 0 4px 10px rgba(74, 222, 128, 0.3);
+            pointer-events: none; /* 마우스 간섭 방지 */
+            animation: popUp 0.2s ease-out forwards;
+        }
+        @keyframes popUp {
+            from { opacity: 0; transform: translate(-50%, 5px); }
+            to { opacity: 1; transform: translate(-50%, 0); }
+        }
+        /* 관리자 선물용 하이라이트 행 */
+        .admin-gift-row { background: rgba(168, 85, 247, 0.15); border-left: 3px solid #a855f7; }
+
+
     </style>
 </head>
 <body>
@@ -128,10 +162,12 @@
         <div id="study" class="content-section" style="display:none;">
             <div class="section-card">
                 <div class="tab-title">📊 최근 연습 내역</div>
-                <table class="history-table">
-                    <thead><tr><th>날짜</th><th>과목</th><th>점수</th><th>보석</th></tr></thead>
-                    <tbody id="study-logs-body"></tbody>
-                </table>
+               <table class="history-table">
+    <thead>
+        <tr><th>날짜</th><th>과목</th><th>점수</th><th>보석</th><th>코인</th></tr>
+    </thead>
+    <tbody id="study-logs-body"></tbody>
+</table>
             </div>
         </div>
 
@@ -219,18 +255,16 @@
         db.ref('approvedUsers/' + userId).on('value', (snapshot) => {
             const userData = snapshot.val();
             if (userData) {
-                // 1. 서버 값으로 변수 업데이트
                 gems = userData.gems || 0;
                 coins = userData.coins || 0;
                 fireballs = userData.fireballCount || 0;
                 purchased = userData.purchasedItems || ["dog.png"];
                 myBadges = userData.myBadges || [];
 
-                // 2. 화면 UI 업데이트
-                updateUI();       // 보석, 코인 숫자 표시
-                loadLook();       // 저장된 꾸미기 아이템 적용
-                refreshBadges();  // 획득한 뱃지 불 켜기
-                renderLogs(userData.practiceLogs); // 공부 기록 출력
+                updateUI();
+                loadLook();
+                renderLogs(userData.practiceLogs); // 공부 기록 출력 (코인 포함)
+                refreshBadges(userData.practiceLogs); // 뱃지에 날짜 정보 넘겨주기
                 
                 document.getElementById('user-display-name').innerText = userData.name || "마법사";
             }
@@ -257,33 +291,73 @@
     }
 
     // 아이템 구매 또는 착용
+   // 🌟 [수정됨] 아이템 구매 또는 착용 (구매 시 기록 남기기)
     function buyOrApply(type, file, price, btn) {
         if (!purchased.includes(file)) {
             // 미구매 아이템인 경우
             if (gems < price) return alert("보석이 부족해요! 💎");
             if (confirm(`보석 ${price}개를 사용하여 구매할까요?`)) {
                 const newPurchased = [...purchased, file];
+                
+                // 📝 [기록 데이터 생성] 상점 구매 내역
+                const logData = {
+                    date: new Date().toLocaleDateString(),
+                    subject: "상점: 아이템 구매",
+                    score: "-",
+                    earnedGems: -price, // 차감은 마이너스 기호!
+                    earnedCoins: 0
+                };
+
                 db.ref('approvedUsers/' + userId).update({
                     gems: gems - price,
                     purchasedItems: newPurchased
-                }).then(() => alert("구매 완료!"));
+                }).then(() => {
+                    // 서버에 기록 한 줄 추가!
+                    db.ref('approvedUsers/' + userId + '/practiceLogs').push(logData).then(() => {
+                        alert("구매 완료!");
+                    });
+                });
             }
         } else {
-            // 이미 구매한 아이템인 경우 착용 로직
+            // 이미 구매한 아이템인 경우 착용 로직 (기존과 동일)
             const img = document.getElementById(type);
-            // 이미 착용 중이면 해제 (캐릭터 제외)
             if (img.style.display === 'block' && img.src.includes(file) && type !== 'character') {
                 img.style.display = 'none';
                 localStorage.removeItem('my' + type.charAt(0).toUpperCase() + type.slice(1));
                 btn.classList.remove('active');
             } else {
-                // 새로 착용
                 img.src = file;
                 img.style.display = 'block';
                 btn.parentElement.querySelectorAll('.item-btn').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
                 localStorage.setItem('my' + type.charAt(0).toUpperCase() + type.slice(1), file);
             }
+        }
+    }
+
+    // 🌟 [수정됨] 파이어볼 교환 (교환 시 기록 남기기)
+    function exchangeFireball() {
+        if (fireballs <= 0) return alert("교환할 파이어볼이 없어요! 🔥");
+        if (confirm("파이어볼 1개를 보석 30개로 교환할까요?")) {
+            
+            // 📝 [기록 데이터 생성] 파이어볼 교환 내역
+            const logData = {
+                date: new Date().toLocaleDateString(),
+                subject: "상점: 파이어볼 ↔ 보석 교환",
+                score: "-",
+                earnedGems: 30, // 30개 획득!
+                earnedCoins: 0
+            };
+
+            db.ref('approvedUsers/' + userId).update({
+                fireballCount: fireballs - 1,
+                gems: gems + 30
+            }).then(() => {
+                // 서버에 기록 한 줄 추가!
+                db.ref('approvedUsers/' + userId + '/practiceLogs').push(logData).then(() => {
+                    alert("교환 완료!");
+                });
+            });
         }
     }
 
@@ -307,42 +381,63 @@
         });
     }
 
-    // 파이어볼 교환
-    function exchangeFireball() {
-        if (fireballs <= 0) return alert("교환할 파이어볼이 없어요! 🔥");
-        if (confirm("파이어볼 1개를 보석 30개로 교환할까요?")) {
-            db.ref('approvedUsers/' + userId).update({
-                fireballCount: fireballs - 1,
-                gems: gems + 30
-            });
-        }
-    }
+    
 
-    // 공부 기록 렌더링
+    // 🌟 [수정] 공부 기록 렌더링 (보석, 코인, 관리자 선물 처리)
     function renderLogs(logsObj) {
         const body = document.getElementById('study-logs-body');
         if (!logsObj) {
-            body.innerHTML = "<tr><td colspan='4' style='padding:20px; color:#666;'>공부 기록이 없습니다.</td></tr>";
+            body.innerHTML = "<tr><td colspan='5' style='padding:20px; color:#666;'>공부 기록이 없습니다.</td></tr>";
             return;
         }
         
-        // Firebase 객체를 배열로 변환 후 역순 정렬
         const logs = Object.values(logsObj).reverse();
-        body.innerHTML = logs.slice(0, 15).map(log => `
-            <tr>
-                <td>${log.date ? log.date.split(' ')[0].slice(5) : '-'}</td>
-                <td>${log.subject || '-'}</td>
-                <td>${log.score || 0}</td>
-                <td style="color:#fbbf24">+${log.earnedGems || 0}</td>
-            </tr>
-        `).join('');
+        body.innerHTML = logs.map(log => {
+            // [특별 기능] 관리자가 준 선물이거나 차감 기록일 경우
+            if (log.subject && log.subject.includes("선물")) {
+                return `
+                    <tr class="admin-gift-row">
+                        <td style="font-size:9px; color:#aaa;">${log.date || '-'}</td>
+                        <td colspan="2" style="color:#d8b4fe; font-weight:bold;">🎁 ${log.subject}</td>
+                        <td style="color:#22d3ee; font-weight:bold;">${log.earnedGems ? '+' + log.earnedGems : ''}</td>
+                        <td style="color:#fbbf24; font-weight:bold;">${log.earnedCoins ? '+' + log.earnedCoins : ''}</td>
+                    </tr>
+                `;
+            }
+
+            // 일반 공부 기록
+            return `
+                <tr>
+                    <td style="font-size:9px; color:#aaa;">${log.date || '-'}</td>
+                    <td>${log.subject || '-'}</td>
+                    <td>${log.score || 0}점</td>
+                    <td style="color:#22d3ee">+${log.earnedGems || 0}</td>
+                    <td style="color:#fbbf24">${log.earnedCoins > 0 ? '+'+log.earnedCoins : '-'}</td>
+                </tr>
+            `;
+        }).join('');
     }
 
-    // 뱃지 상태 업데이트
-    function refreshBadges() {
+// 🌟 [수정] 뱃지 상태 업데이트 및 마우스 오버(말풍선) 날짜 삽입
+    function refreshBadges(logsObj) {
+        // 임시로 가장 마지막 공부한 날짜를 가져옵니다. 
+        // (나중에 DB가 고도화되면 뱃지별 획득 날짜를 정확히 매칭할 수 있습니다)
+        let latestDate = "✨ 획득 완료 ✨";
+        if (logsObj) {
+            const logsArray = Object.values(logsObj);
+            if(logsArray.length > 0) {
+                // "26.03.10" 처럼 앞부분 날짜만 자르기
+                latestDate = "획득일: " + logsArray[logsArray.length - 1].date.split(' ')[0];
+            }
+        }
+
         myBadges.forEach(id => {
             const el = document.getElementById(id);
-            if (el) el.classList.add('owned');
+            if (el) {
+                el.classList.add('owned');
+                // HTML 요소에 data-date 속성을 넣어주면 CSS의 ::after가 이를 읽어서 말풍선으로 띄워줍니다!
+                el.setAttribute('data-date', latestDate);
+            }
         });
     }
 
