@@ -64,6 +64,19 @@
         }
         .m-badge-item { font-size: 1.5rem; filter: drop-shadow(0 0 5px rgba(255,255,255,0.2)); }
 
+/* 🌟 뱃지 툴팁 및 관리자 테이블 스타일 */
+        .m-badge-item { position: relative; cursor: pointer; display: inline-block; }
+        .m-badge-item:hover::after {
+            content: attr(data-date);
+            position: absolute; bottom: 120%; left: 50%; transform: translateX(-50%);
+            background: rgba(0,0,0,0.9); color: #4ade80; padding: 5px 8px;
+            border-radius: 6px; font-size: 0.7rem; white-space: nowrap; z-index: 100;
+            border: 1px solid #4ade80; pointer-events: none;
+        }
+        .admin-gift-row { background: rgba(168, 85, 247, 0.2) !important; border-left: 3px solid #a855f7; }
+        #m-log-list td { font-size: 0.75rem; text-align: center; }
+
+
     </style>
 </head>
 <body>
@@ -121,12 +134,16 @@
             </select>
         </div>
 
-<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; margin-bottom:8px;">
-    <input type="text" id="reg-name" placeholder="성함/이름">
-    <input type="text" id="reg-id" placeholder="아이디">
-</div>
-        <input type="password" id="reg-pw" placeholder="비밀번호">
-        <button class="btn btn-approve" onclick="directRegister()">등록하기</button>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; margin-bottom:4px;">
+            <input type="text" id="reg-name" placeholder="성함/이름">
+            <input type="text" id="reg-id" placeholder="아이디">
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+            <input type="password" id="reg-pw" placeholder="비밀번호">
+            <input type="password" id="reg-pw2" placeholder="비밀번호 확인">
+        </div>
+        
+        <button class="btn btn-approve" style="margin-top: 5px;" onclick="directRegister()">등록하기</button>
     </div>
 </section>
 
@@ -196,32 +213,59 @@
 
 <div id="record-modal">
     <div class="modal-content">
-        <h2 id="modal-user-name" style="font-size:1rem; margin-top:0; color:var(--purple);">학습 리포트</h2>
+        <h2 id="modal-user-name" style="font-size:1.1rem; margin-top:0; color:var(--purple);">📊 학생 리포트</h2>
         
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 15px 0; font-size:0.85rem;">
-            <div style="background:rgba(0,0,0,0.2); padding:10px; border-radius:10px; border:1px solid #334155;">
-                <span style="color:var(--blue)">💎 보석:</span> <span id="m-gem">0</span>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 15px 0; font-size:0.9rem;">
+            <div style="background:rgba(0,0,0,0.3); padding:10px; border-radius:10px; border:1px solid #334155; text-align:center;">
+                <span style="color:var(--blue)">💎 보석:</span> <strong id="m-gem" style="font-size:1.1rem;">0</strong>
             </div>
-            <div style="background:rgba(0,0,0,0.2); padding:10px; border-radius:10px; border:1px solid #334155;">
-                <span style="color:var(--gold)">🪙 코인:</span> <span id="m-coin">0</span>
+            <div style="background:rgba(0,0,0,0.3); padding:10px; border-radius:10px; border:1px solid #334155; text-align:center;">
+                <span style="color:var(--gold)">🪙 코인:</span> <strong id="m-coin" style="font-size:1.1rem;">0</strong>
             </div>
         </div>
 
-        <div style="font-size:0.8rem; color:var(--gold); margin-bottom:5px; font-weight:bold;">🏆 획득 명예 뱃지</div>
-        <div id="m-badges" class="m-badge-area" style="background:rgba(0,0,0,0.3); padding:10px; border-radius:12px; margin-bottom:15px; display:flex; flex-wrap:wrap; gap:8px; border:1px solid rgba(168,85,247,0.2); min-height:40px;">
+       <div style="background: rgba(168, 85, 247, 0.15); padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid var(--purple);">
+            <h4 style="margin: 0 0 10px 0; color: #d8b4fe; font-size:0.85rem;">🎁 관리자 권한 (보석/코인/뱃지 컨트롤)</h4>
+            
+            <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                <input type="number" id="gift-gems" placeholder="보석 증감 (예: 50, -30)" style="flex:1;">
+                <input type="number" id="gift-coins" placeholder="코인 증감 (예: 100, -50)" style="flex:1;">
+            </div>
+            
+            <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                <select id="gift-give-badge" style="flex:1; padding: 8px; border-radius: 8px; background: #020617; border: 1px solid #4ade80; color: white; font-size: 0.8rem;">
+                    <option value="">-- 🎁 뱃지 지급 --</option>
+                </select>
+                <select id="gift-take-badge" style="flex:1; padding: 8px; border-radius: 8px; background: #020617; border: 1px solid #f87171; color: white; font-size: 0.8rem;">
+                    <option value="">-- 🗑️ 뱃지 회수 --</option>
+                </select>
             </div>
 
-        <h4 style="margin: 10px 0; font-size:0.9rem; color:var(--purple);">🏆 과목별 최고 기록</h4>
+            <div style="display: flex; gap: 8px;">
+                <input type="text" id="gift-msg" placeholder="사유 (예: 누락된 100점 뱃지 지급)" style="flex:2;">
+                <button class="btn btn-approve" style="flex:1;" onclick="sendAdminGift()">적용하기</button>
+            </div>
+        </div>
+        <div style="font-size:0.85rem; color:var(--gold); margin-bottom:5px; font-weight:bold;">🏆 획득 명예 뱃지</div>
+        <div id="m-badges" class="m-badge-area"></div>
+
+        <h4 style="margin: 15px 0 10px 0; font-size:0.85rem; color:var(--purple);">🏆 과목별 최고 기록</h4>
         <div class="report-grid">
             <div class="report-column" id="col-1"></div>
             <div class="report-column" id="col-2"></div>
         </div>
 
-        <h4 style="margin: 10px 0; font-size:0.8rem; color:var(--gold);">📜 최근 연습 내역</h4>
-        <div id="m-log-list" class="log-list" style="background: #020617; border-radius: 10px; padding: 10px; max-height: 150px; overflow-y: auto; font-size: 0.7rem;">
-            </div>
+        <h4 style="margin: 15px 0 10px 0; font-size:0.85rem; color:var(--gold);">📜 공부 및 교환 내역</h4>
+        <div class="table-wrapper" style="max-height: 200px; overflow-y: auto; background: #020617; border-radius:10px; border:1px solid #334155;">
+            <table class="admin-table" style="min-width: 100%;">
+                <thead style="position: sticky; top: 0; background: #0f172a;">
+                    <tr><th>날짜</th><th>과목/사유</th><th>점수</th><th>보석</th><th>코인</th></tr>
+                </thead>
+                <tbody id="m-log-list"></tbody>
+            </table>
+        </div>
 
-        <button class="btn btn-delete" style="width:100%; margin-top:15px;" onclick="closeModal()">닫기</button>
+        <button class="btn btn-delete" style="width:100%; margin-top:15px; padding:12px; font-size:1rem;" onclick="closeModal()">닫기</button>
     </div>
 </div>
 
@@ -272,29 +316,41 @@
     var group2 = ['곱셈초급', '곱셈중급', '곱셈마스터', '나눗셈초급', '나눗셈중급', '나눗셈마스터'];
 
     // [5] 화면 초기화 (여기서 버튼들이 보이고 숨겨집니다)
+   // 🌟 [수정됨] 화면 초기화 (관리자 vs 선생님 모드 분리)
     window.onload = function() {
         var regArea = document.getElementById('reg-type-select-area');
         var regTeacherSelect = document.getElementById('reg-teacher-select');
         var adminTop = document.getElementById('admin-only-top');
         var resetSec = document.getElementById('reset-section');
+        var teacherSection = document.getElementById('teacher-list-section');
 
         if (userRole === 'admin') {
+            // [관리자 모드] 모든 기능 개방
             if(adminTop) adminTop.style.display = 'block';
             if(resetSec) resetSec.style.display = 'block';
-        } else {
-            if(adminTop) adminTop.style.display = 'none';
+            if(teacherSection) teacherSection.style.display = 'block';
+            if(regArea) regArea.style.display = 'grid';
+        } else if (userRole === '선생님' || userRole === 'teacher') {
+            // [선생님 모드] 본인 학생만 관리, 초기화/선생님목록 숨김
+            if(adminTop) adminTop.style.display = 'block'; // 가입 승인은 가능
             if(resetSec) resetSec.style.display = 'none';
-            if(regArea) regArea.style.display = 'none';
+            if(teacherSection) teacherSection.style.display = 'none';
+            if(regArea) regArea.style.display = 'none'; // 학생 등록만 가능하게 고정
+            
             if(regTeacherSelect) {
                 regTeacherSelect.innerHTML = '<option value="' + loginName + '">' + loginName + '</option>';
                 regTeacherSelect.value = loginName;
             }
+        } else {
+            // 학생은 이 페이지 접근 불가 처리 (혹시 모르니)
+            document.body.innerHTML = "<h2 style='text-align:center; margin-top:50px;'>접근 권한이 없습니다.</h2>";
+            return;
         }
-        displayUserList(); // 리스트 실행
-        loadJoinRequests(); // 승인요청 실행
+        displayUserList();
+        loadJoinRequests();
     };
 
-    // [6] 학생/선생님 목록 실시간 표시
+    // 🌟 [수정됨] 학생 명단 출력 (최근 날짜 및 Add/Mul/Div 레벨 색상 표시)
     function displayUserList() {
         db.ref('approvedUsers').on('value', function(snapshot) {
             var usersObj = snapshot.val() || {};
@@ -308,30 +364,89 @@
             var filterValue = document.getElementById('filter-teacher') ? document.getElementById('filter-teacher').value : 'all';
             var search = document.getElementById('search-input') ? document.getElementById('search-input').value.toLowerCase() : "";
 
-            // 선생님 관리
-            if (userRole === 'admin') {
-                var teachers = users.filter(function(u) { return u.type === '선생님'; });
+           // 선생님 관리 (관리자만)
+            if (userRole === 'admin' && document.getElementById('teacher-list-body')) {
+                var teachers = users.filter(function(u) { return u.type === '선생님' || u.type === 'teacher'; });
                 document.getElementById('teacher-count').innerText = teachers.length + "명";
                 document.getElementById('teacher-list-body').innerHTML = teachers.map(function(t) {
                     return '<tr><td><strong>' + t.name + '</strong><br>' + t.id + '</td><td>' + t.pw + '</td><td><button class="btn btn-delete btn-sm" onclick="deleteUser(\'' + t.id + '\')">삭제</button></td></tr>';
                 }).join('');
+
+                // 1. 가입 창의 '담당 선생님' 선택칸 자동 업데이트
+                var teacherSelect = document.getElementById('reg-teacher-select');
+                if (teacherSelect) {
+                    var options = '<option value="관리자">관리자 직속</option>';
+                    teachers.forEach(function(t) {
+                        options += '<option value="' + t.name + '">' + t.name + ' 선생님</option>';
+                    });
+                    teacherSelect.innerHTML = options;
+                }
+
+                // 🌟 2. [추가됨] 학생 명단 위의 '필터(분류)' 선택칸 자동 업데이트
+                var filterSelect = document.getElementById('filter-teacher');
+                if (filterSelect) {
+                    // 화면이 새로고침될 때 기존에 선택해둔 선생님이 풀리지 않도록 기억하기
+                    var currentFilter = filterSelect.value;
+
+                    // 필터 목록 만들기
+                    var filterOptions = '<option value="all">전체보기 (모든 학생)</option>';
+                    filterOptions += '<option value="관리자">관리자 직속</option>';
+                    teachers.forEach(function(t) {
+                        filterOptions += '<option value="' + t.name + '">' + t.name + ' 선생님반</option>';
+                    });
+                    
+                    filterSelect.innerHTML = filterOptions;
+
+                    // 기억해둔 선택값 다시 적용
+                    if (filterSelect.querySelector('option[value="' + currentFilter + '"]')) {
+                        filterSelect.value = currentFilter;
+                    }
+                }
             }
 
-            // 학생 관리
-            var students = users.filter(function(u) { return u.type === '학생'; });
+            // 학생 목록 (선생님은 자기 학생만)
+            var students = users.filter(function(u) { return u.type === '학생' || u.type === 'student'; });
             var filtered = students.filter(function(u) {
                 var matchT = (userRole === 'admin') ? (filterValue === 'all' || u.teacher === filterValue) : (u.teacher === loginName);
-                var matchS = u.name.toLowerCase().includes(search);
+                var matchS = (u.name || "").toLowerCase().includes(search);
                 return matchT && matchS;
             });
 
             document.getElementById('user-count').innerText = filtered.length + "명";
+            
+            // 🌟 테이블 헤더 동적 변경 (최근학습날짜 추가)
+            const thead = document.querySelector('#user-list-body').previousElementSibling;
+            thead.innerHTML = '<tr><th>성명(ID)</th><th>기록</th><th>과목별 레벨</th><th>최근학습날짜</th><th>담당 선생님</th><th>관리</th></tr>';
+
             document.getElementById('user-list-body').innerHTML = filtered.map(function(user) {
+                // 1. 획득한 뱃지 기반으로 레벨 자동 계산
+                let badges = user.myBadges || [];
+                let addLv = (badges.includes('badge-add-3') || badges.includes('badge-add-2')) ? 3 : (badges.includes('badge-add-1') ? 2 : 1);
+                let mulLv = (badges.includes('badge-mul-3') || badges.includes('badge-mul-2')) ? 3 : (badges.includes('badge-mul-1') ? 2 : 1);
+                let divLv = (badges.includes('badge-div-3') || badges.includes('badge-div-2')) ? 3 : (badges.includes('badge-div-1') ? 2 : 1);
+
+                // 색상 결정 함수 (Lv1:회색, Lv2:초록, Lv3:보라)
+                let getColor = (lv) => lv === 3 ? '#c084fc' : (lv === 2 ? '#4ade80' : '#94a3b8');
+
+                let levelHtml = `
+                    <span style="color:${getColor(addLv)}; font-weight:bold;">Add: Lv.${addLv}</span><br>
+                    <span style="color:${getColor(mulLv)}; font-weight:bold;">Mul: Lv.${mulLv}</span><br>
+                    <span style="color:${getColor(divLv)}; font-weight:bold;">Div: Lv.${divLv}</span>
+                `;
+
+                // 2. 최근 학습 날짜 추출
+                let recentDate = "-";
+                if (user.practiceLogs) {
+                    let logs = Object.values(user.practiceLogs);
+                    if (logs.length > 0) recentDate = logs[logs.length - 1].date.split(' ')[0];
+                }
+
                 return '<tr>' +
-                    '<td><strong>' + user.name + '</strong><br>' + user.id + '</td>' +
-                    '<td><button class="btn btn-blue btn-sm" onclick="showDetail(\'' + user.id + '\')">기록</button></td>' +
-                    '<td>Lv.' + (user.level || 1) + '</td>' +
-                    '<td style="color:#facc15">' + (user.teacher || '-') + '</td>' +
+                    '<td><strong>' + user.name + '</strong><br><span style="font-size:0.7rem; color:#888;">' + user.id + '</span></td>' +
+                    '<td><button class="btn btn-blue btn-sm" onclick="showDetail(\'' + user.id + '\')">보기</button></td>' +
+                    '<td style="line-height:1.4;">' + levelHtml + '</td>' +
+                    '<td style="color:#cbd5e1;">' + recentDate + '</td>' +
+                    '<td style="color:#facc15">' + (user.teacher || '관리자') + '</td>' +
                     '<td><button class="btn btn-delete btn-sm" onclick="deleteUser(\'' + user.id + '\')">삭제</button></td>' +
                 '</tr>';
             }).join('');
@@ -394,79 +509,217 @@ function resetRank(subject) {
     }
 }
 
-    // [9] 기타 함수
+   // 🌟 [수정됨] 사용자 직접 등록 (비밀번호 더블 체크 기능)
     function directRegister() {
         var name = document.getElementById('reg-name').value;
         var id = document.getElementById('reg-id').value;
         var pw = document.getElementById('reg-pw').value;
+        var pw2 = document.getElementById('reg-pw2').value; // 새로 추가된 비밀번호 확인
         var type = document.getElementById('reg-type').value;
         var teacher = document.getElementById('reg-teacher-select').value;
+        
+        // 선생님 모드일 경우 강제 고정
         if (userRole !== 'admin') { type = "학생"; teacher = loginName; }
-        if(!name || !id || !pw) return alert("정보를 모두 입력해주세요.");
-        db.ref('approvedUsers/' + id).set({ name:name, id:id, pw:pw, type:type, teacher:teacher, level: 1, gems: 0, coins: 0, bestScores: {}, badges: "", practiceLogs: [] })
-        .then(function() { alert("등록 완료!"); });
+        
+        // 빈칸 검사
+        if(!name || !id || !pw || !pw2) return alert("정보를 모두 입력해주세요.");
+        
+        // 비밀번호 일치 검사
+        if(pw !== pw2) return alert("비밀번호가 서로 일치하지 않습니다. 다시 확인해주세요.");
+
+        db.ref('approvedUsers/' + id).set({ 
+            name: name, id: id, pw: pw, type: type, teacher: teacher, 
+            level: 1, gems: 0, coins: 0, bestScores: {}, badges: "", practiceLogs: [] 
+        })
+        .then(function() { 
+            alert("성공적으로 등록되었습니다!"); 
+            // 등록 후 깔끔하게 칸 비워주기
+            document.getElementById('reg-name').value = "";
+            document.getElementById('reg-id').value = "";
+            document.getElementById('reg-pw').value = "";
+            document.getElementById('reg-pw2').value = "";
+        });
     }
 
     function deleteUser(id) { if(confirm("정말 삭제하시겠습니까?")) db.ref('approvedUsers/' + id).remove(); }
     
+let currentModalUserId = ""; 
+
 function showDetail(id) {
+    currentModalUserId = id; 
+    
     db.ref('approvedUsers/' + id).once('value').then((snap) => {
         const u = snap.val();
         if (!u) return;
 
-        // 1. 이름 및 기본 재화 표시
         document.getElementById('modal-user-name').innerText = `📊 ${u.name} 학생 리포트`;
         document.getElementById('m-gem').innerText = u.gems || 0;
         document.getElementById('m-coin').innerText = u.coins || 0;
 
-        // 2. [추가] 뱃지 표시 로직
+        // 1. 뱃지 데이터 준비
         const badgeList = u.myBadges || [];
         const badgeIcons = {
-            'badge-add-1': '🥇', 'badge-add-2': '🏆', 'badge-add-3': '👑', // 덧셈 메달,트로피,왕관
-            'badge-mul-1': '🥈', 'badge-mul-2': '💎', 'badge-mul-3': '🔮', // 곱셈 메달,트로피,마스터
-            'badge-div-1': '🥉', 'badge-div-2': '🔱', 'badge-div-3': '🌌', // 나눗셈 메달,트로피,마스터
-            'badge-fire': '🔥', 'badge-calendar': '🗓️', 'badge-perfect': '💯' // 특별 뱃지
+            'badge-add-1': '🥇', 'badge-add-2': '🏆', 'badge-add-3': '👑',
+            'badge-mul-1': '🥈', 'badge-mul-2': '💎', 'badge-mul-3': '🔮',
+            'badge-div-1': '🥉', 'badge-div-2': '🔱', 'badge-div-3': '🌌',
+            'badge-fire': '🔥', 'badge-calendar': '🗓️', 'badge-perfect': '💯'
+        };
+        const allBadges = {
+            'badge-add-1': '덧셈 메달', 'badge-add-2': '덧셈 트로피', 'badge-add-3': '덧셈 왕관',
+            'badge-mul-1': '곱셈 메달', 'badge-mul-2': '곱셈 트로피', 'badge-mul-3': '곱셈 마스터',
+            'badge-div-1': '나눗셈 메달', 'badge-div-2': '나눗셈 트로피', 'badge-div-3': '나눗셈 마스터',
+            'badge-fire': '7일 파이어볼', 'badge-calendar': '30일 황금달력', 'badge-perfect': '100점 만점'
         };
         
-        let badgeHtml = badgeList.map(bId => `
-            <span title="${bId}" style="font-size:24px; margin-right:5px;">${badgeIcons[bId] || '⭐'}</span>
-        `).join('');
+        // 🌟 아이가 가진 건 '회수' 목록에, 없는 건 '지급' 목록에 넣기!
+        let giveHtml = '<option value="">-- 🎁 뱃지 지급 --</option>';
+        let takeHtml = '<option value="">-- 🗑️ 뱃지 회수 --</option>';
         
-        // 만약 관리자 페이지 HTML에 뱃지를 넣을 공간(id="m-badges")이 없다면 하나 만드셔야 합니다.
-        if(document.getElementById('m-badges')) {
-            document.getElementById('m-badges').innerHTML = badgeHtml || "획득 뱃지 없음";
+        for (let bId in allBadges) {
+            if (badgeList.includes(bId)) {
+                takeHtml += `<option value="${bId}">${badgeIcons[bId]} ${allBadges[bId]}</option>`;
+            } else {
+                giveHtml += `<option value="${bId}">${badgeIcons[bId]} ${allBadges[bId]}</option>`;
+            }
+        }
+        document.getElementById('gift-give-badge').innerHTML = giveHtml;
+        document.getElementById('gift-take-badge').innerHTML = takeHtml;
+
+        let latestDate = "정보 없음";
+        if (u.practiceLogs) {
+            const logsArray = Object.values(u.practiceLogs);
+            if(logsArray.length > 0) latestDate = "최근 획득: " + logsArray[logsArray.length - 1].date.split(' ')[0];
         }
 
-        // 3. 최고 점수 카드 표시 (과목 리스트 업데이트)
+        let badgeHtml = badgeList.map(bId => `
+            <span class="m-badge-item" title="${bId}" data-date="${latestDate}" style="font-size:30px;">
+                ${badgeIcons[bId] || '⭐'}
+            </span>
+        `).join('');
+        document.getElementById('m-badges').innerHTML = badgeHtml || "<span style='color:#666; font-size:0.8rem;'>획득한 뱃지가 없습니다.</span>";
+
+        // 2. 최고 점수 표시
         const subs = [
-            '암산챔피언', '10만들기', '24만들기', '슐태표',
-            '덧셈초급', '덧셈중급', '덧셈마스터',
-            '곱셈초급', '곱셈중급', '곱셈마스터',
-            '나눗셈초급', '나눗셈중급', '나눗셈마스터'
+            '덧셈초급', '덧셈중급', '덧셈마스터', '곱셈초급', '곱셈중급', '곱셈마스터', 
+            '나눗셈초급', '나눗셈중급', '나눗셈마스터', '암산챔피언', '10만들기', '24만들기', '슐태표'
         ];
         const best = u.bestScores || {};
-        let h = subs.map(s => `
-            <div class="subject-card">
-                <span>${s}</span>
-                <span class="score-val">${best[s] !== undefined ? best[s] : '-'}</span>
-            </div>
-        `).join('');
-        document.getElementById('col-1').innerHTML = h;
+        let col1Html = "", col2Html = "";
+        subs.forEach((s, idx) => {
+            let card = `
+                <div class="subject-card">
+                    <span>${s}</span><span class="score-val">${best[s] !== undefined ? best[s] : '-'}</span>
+                </div>`;
+            if(idx < 7) col1Html += card; else col2Html += card;
+        });
+        document.getElementById('col-1').innerHTML = col1Html;
+        document.getElementById('col-2').innerHTML = col2Html;
 
-        // 4. [추가] 최근 연습 로그 표시 (데이터가 있을 경우)
-        if(u.practiceLogs && document.getElementById('m-log-list')) {
-            const logArray = Object.values(u.practiceLogs).reverse(); // 최신순
-            let logHtml = logArray.slice(0, 10).map(log => `
-                <div style="font-size:12px; border-bottom:1px solid #eee; padding:3px 0; display:flex; justify-content:space-between;">
-                    <span>${log.date.split(' ')[0]} ${log.subject}</span>
-                    <span style="font-weight:bold;">${log.score}점</span>
-                </div>
-            `).join('');
-            document.getElementById('m-log-list').innerHTML = logHtml;
+        // 3. 기록 표시
+        const logBody = document.getElementById('m-log-list');
+        if(!u.practiceLogs) {
+            logBody.innerHTML = "<tr><td colspan='5'>기록이 없습니다.</td></tr>";
+        } else {
+            const logArray = Object.values(u.practiceLogs).reverse(); 
+            logBody.innerHTML = logArray.map(log => {
+                if (log.subject && (log.subject.includes("관리자") || log.subject.includes("교환"))) {
+                    return `
+                        <tr class="admin-gift-row">
+                            <td style="color:#aaa;">${log.date ? log.date.split(' ')[0].slice(5) : '-'}</td>
+                            <td colspan="2" style="color:#d8b4fe; font-weight:bold;">🎁 ${log.subject}</td>
+                            <td style="color:#22d3ee; font-weight:bold;">${log.earnedGems ? (log.earnedGems > 0 ? '+'+log.earnedGems : log.earnedGems) : ''}</td>
+                            <td style="color:#fbbf24; font-weight:bold;">${log.earnedCoins ? (log.earnedCoins > 0 ? '+'+log.earnedCoins : log.earnedCoins) : ''}</td>
+                        </tr>
+                    `;
+                }
+                return `
+                    <tr>
+                        <td style="color:#aaa;">${log.date ? log.date.split(' ')[0].slice(5) : '-'}</td>
+                        <td>${log.subject || '-'}</td>
+                        <td>${log.score || 0}점</td>
+                        <td style="color:#22d3ee">+${log.earnedGems || 0}</td>
+                        <td style="color:#fbbf24">${log.earnedCoins > 0 ? '+'+log.earnedCoins : '-'}</td>
+                    </tr>
+                `;
+            }).join('');
         }
-
         document.getElementById('record-modal').style.display = 'flex';
     });
+}
+
+// 🌟 뱃지 지급 및 회수 기능 통합!
+function sendAdminGift() {
+    if(!currentModalUserId) return;
+    
+    const gemInput = parseInt(document.getElementById('gift-gems').value) || 0;
+    const coinInput = parseInt(document.getElementById('gift-coins').value) || 0;
+    const msgInput = document.getElementById('gift-msg').value.trim();
+    
+    // 지급할 뱃지와 회수할 뱃지 값 가져오기
+    const giveSelect = document.getElementById('gift-give-badge');
+    const takeSelect = document.getElementById('gift-take-badge');
+    
+    const badgeToGiveId = giveSelect.value;
+    const badgeToTakeId = takeSelect.value;
+    
+    const badgeToGiveName = badgeToGiveId ? giveSelect.options[giveSelect.selectedIndex].text : "";
+    const badgeToTakeName = badgeToTakeId ? takeSelect.options[takeSelect.selectedIndex].text : "";
+
+    if (gemInput === 0 && coinInput === 0 && !badgeToGiveId && !badgeToTakeId) {
+        return alert("보석/코인 수량을 적거나, 지급/회수할 뱃지를 선택하세요.");
+    }
+    if (msgInput === "") {
+        return alert("사유를 입력해주세요. (예: 시스템 누락 보상 지급)");
+    }
+
+    if(confirm(`적용하시겠습니까?`)) {
+        db.ref('approvedUsers/' + currentModalUserId).once('value').then((snap) => {
+            const u = snap.val();
+            const newGems = (u.gems || 0) + gemInput;
+            const newCoins = (u.coins || 0) + coinInput;
+            let currentBadges = u.myBadges || [];
+
+            // 1. 뱃지 회수 (목록에서 삭제)
+            if (badgeToTakeId) {
+                currentBadges = currentBadges.filter(b => b !== badgeToTakeId);
+            }
+            // 2. 뱃지 지급 (목록에 추가)
+            if (badgeToGiveId && !currentBadges.includes(badgeToGiveId)) {
+                currentBadges.push(badgeToGiveId);
+            }
+
+            // 기록 작성용 문구 만들기
+            let badgeMsg = "";
+            if (badgeToGiveId) badgeMsg += ` [${badgeToGiveName} 지급]`;
+            if (badgeToTakeId) badgeMsg += ` [${badgeToTakeName} 회수]`;
+
+            const recordSubject = "관리자: " + msgInput + badgeMsg;
+            
+            const logData = {
+                date: new Date().toLocaleDateString(),
+                subject: recordSubject,
+                score: "-",
+                earnedGems: gemInput,
+                earnedCoins: coinInput
+            };
+
+            db.ref('approvedUsers/' + currentModalUserId).update({
+                gems: Math.max(0, newGems),
+                coins: Math.max(0, newCoins),
+                myBadges: currentBadges
+            }).then(() => {
+                db.ref('approvedUsers/' + currentModalUserId + '/practiceLogs').push(logData).then(() => {
+                    alert("성공적으로 처리되었습니다!");
+                    document.getElementById('gift-gems').value = "";
+                    document.getElementById('gift-coins').value = "";
+                    document.getElementById('gift-msg').value = "";
+                    document.getElementById('gift-give-badge').value = ""; 
+                    document.getElementById('gift-take-badge').value = ""; 
+                    showDetail(currentModalUserId); 
+                });
+            });
+        });
+    }
 }
     function closeModal() { document.getElementById('record-modal').style.display = 'none'; }
     window.onclick = function(e) { if (e.target == document.getElementById('record-modal')) closeModal(); }
