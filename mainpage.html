@@ -128,25 +128,25 @@ setInterval(function() {
     <div class="subject-row">
         <div class="subject-header">➕ 덧셈/뺄셈</div>
         <div class="level-group">
-            <button class="level-btn lv-basic">초급</button>
-            <button class="level-btn lv-basic">중급 🔒</button>
-            <button class="level-btn lv-locked">마스터 🔒</button>
+            <button class="level-btn lv-basic">덧셈초급</button>
+            <button class="level-btn lv-locked" id="btn-add-2">덧셈중급 🔒</button>
+            <button class="level-btn lv-locked" id="btn-add-3">덧셈마스터 🔒</button>
         </div>
     </div>
     <div class="subject-row">
         <div class="subject-header">✖️ 곱셈 암산</div>
         <div class="level-group">
-            <button class="level-btn lv-locked">초급</button>
-            <button class="level-btn lv-locked">중급 🔒</button>
-            <button class="level-btn lv-locked">마스터 🔒</button>
+            <button class="level-btn lv-basic">곱셈초급</button>
+            <button class="level-btn lv-locked" id="btn-mul-2">곱셈중급 🔒</button>
+            <button class="level-btn lv-locked" id="btn-mul-3">곱셈마스터 🔒</button>
         </div>
     </div>
     <div class="subject-row">
         <div class="subject-header">➗ 나눗셈 암산</div>
         <div class="level-group">
-            <button class="level-btn lv-locked">초급</button>
-            <button class="level-btn lv-locked">중급 🔒</button>
-            <button class="level-btn lv-locked">마스터 🔒</button>
+            <button class="level-btn lv-basic">나눗셈초급</button>
+            <button class="level-btn lv-locked" id="btn-div-2">나눗셈중급 🔒</button>
+            <button class="level-btn lv-locked" id="btn-div-3">나눗셈마스터 🔒</button>
         </div>
     </div>
 </div>
@@ -187,16 +187,15 @@ setInterval(function() {
     measurementId: "G-KLHCC95R2C"
   };
 
-// Firebase 초기화 (중복 방지)
+
+
     if (!firebase.apps.length) {
         firebase.initializeApp(firebaseConfig);
     }
     const db = firebase.database();
-
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
-
-
+    // 2. 소리 재생 함수들
     function playClickSound() {
         if (audioCtx.state === 'suspended') audioCtx.resume();
         const osc = audioCtx.createOscillator();
@@ -221,13 +220,14 @@ setInterval(function() {
 
     function handleSettingsClick() {
         const role = localStorage.getItem('userRole');
-        if (role === 'admin' || role === 'teacher') {
+        if (role === 'admin' || role === 'teacher' || role === '선생님') {
             location.href = 'admin.html';
         } else {
             alert("학생용 설정 메뉴는 준비 중입니다.");
         }
     }
 
+    // 3. 카운트다운 및 게임 이동 함수
     function startCountdown(gameName) {
         const overlay = document.getElementById('countdown-overlay');
         const circle = document.getElementById('l-circle');
@@ -255,87 +255,93 @@ setInterval(function() {
             banner.classList.add('show-banner'); 
             playStartSignal(); 
 
-setTimeout(() => {
-    if (gameName.includes("초급")) {
-        location.href = 'add_base.html';
-    } else if (gameName.includes("중급")) {
-        location.href = 'add_medium.html';
-    } else if (gameName.includes("마스터")) {
-        location.href = 'add_master.html';
-    } else if (gameName.includes("CHAMPIONSHIP") || gameName.includes("실시간")) {
-        // CHAMPIONSHIP 배너 클릭 시 암산챔피언.html로 이동
-        location.href = 'championship.html';
-    } else {
-        overlay.style.display = 'none';
-        banner.classList.remove('show-banner');
-        alert("'" + gameName + "' 과목은 준비 중입니다!");
-    }
-}, 1200); 
+            setTimeout(() => {
+                // 게임 이름에 따라 정확한 페이지로 이동!
+                if (gameName.includes("덧셈초급") || gameName === "초급") {
+                    location.href = 'add_base.html';
+                } else if (gameName.includes("덧셈중급") || gameName === "중급") {
+                    location.href = 'add_medium.html';
+                } else if (gameName.includes("덧셈마스터") || gameName === "마스터") {
+                    location.href = 'add_master.html';
+                } else if (gameName.includes("CHAMPIONSHIP") || gameName.includes("실시간")) {
+                    location.href = 'championship.html';
+                } else {
+                    overlay.style.display = 'none';
+                    banner.classList.remove('show-banner');
+                    alert("'" + gameName + "' 과목은 아직 준비 중입니다!");
+                }
+            }, 1200); 
         }, 2500);
     }
 
-window.addEventListener('load', function() {
-    const loginId = localStorage.getItem('loginId'); 
-    const userName = localStorage.getItem('userName') || "사용자";
+    // 4. 페이지 로드 시 실행 (실시간 데이터 연동 및 잠금 해제)
+    window.addEventListener('load', function() {
+        const loginId = localStorage.getItem('loginId'); 
+        const userName = localStorage.getItem('userName') || "사용자";
 
-    document.getElementById('display-user-name').innerText = userName + " 〉";
+        document.getElementById('display-user-name').innerText = userName + " 〉";
 
-    if (loginId) {
-        // 실시간 데이터 감시
-        db.ref('approvedUsers/' + loginId).on('value', (snapshot) => {
-            const userData = snapshot.val();
-            if (userData) {
-                // 1. 보석 및 코인 표시 (값이 없을 경우를 대비해 0으로 설정)
-                const currentGems = userData.gems || 0;
-                const currentCoins = userData.coins || 0;
-                
-                // HTML 요소가 존재하는지 확인 후 업데이트
-                if(document.getElementById('display-gems'))
-                    document.getElementById('display-gems').innerText = `💎 ${currentGems}`;
-                if(document.getElementById('display-coins'))
-                    document.getElementById('display-coins').innerText = `🪙 ${currentCoins}`;
+        if (loginId) {
+            db.ref('approvedUsers/' + loginId).on('value', (snapshot) => {
+                const userData = snapshot.val();
+                if (userData) {
+                    const currentGems = userData.gems || 0;
+                    const currentCoins = userData.coins || 0;
+                    
+                    if(document.getElementById('display-gems')) document.getElementById('display-gems').innerText = `💎 ${currentGems}`;
+                    if(document.getElementById('display-coins')) document.getElementById('display-coins').innerText = `🪙 ${currentCoins}`;
 
-                // 2. 뱃지 표시 로직
-                const myBadges = userData.myBadges || []; 
-                const badgeContainer = document.getElementById('main-badge-container');
-                
-                const badgeEmojis = {
-                    'badge-fire': '🔥', 'badge-calendar': '🗓️', 'badge-perfect': '💯',
-                    'badge-add-1': '🥇', 'badge-add-2': '🏆', 'badge-add-3': '👑',
-                    'badge-mul-1': '🥈', 'badge-mul-2': '💎', 'badge-mul-3': '🔮',
-                    'badge-div-1': '🥉', 'badge-div-2': '🔱', 'badge-div-3': '🌌'
-                };
+                    const myBadges = userData.myBadges || []; 
+                    const badgeContainer = document.getElementById('main-badge-container');
+                    
+                    const badgeEmojis = {
+                        'badge-fire': '🔥', 'badge-calendar': '🗓️', 'badge-perfect': '💯',
+                        'badge-add-1': '🥇', 'badge-add-2': '🏆', 'badge-add-3': '👑',
+                        'badge-mul-1': '🥈', 'badge-mul-2': '💎', 'badge-mul-3': '🔮',
+                        'badge-div-1': '🥉', 'badge-div-2': '🔱', 'badge-div-3': '🌌'
+                    };
 
-                if (badgeContainer) {
-                    badgeContainer.innerHTML = ""; // 기존의 가짜 뱃지들 싹 비우기
-
-                    // 만약 획득한 뱃지가 하나도 없다면 (배열이 비어있다면)
-                    if (myBadges.length === 0) {
-                        badgeContainer.innerHTML = '<div style="color: #475569; font-size: 0.8rem; padding: 10px;">획득한 뱃지가 없습니다.</div>';
-                    } else {
-                        // 획득한 뱃지가 있다면 하나씩 생성
-                        myBadges.forEach(badgeId => {
-                            const emoji = badgeEmojis[badgeId];
-                            if (emoji) {
-                                const slot = document.createElement('div');
-                                slot.className = "badge-slot"; // CSS의 badge-slot 스타일 적용
-                                slot.innerText = emoji;
-                                badgeContainer.appendChild(slot);
-                            }
-                        });
+                    if (badgeContainer) {
+                        badgeContainer.innerHTML = ""; 
+                        if (myBadges.length === 0) {
+                            badgeContainer.innerHTML = '<div style="color: #475569; font-size: 0.8rem; padding: 10px;">획득한 뱃지가 없습니다.</div>';
+                        } else {
+                            myBadges.forEach(badgeId => {
+                                const emoji = badgeEmojis[badgeId];
+                                if (emoji) {
+                                    const slot = document.createElement('div');
+                                    slot.className = "badge-slot"; 
+                                    slot.innerText = emoji;
+                                    badgeContainer.appendChild(slot);
+                                }
+                            });
+                        }
                     }
+
+                    localStorage.setItem('userGems', currentGems);
+                    localStorage.setItem('userCoins', currentCoins);
+
+                    // 🌟 뱃지에 따른 자물쇠 자동 해제
+                    function unlockBtn(btnId, text) {
+                        let btn = document.getElementById(btnId);
+                        if(btn) {
+                            btn.classList.remove('lv-locked');
+                            btn.classList.add('lv-basic');
+                            btn.innerText = text;
+                        }
+                    }
+
+                    if (myBadges.includes('badge-add-1') || myBadges.includes('badge-add-2') || myBadges.includes('badge-add-3')) unlockBtn('btn-add-2', '덧셈중급');
+                    if (myBadges.includes('badge-add-2') || myBadges.includes('badge-add-3')) unlockBtn('btn-add-3', '덧셈마스터');
+                    if (myBadges.includes('badge-mul-1') || myBadges.includes('badge-mul-2') || myBadges.includes('badge-mul-3')) unlockBtn('btn-mul-2', '곱셈중급');
+                    if (myBadges.includes('badge-mul-2') || myBadges.includes('badge-mul-3')) unlockBtn('btn-mul-3', '곱셈마스터');
+                    if (myBadges.includes('badge-div-1') || myBadges.includes('badge-div-2') || myBadges.includes('badge-div-3')) unlockBtn('btn-div-2', '나눗셈중급');
+                    if (myBadges.includes('badge-div-2') || myBadges.includes('badge-div-3')) unlockBtn('btn-div-3', '나눗셈마스터');
                 }
+            });
+        }
 
-                // 브라우저 저장소 업데이트
-                localStorage.setItem('userGems', currentGems);
-                localStorage.setItem('userCoins', currentCoins);
-            }
-        });
-    }
-
-
-
-   // --- 캐릭터 설정 로직 (기존 그대로 유지) ---
+        // 캐릭터 설정 로직
         const savedChar = localStorage.getItem('myChar') || "dog.png";
         const savedWing = localStorage.getItem('myWing'); 
         const savedPet = localStorage.getItem('myPet');
@@ -352,8 +358,14 @@ window.addEventListener('load', function() {
             petImg.style.display = 'block';
         }
 
-        document.querySelectorAll('.level-btn.lv-basic, .mini-btn, .championship-banner').forEach(btn => {
+        // 🌟 클릭 이벤트 등록 (잠긴 버튼 안내 기능 포함)
+        document.querySelectorAll('.level-btn, .mini-btn, .championship-banner').forEach(btn => {
             btn.onclick = function() {
+                // 만약 'lv-locked' 클래스가 있다면 잠긴 버튼이므로 클릭 방지!
+                if (this.classList.contains('lv-locked')) {
+                    alert("🔒 아직 잠겨있습니다! 이전 단계를 클리어해서 메달을 획득하세요.");
+                    return; 
+                }
                 const title = this.innerText.split('\n')[0].trim();
                 startCountdown(title);
             };
