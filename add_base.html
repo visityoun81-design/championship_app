@@ -969,93 +969,81 @@ if (typeof updateHallOfFame === 'function') {
     setInterval(updateHallOfFame, 3000);
 }
 
-// --- 뱃지 지급 및 기록 저장 함수 통합 ---
 function checkAndAwardBadges(level, currentScore) {
-    // 1. 필요한 정보 가져오기
-    let myBadges = JSON.parse(localStorage.getItem('myBadges') || "[]");
-    let gems = parseInt(localStorage.getItem('userGems') || 0);
-    let coins = parseInt(localStorage.getItem('userCoins') || 0);
-    let logs = JSON.parse(localStorage.getItem('practiceLogs') || "[]"); // 출석 확인용
+    const loginId = localStorage.getItem('loginId');
+    if (!loginId || typeof firebase === 'undefined') return;
+
+    const db = firebase.database();
     
-    let badgeId = "";
-    let badgeName = "";
-
-    // 2. 점수별 뱃지 판정 (초급/마스터)
-    if (currentScore >= 95) {
-        if (level === '덧셈초급') { badgeId = 'badge-add-1'; badgeName = '덧셈 메달'; }
-    } else if (currentScore >= 90) {
-        if (level === '덧셈마스터') { badgeId = 'badge-add-3'; badgeName = '덧셈 왕관'; }
-    }
-
-    // 뱃지 획득 처리
-    if (badgeId && !myBadges.includes(badgeId)) {
-        myBadges.push(badgeId);
-        alert(`🎊 축하합니다! ${badgeName}을(를) 획득했습니다!`);
-    }
-
-    // 3. 출석 기반 뱃지 (7일/30일)
-    if (logs && logs.length > 0) {
-        let studyDates = [...new Set(logs.map(log => log.date ? log.date.split(' ')[0] : ""))].filter(d => d !== "").sort();
+    // 1. 해당 아이의 전체 데이터를 가져옵니다.
+    db.ref('approvedUsers/' + loginId).once('value', (snapshot) => {
+        const userData = snapshot.val() || {};
+        let myBadges = userData.myBadges || [];
+        let currentGems = userData.gems || 0;
+        let currentCoins = userData.coins || 0;
         
-        // 7일 연속 출석 확인
-        if (!myBadges.includes('badge-fire')) {
-            let continuousDays = 1;
-            for (let i = 1; i < studyDates.length; i++) {
-                let prev = new Date(studyDates[i-1]);
-                let curr = new Date(studyDates[i]);
-                if ((curr - prev) / (1000 * 60 * 60 * 24) === 1) continuousDays++;
-                else continuousDays = 1;
-                
-                if (continuousDays >= 7) { 
-                    myBadges.push('badge-fire'); 
-                    alert("🔥 7일 연속 열공! 파이어볼 뱃지 획득!"); 
-                    break; 
-                }
+        // [수정 포인트] 전체 최고점이 아니라, '현재 과목'의 최고점을 가져옵니다.
+        // 예: userData.bestScores['덧셈초급']
+        let subjectBestScores = userData.bestScores || {}; 
+        let oldBestForThisSubject = subjectBestScores[level] || 0; 
+
+        // --- [A] 뱃지 및 레벨업 판정 (기존과 동일) ---
+        if (currentScore >= 95) {
+            if (!myBadges.includes('badge-add-1')) {
+                myBadges.push('badge-add-1');
+                alert("🥇 축하합니다! '덧셈 메달' 획득 및 '중급' 레벨이 열렸습니다!");
+            }
+            localStorage.setItem('level_addition_intermediate', 'unlocked');
+        }
+        if (currentScore === 100) {
+            if (!myBadges.includes('badge-perfect')) {
+                myBadges.push('badge-perfect');
+                alert("💯 대단해요! '만점 뱃지'를 획득했습니다!");
             }
         }
+
+        // --- [B] 보석 및 코인 계산 ---
+        const earnedGems = Math.floor(currentScore / 10);
         
-        // 30일 누적 출석 확인
-        if (!myBadges.includes('badge-calendar') && studyDates.length >= 30) {
-            myBadges.push('badge-calendar');
-            alert("🗓️ 30일 출석 달성! 황금달력 뱃지 획득!");
+        // [수정 포인트] '해당 과목'의 이전 최고점보다 높을 때만 100코인!
+        let earnedCoins = 0;
+        if (currentScore > oldBestForThisSubject) {
+            earnedCoins = 100;
+            // 해당 과목의 새로운 최고점 저장
+            subjectBestScores[level] = currentScore; 
         }
-    }
 
-    // 4. 만점 뱃지 (100점일 때)
-    if (currentScore === 100 && !myBadges.includes('badge-perfect')) {
-        myBadges.push('badge-perfect');
-        alert("💯 만점 달성! '완벽한 마법사' 뱃지 획득!");
-    }
+        // --- [C] 서버 데이터 업데이트 ---
+        const newGems = currentGems + earnedGems;
+        const newCoins = currentCoins + earnedCoins;
 
-    // 5. 로컬 및 서버 저장소 업데이트
-    localStorage.setItem('myBadges', JSON.stringify(myBadges));
+        // 공부 기록 (날짜/과목/점수/보석/코인 모두 포함)
+        const logData = {
+            date: new Date().toLocaleDateString(),
+            subject: level,
+            score: currentScore,
+            earnedGems: earnedGems,
+            earnedCoins: earnedCoins
+        };
 
-// checkAndAwardBadges 함수 내부 수정
-const loginId = localStorage.getItem('loginId');
-if (loginId && typeof firebase !== 'undefined' && firebase.apps.length > 0) {
-    const db = firebase.database();
-    const earnedGems = Math.floor(currentScore / 10); // 10점당 보석 1개 예시
+        // 서버에 묶어서 업데이트
+        db.ref('approvedUsers/' + loginId).update({
+            myBadges: myBadges,
+            gems: newGems,
+            coins: newCoins,
+            bestScores: subjectBestScores, // 과목별 점수판 전체를 업데이트
+            lastActivity: new Date().toLocaleString()
+        });
 
-    // [공통] 서버의 공부기록(practiceLogs)에 데이터 추가
-    db.ref('approvedUsers/' + loginId + '/practiceLogs').push({
-        date: new Date().toLocaleDateString(), // "2024. 3. 9." 형태로 저장
-        subject: level,     // 과목명 (예: 덧셈초급)
-        score: currentScore, // 점수
-        earnedGems: earnedGems // 획득한 보석 (+숫자로 표시됨)
-    });
+        // 상세 공부 기록 추가
+        db.ref('approvedUsers/' + loginId + '/practiceLogs').push(logData);
 
-// 3. 보석 누적 및 서버 업데이트
-    let currentGems = parseInt(localStorage.getItem('userGems') || 0);
-    let newTotalGems = currentGems + earnedGems;
-    
-    localStorage.setItem('userGems', newTotalGems);
-    db.ref('approvedUsers/' + loginId).update({ 
-        gems: newTotalGems,
-        lastActivity: new Date().toLocaleString()
+        // 로컬 저장소 동기화
+        localStorage.setItem('userGems', newGems);
+        localStorage.setItem('userCoins', newCoins);
+        localStorage.setItem('myBadges', JSON.stringify(myBadges));
     });
 }
-}
-// 함수 정의가 끝났습니다.
 
 
 </script>
