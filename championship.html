@@ -871,7 +871,7 @@ function showFinalResult() {
     let totalCoins = parseInt(localStorage.getItem('userCoins') || "0");
     
     // 이번 게임 보상 (기존 로직 유지: 점수당 보석 1개, 참가 코인 100개)
-    let earnedGems = totalScore;
+    let earnedGems = Math.floor(totalScore / 10);
     let earnedCoins = 100;
 
     let bestRecords = {}; 
@@ -910,3 +910,4 @@ function showFinalResult() {
     </script>
 </body>
 </html>
+
