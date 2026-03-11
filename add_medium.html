@@ -581,10 +581,11 @@ function saveRecord(finished) {
         console.error("서버 저장 실패:", error);
     });
 
-    if(finished) { 
-        localStorage.setItem('userGems', (parseInt(localStorage.getItem('userGems')||0)) + totalScore); 
-        localStorage.setItem('userCoins', (parseInt(localStorage.getItem('userCoins')||0)) + 100); 
-    }
+   if(finished) { 
+    let earnedGems = Math.floor(totalScore / 10); // 10점당 1개
+    localStorage.setItem('userGems', (parseInt(localStorage.getItem('userGems')||0)) + earnedGems); 
+    localStorage.setItem('userCoins', (parseInt(localStorage.getItem('userCoins')||0)) + 100); 
+}
     updateHallOfFame(); 
 }
 
@@ -863,9 +864,9 @@ function showFinalResult() {
     let totalGems = parseInt(localStorage.getItem('userGems') || "0");
     let totalCoins = parseInt(localStorage.getItem('userCoins') || "0");
     
-    // 이번 게임 보상 (기존 로직 유지: 점수당 보석 1개, 참가 코인 100개)
-    let earnedGems = totalScore;
-    let earnedCoins = 100;
+// 이번 게임 보상: 10점당 보석 1개
+let earnedGems = Math.floor(totalScore / 10);
+let earnedCoins = 100;
 
     let bestRecords = {}; 
     allRanks.forEach(r => { if(!bestRecords[r.realName] || bestRecords[r.realName].score < r.score) bestRecords[r.realName] = r; });
