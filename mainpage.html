@@ -1,360 +1,185 @@
 <!DOCTYPE html>
-
 <html lang="ko">
-
 <head>
-
     <meta charset="UTF-8">
-
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <title>CHAMPIONSHIP LOBBY</title>
 
-
-
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
 
-
-
-
     <link rel="manifest" href="manifest.json">
-
     <meta name="apple-mobile-web-app-capable" content="yes">
-
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-
     <link rel="apple-touch-icon" href="dog.png">
-
     <script>
-
       if ('serviceWorker' in navigator) {
-
         navigator.serviceWorker.register('sw.js');
-
       }
 
-
-
 // 1초마다 대회가 시작되었는지 체크하는 기능
-
 setInterval(function() {
-
     const isStarted = localStorage.getItem('tournamentActive');
-
     const eventBanner = document.getElementById('event-banner'); // 이벤트 배너 ID
 
-
-
     if (isStarted === 'true') {
-
         // 대회가 시작되었다면 배너를 보여주거나 강조 효과
-
         if (eventBanner) {
-
             eventBanner.style.display = 'block';
-
             eventBanner.innerHTML = "🔥 지금은 대회 시간입니다! 높은 점수에 도전하세요! 🔥";
-
             eventBanner.style.backgroundColor = "#f87171"; // 빨간색으로 강조
-
         }
-
     } else {
-
         // 대회가 종료되었다면 배너를 숨기거나 평소 상태로
-
         if (eventBanner) {
-
             eventBanner.style.display = 'none';
-
         }
-
     }
-
 }, 1000); // 1000ms = 1초마다 확인
-
-
-
 
 
     </script>
 
 
 
-
-
-
-
     <style>
-
         /* [1. 기본 디자인 복구] */
-
         body { opacity: 0; animation: fadeInPage 0.8s forwards; margin: 0; padding: 0; background: radial-gradient(circle at top, #1e1b4b, #020617); color: white; font-family: 'Pretendard', sans-serif; padding-bottom: 40px; overflow-x: hidden; }
-
         @keyframes fadeInPage { from { opacity: 0; } to { opacity: 1; } }
-
         :root { --bg-dark: #0f172a; --card-bg: rgba(30, 41, 59, 0.8); --neon-purple: #a855f7; --gold: #fbbf24; --diamond: #22d3ee; }
 
-
-
         /* [2. 헤더 및 자산 UI] */
-
         .header { padding: 15px 20px; display: flex; align-items: center; justify-content: space-between; background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(15px); border-bottom: 2px solid rgba(168, 85, 247, 0.3); position: sticky; top: 0; z-index: 1000; }
-
         .profile-btn { display: flex; align-items: center; gap: 12px; cursor: pointer; }
-
         .char-circle { width: 50px; height: 50px; background: linear-gradient(135deg, #a855f7, #3b82f6); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px; border: 2px solid white; }
-
         .user-text .name { font-weight: bold; font-size: 1rem; display: block; }
-
         
-
         /* [3. 섹션 및 버튼 디자인] */
-
         .section { padding: 15px 20px 5px; }
-
         .section-title { font-size: 1rem; font-weight: bold; margin-bottom: 10px; display: block; color: var(--neon-purple); }
-
         .badge-row { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 5px; }
-
         .badge-slot { min-width: 55px; height: 55px; background: var(--card-bg); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; border: 1px solid rgba(255,255,255,0.1); }
-
         
-
         .content-list { padding: 0 20px; display: flex; flex-direction: column; gap: 12px; }
-
         .subject-row { background: var(--card-bg); border-radius: 18px; padding: 15px; display: flex; flex-direction: column; gap: 10px; border: 1px solid rgba(255,255,255,0.08); }
-
         .subject-header { font-weight: bold; font-size: 1rem; display: flex; align-items: center; gap: 5px; }
-
         .level-group { display: flex; gap: 8px; }
-
         .level-btn { flex: 1; padding: 12px 5px; border-radius: 10px; border: none; font-weight: bold; font-size: 0.85rem; color: white; cursor: pointer; transition: 0.2s; }
-
         .lv-basic { background: linear-gradient(135deg, #22c55e, #15803d); box-shadow: 0 4px 0 #052e16; }
-
         .lv-locked { background: #334155; box-shadow: 0 4px 0 #1e293b; opacity: 0.6; cursor: not-allowed; }
-
         
-
         .mini-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; padding: 15px 20px; }
-
         .mini-btn { background: #1e293b; border: 1px solid var(--neon-purple); padding: 15px 5px; border-radius: 15px; text-align: center; font-size: 0.8rem; font-weight: bold; color: white; cursor: pointer; }
-
         .championship-banner { background: linear-gradient(90deg, #7e22ce, #3b82f6); margin: 10px 20px; padding: 20px; border-radius: 20px; text-align: center; font-weight: 900; font-size: 1.1rem; box-shadow: 0 10px 20px rgba(126, 34, 206, 0.4); color: white; cursor: pointer; }
 
-
-
         /* [4. 카운트다운 레이어] */
-
         #countdown-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(2, 6, 23, 0.98); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 10000; backdrop-filter: blur(20px); }
-
         .loader-container { position: relative; width: 250px; height: 250px; display: flex; align-items: center; justify-content: center; }
-
         .loader-bg { position: absolute; width: 100%; height: 100%; border-radius: 50%; border: 10px solid rgba(168, 85, 247, 0.1); }
-
         .loader-circle { position: absolute; width: 100%; height: 100%; border-radius: 50%; border: 10px solid transparent; border-top: 10px solid #a855f7; border-right: 10px solid #a855f7; box-shadow: 0 0 25px #a855f7; transform: rotate(-45deg); display: none; }
-
         .loader-circle.active { display: block; animation: spinCircle 2s linear forwards; }
-
         @keyframes spinCircle { 0% { transform: rotate(-45deg); } 100% { transform: rotate(315deg); } }
-
         #countdown-text { position: absolute; font-size: 50px; font-weight: 900; color: #fff; opacity: 0.3; transition: 0.5s; z-index: 10; }
-
         #countdown-text.finish { opacity: 1; transform: scale(1.3); color: #fbbf24; text-shadow: 0 0 40px #fbbf24; }
-
         #game-start-banner { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0); width: 100%; text-align: center; font-size: 80px; font-weight: 900; color: #22d3ee; text-shadow: 0 0 50px #22d3ee; z-index: 10001; pointer-events: none; opacity: 0; font-style: italic; }
-
         .show-banner { animation: bannerPop 1s forwards; }
-
         @keyframes bannerPop { 0% { transform: translate(-50%, -50%) scale(0); opacity: 0; } 100% { transform: translate(-50%, -50%) scale(1); opacity: 1; } }
 
-
-
         .settings-btn { position: fixed; bottom: 20px; right: 20px; font-size: 30px; cursor: pointer; z-index: 1100; background: rgba(0,0,0,0.5); border-radius: 50%; width: 55px; height: 55px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--neon-purple); }
-
     </style>
-
 </head>
-
 <body>
 
 
 
-
-
-
-
 <div class="header">
-
     <div class="profile-btn" onclick="location.href='information.html'" style="display: flex; align-items: center; gap: 12px; cursor: pointer;">
 
-
-
         <div class="char-circle" id="lobby-char-container" style="position: relative; overflow: hidden; background: #2d2d5a; width: 50px; height: 50px; border-radius: 50%; border: 2px solid white; display: flex; align-items: center; justify-content: center;">
-
             <img id="l-wing" src="" style="position:absolute; width:100%; height:100%; top:50%; left:50%; transform:translate(-50%, -50%); display:none; z-index:1;">
-
             <img id="l-char" src="dog.png" style="position:absolute; width:80%; height:80%; top:50%; left:50%; transform:translate(-50%, -50%); z-index:2;">
-
             <img id="l-pet" src="" style="position:absolute; width:35%; height:35%; top:75%; left:75%; transform:translate(-50%, -50%); display:none; z-index:3;">
-
         </div>
-
-
-
-
 
 
 
         <div class="user-text">
-
             <span id="display-user-name" style="font-weight: bold; font-size: 1rem;">윤석화 〉</span>
-
         </div>
-
     </div>
-
     
-
     <div style="display: flex; align-items: center; gap: 15px; text-align: right; font-weight: bold; font-size: 0.9rem;">
-
         <div style="text-align: left;">
-
             <div id="display-gems" style="color:var(--diamond)">💎 0</div>
-
             <div id="display-coins" style="color:var(--gold)">🪙 0</div>
-
         </div>
-
     </div>
-
 </div>
-
-
 
 <div class="section">
-
     <span class="section-title">🏆 나의 황금 배지 컬렉션</span>
-
     <div class="badge-row" id="main-badge-container">
-
         <div style="color: #475569; font-size: 0.8rem; padding: 10px;">데이터를 불러오는 중...</div>
-
     </div>
-
 </div>
-
-
 
 <div class="content-list">
-
     <div class="subject-row">
-
         <div class="subject-header">➕ 덧셈/뺄셈</div>
-
         <div class="level-group">
-
             <button class="level-btn lv-basic">덧셈초급</button>
-
             <button class="level-btn lv-locked" id="btn-add-2">덧셈중급 🔒</button>
-
             <button class="level-btn lv-locked" id="btn-add-3">덧셈마스터 🔒</button>
-
         </div>
-
     </div>
-
     <div class="subject-row">
-
         <div class="subject-header">✖️ 곱셈 암산</div>
-
         <div class="level-group">
-
             <button class="level-btn lv-basic">곱셈초급</button>
-
             <button class="level-btn lv-locked" id="btn-mul-2">곱셈중급 🔒</button>
-
             <button class="level-btn lv-locked" id="btn-mul-3">곱셈마스터 🔒</button>
-
         </div>
-
     </div>
-
     <div class="subject-row">
-
         <div class="subject-header">➗ 나눗셈 암산</div>
-
         <div class="level-group">
-
             <button class="level-btn lv-basic">나눗셈초급</button>
-
             <button class="level-btn lv-locked" id="btn-div-2">나눗셈중급 🔒</button>
-
             <button class="level-btn lv-locked" id="btn-div-3">나눗셈마스터 🔒</button>
-
         </div>
-
     </div>
-
 </div>
-
-
 
 <div class="mini-grid">
-
     <div class="mini-btn  lv-locked">🎈 10만들기🔒</div>
-
     <div class="mini-btn  lv-locked">🧱 24만들기🔒</div>
-
     <div class="mini-btn  lv-locked">🔢 슐테표🔒</div>
-
 </div>
-
-
 
 <div class="championship-banner">
-
     🏆 CHAMPIONSHIP 🏆
-
     <div style="font-size: 0.7rem; font-weight: normal; margin-top: 5px;">실시간 전국 암산챔피언쉽 입장</div>
-
 </div>
-
-
 
 <div id="countdown-overlay">
-
     <div class="loader-container">
-
         <div class="loader-bg"></div><div class="loader-circle" id="l-circle"></div><div id="countdown-text">START!</div>
-
     </div>
-
 </div>
-
 <div id="game-start-banner">GAME START!!</div>
-
 <div class="settings-btn" onclick="handleSettingsClick()">⚙️</div>
-
-
-
-
-
 
 
 
 
 <script>
 
-
-
-  const firebaseConfig = {
+    // Firebase 설정 및 초기화
+    const firebaseConfig = {
     apiKey: "AIzaSyCbhFq8vcLem8DoMdlsXpC-ZRYELhJSFHU",
     authDomain: "championship-8f923.firebaseapp.com",
+    databaseURL: "https://championship-8f923-default-rtdb.asia-southeast1.firebasedatabase.app",
     projectId: "championship-8f923",
     storageBucket: "championship-8f923.firebasestorage.app",
     messagingSenderId: "118704807417",
@@ -364,378 +189,189 @@ setInterval(function() {
 
 
 
-
-
-
-
     if (!firebase.apps.length) {
-
         firebase.initializeApp(firebaseConfig);
-
     }
-
     const db = firebase.database();
-
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
-
-
     // 2. 소리 재생 함수들
-
     function playClickSound() {
-
         if (audioCtx.state === 'suspended') audioCtx.resume();
-
         const osc = audioCtx.createOscillator();
-
         const gain = audioCtx.createGain();
-
         osc.type = 'triangle'; osc.frequency.setValueAtTime(800, audioCtx.currentTime);
-
         gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-
         osc.connect(gain); gain.connect(audioCtx.destination);
-
         osc.start(); osc.stop(audioCtx.currentTime + 0.1);
-
     }
-
-
 
     function playStartSignal() {
-
         if (audioCtx.state === 'suspended') audioCtx.resume();
-
         const osc = audioCtx.createOscillator();
-
         const gain = audioCtx.createGain();
-
         osc.type = 'square'; osc.frequency.setValueAtTime(440, audioCtx.currentTime);
-
         osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.1);
-
         gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
-
         gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 1.2);
-
         osc.connect(gain); gain.connect(audioCtx.destination);
-
         osc.start(); osc.stop(audioCtx.currentTime + 1.2);
-
     }
-
-
 
     function handleSettingsClick() {
-
         const role = localStorage.getItem('userRole');
-
         if (role === 'admin' || role === 'teacher' || role === '선생님') {
-
             location.href = 'admin.html';
-
         } else {
-
             alert("학생용 설정 메뉴는 준비 중입니다.");
-
         }
-
     }
-
-
 
     // 3. 카운트다운 및 게임 이동 함수
-
     function startCountdown(gameName) {
-
         const overlay = document.getElementById('countdown-overlay');
-
         const circle = document.getElementById('l-circle');
-
         const text = document.getElementById('countdown-text');
-
         const banner = document.getElementById('game-start-banner');
 
-
-
         overlay.style.display = 'flex';
-
         circle.classList.remove('active');
-
         text.classList.remove('finish');
-
         text.style.display = 'block'; 
-
         text.style.opacity = "0.3";
-
         banner.classList.remove('show-banner');
 
-
-
         void circle.offsetWidth; 
-
         circle.classList.add('active');
-
         playClickSound(); 
 
-
-
         setTimeout(() => {
-
             text.classList.add('finish');
-
             playClickSound(); 
-
         }, 2000);
 
-
-
         setTimeout(() => {
-
             text.style.display = 'none'; 
-
             banner.classList.add('show-banner'); 
-
             playStartSignal(); 
 
-
-
             setTimeout(() => {
-
                 // 게임 이름에 따라 정확한 페이지로 이동!
-
                 if (gameName.includes("덧셈초급") || gameName === "초급") {
-
                     location.href = 'add_base.html';
-
                 } else if (gameName.includes("덧셈중급") || gameName === "중급") {
-
                     location.href = 'add_medium.html';
-
                 } else if (gameName.includes("덧셈마스터") || gameName === "마스터") {
-
                     location.href = 'add_master.html';
-
                 } else if (gameName.includes("CHAMPIONSHIP") || gameName.includes("실시간")) {
-
                     location.href = 'championship.html';
-
                 } else {
-
                     overlay.style.display = 'none';
-
                     banner.classList.remove('show-banner');
-
                     alert("'" + gameName + "' 과목은 아직 준비 중입니다!");
-
                 }
-
             }, 1200); 
-
         }, 2500);
-
     }
 
-
-
     // 4. 페이지 로드 시 실행 (실시간 데이터 연동 및 잠금 해제)
-
     window.addEventListener('load', function() {
-
         const loginId = localStorage.getItem('loginId'); 
-
         const userName = localStorage.getItem('userName') || "사용자";
-
-
 
         document.getElementById('display-user-name').innerText = userName + " 〉";
 
-
-
         if (loginId) {
-
             db.ref('approvedUsers/' + loginId).on('value', (snapshot) => {
-
                 const userData = snapshot.val();
-
                 if (userData) {
-
                     const currentGems = userData.gems || 0;
-
                     const currentCoins = userData.coins || 0;
-
                     
-
                     if(document.getElementById('display-gems')) document.getElementById('display-gems').innerText = `💎 ${currentGems}`;
-
                     if(document.getElementById('display-coins')) document.getElementById('display-coins').innerText = `🪙 ${currentCoins}`;
 
-
-
                     const myBadges = userData.myBadges || []; 
-
                     const badgeContainer = document.getElementById('main-badge-container');
-
                     
-
                     const badgeEmojis = {
-
                         'badge-fire': '🔥', 'badge-calendar': '🗓️', 'badge-perfect': '💯',
-
                         'badge-add-1': '🥇', 'badge-add-2': '🏆', 'badge-add-3': '👑',
-
                         'badge-mul-1': '🥈', 'badge-mul-2': '💎', 'badge-mul-3': '🔮',
-
                         'badge-div-1': '🥉', 'badge-div-2': '🔱', 'badge-div-3': '🌌'
-
                     };
 
-
-
                     if (badgeContainer) {
-
                         badgeContainer.innerHTML = ""; 
-
                         if (myBadges.length === 0) {
-
                             badgeContainer.innerHTML = '<div style="color: #475569; font-size: 0.8rem; padding: 10px;">획득한 뱃지가 없습니다.</div>';
-
                         } else {
-
                             myBadges.forEach(badgeId => {
-
                                 const emoji = badgeEmojis[badgeId];
-
                                 if (emoji) {
-
                                     const slot = document.createElement('div');
-
                                     slot.className = "badge-slot"; 
-
                                     slot.innerText = emoji;
-
                                     badgeContainer.appendChild(slot);
-
                                 }
-
                             });
-
                         }
-
                     }
-
-
 
                     localStorage.setItem('userGems', currentGems);
-
                     localStorage.setItem('userCoins', currentCoins);
 
-
-
                     // 🌟 뱃지에 따른 자물쇠 자동 해제
-
                     function unlockBtn(btnId, text) {
-
                         let btn = document.getElementById(btnId);
-
                         if(btn) {
-
                             btn.classList.remove('lv-locked');
-
                             btn.classList.add('lv-basic');
-
                             btn.innerText = text;
-
                         }
-
                     }
 
-
-
                     if (myBadges.includes('badge-add-1') || myBadges.includes('badge-add-2') || myBadges.includes('badge-add-3')) unlockBtn('btn-add-2', '덧셈중급');
-
                     if (myBadges.includes('badge-add-2') || myBadges.includes('badge-add-3')) unlockBtn('btn-add-3', '덧셈마스터');
-
                     if (myBadges.includes('badge-mul-1') || myBadges.includes('badge-mul-2') || myBadges.includes('badge-mul-3')) unlockBtn('btn-mul-2', '곱셈중급');
-
                     if (myBadges.includes('badge-mul-2') || myBadges.includes('badge-mul-3')) unlockBtn('btn-mul-3', '곱셈마스터');
-
                     if (myBadges.includes('badge-div-1') || myBadges.includes('badge-div-2') || myBadges.includes('badge-div-3')) unlockBtn('btn-div-2', '나눗셈중급');
-
                     if (myBadges.includes('badge-div-2') || myBadges.includes('badge-div-3')) unlockBtn('btn-div-3', '나눗셈마스터');
-
                 }
-
             });
-
         }
-
-
 
         // 캐릭터 설정 로직
-
         const savedChar = localStorage.getItem('myChar') || "dog.png";
-
         const savedWing = localStorage.getItem('myWing'); 
-
         const savedPet = localStorage.getItem('myPet');
-
         document.getElementById('l-char').src = savedChar;
 
-
-
         if (savedWing && savedWing !== "") {
-
             const wingImg = document.getElementById('l-wing');
-
             wingImg.src = savedWing;
-
             wingImg.style.display = 'block';
-
         }
-
         if (savedPet && savedPet !== "") {
-
             const petImg = document.getElementById('l-pet');
-
             petImg.src = savedPet;
-
             petImg.style.display = 'block';
-
         }
-
-
 
         // 🌟 클릭 이벤트 등록 (잠긴 버튼 안내 기능 포함)
-
         document.querySelectorAll('.level-btn, .mini-btn, .championship-banner').forEach(btn => {
-
             btn.onclick = function() {
-
                 // 만약 'lv-locked' 클래스가 있다면 잠긴 버튼이므로 클릭 방지!
-
                 if (this.classList.contains('lv-locked')) {
-
                     alert("🔒 아직 잠겨있습니다! 이전 단계를 클리어해서 메달을 획득하세요.");
-
                     return; 
-
                 }
-
                 const title = this.innerText.split('\n')[0].trim();
-
                 startCountdown(title);
-
             };
-
         });
-
     });
-
 </script>
 
-
-
 </body>
-
 </html>
