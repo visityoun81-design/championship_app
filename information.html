@@ -14,53 +14,27 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 
-    <script>
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js');
-      }
-    </script>
-
     <style>
-        /* 🌟 전체 배경을 최신 게임 느낌으로 통일 */
         body { 
             background: radial-gradient(circle at top, #1e1b4b, #020617); 
-            color: white; 
-            font-family: 'Pretendard', 'Noto Sans KR', sans-serif; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            padding: 20px; 
-            margin: 0; 
-            min-height: 100vh;
+            color: white; font-family: 'Pretendard', 'Noto Sans KR', sans-serif; 
+            display: flex; flex-direction: column; align-items: center; padding: 20px; margin: 0; min-height: 100vh;
         }
         
-        /* 🌟 태블릿/휴대폰 동시 최적화: max-width를 700px로 넓히고 유리 질감(Glassmorphism) 적용 */
         .info-card { 
-            width: 100%; 
-            max-width: 700px; 
-            background: rgba(30, 30, 63, 0.7); 
-            backdrop-filter: blur(20px);
-            border: 2px solid rgba(168, 85, 247, 0.3);
-            border-radius: 24px; 
-            padding: 20px; 
-            box-shadow: 0 20px 50px rgba(0,0,0,0.5); 
-            text-align: center; 
-            box-sizing: border-box; 
+            width: 100%; max-width: 700px; 
+            background: rgba(30, 30, 63, 0.7); backdrop-filter: blur(20px);
+            border: 2px solid rgba(168, 85, 247, 0.3); border-radius: 24px; 
+            padding: 20px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); 
+            text-align: center; box-sizing: border-box; 
         }
 
         .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
         
-        /* 🌟 버튼 디자인 업그레이드 */
         .back-btn { 
-            background: rgba(168, 85, 247, 0.15); 
-            border: 1.5px solid #a855f7; 
-            color: #d8b4fe; 
-            padding: 8px 16px; 
-            border-radius: 12px; 
-            cursor: pointer; 
-            font-size: 13px; 
-            font-weight: 900; 
-            transition: 0.2s;
+            background: rgba(168, 85, 247, 0.15); border: 1.5px solid #a855f7; 
+            color: #d8b4fe; padding: 8px 16px; border-radius: 12px; cursor: pointer; 
+            font-size: 13px; font-weight: 900; transition: 0.2s;
         }
         .back-btn:hover { background: #a855f7; color: white; }
 
@@ -72,18 +46,12 @@
             flex: 1; padding: 14px 5px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.05); 
             background: rgba(255,255,255,0.05); color: #aaa; font-size: 14px; font-weight: 900; cursor: pointer; transition: 0.3s; 
         }
-        .tab-btn.active { 
-            background: linear-gradient(135deg, #a855f7, #6366f1); 
-            color: white; border-color: #d8b4fe; box-shadow: 0 5px 15px rgba(168, 85, 247, 0.4); 
-        }
+        .tab-btn.active { background: linear-gradient(135deg, #a855f7, #6366f1); color: white; border-color: #d8b4fe; box-shadow: 0 5px 15px rgba(168, 85, 247, 0.4); }
 
         .char-display-area { width: 100%; transition: 0.3s; }
         .char-display { 
-            width: 100%; height: 280px; 
-            background: radial-gradient(circle at center, #3730a3, #1e1e3f); 
-            border-radius: 20px; position: relative; overflow: hidden; 
-            border: 2px solid #6366f1; margin-bottom: 15px;
-            box-shadow: inset 0 0 30px rgba(0,0,0,0.6);
+            width: 100%; height: 280px; background: radial-gradient(circle at center, #3730a3, #1e1e3f); 
+            border-radius: 20px; position: relative; overflow: hidden; border: 2px solid #6366f1; margin-bottom: 15px; box-shadow: inset 0 0 30px rgba(0,0,0,0.6);
         }
         .char-display img { position: absolute; transform: translate(-50%, -50%); object-fit: contain; display: none; }
         
@@ -100,7 +68,6 @@
         .tab-title { font-size: 15px; color: #d8b4fe; font-weight: 900; margin: 20px 0 12px; border-bottom: 2px solid rgba(168, 85, 247, 0.3); padding-bottom: 8px; }
         .tab-title:first-child { margin-top: 0; }
         
-        /* 🌟 반응형 그리드: 모바일은 4칸, 태블릿은 5칸으로 자연스럽게 늘어남 */
         .item-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(65px, 1fr)); gap: 10px; }
         .item-btn { 
             background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #ddd; 
@@ -115,7 +82,6 @@
         .history-table th:nth-child(1) { width: 28%; } 
         .history-table td { padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.05); text-align: center; font-weight: bold; }
 
-        /* 🌟 뱃지 그리드 최적화 */
         .badge-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 12px; margin-bottom: 15px; }
         .badge-item { background: rgba(0,0,0,0.5); padding: 15px 5px; border-radius: 15px; text-align: center; border: 1px solid #333; opacity: 0.2; transition: 0.3s; }
         .badge-item.owned { opacity: 1; border: 2px solid #fbbf24; background: rgba(251, 191, 36, 0.15); box-shadow: inset 0 0 15px rgba(251, 191, 36, 0.1); }
@@ -124,7 +90,6 @@
 
         .special-badge.owned { border-color: #ef4444; background: rgba(239, 68, 68, 0.15); box-shadow: 0 0 15px rgba(239, 68, 68, 0.4); }
 
-        /* 🌟 교환 박스 디자인 고급화 */
         .fire-exchange-box, .calendar-exchange-box { 
             padding: 15px 20px; border-radius: 16px; 
             display: flex; justify-content: space-between; align-items: center; margin-top: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.3);
@@ -139,7 +104,6 @@
         }
         .exchange-btn:hover { transform: scale(1.05); }
 
-        /* 뱃지 툴팁 효과 */
         .badge-item.owned { position: relative; cursor: pointer; }
         .badge-item.owned:hover::after, .badge-item.owned:active::after {
             content: attr(data-date); 
@@ -153,7 +117,6 @@
         
         .admin-gift-row { background: rgba(168, 85, 247, 0.15); border-left: 4px solid #a855f7; }
 
-        /* 🌟 태블릿 화면 크기(600px 이상)일 때 더욱 시원하게 보이도록 미디어 쿼리 적용 */
         @media (min-width: 600px) {
             .info-card { padding: 35px; }
             .char-display { height: 350px; }
@@ -277,9 +240,9 @@
 
     <script>
     // --------------------------------------------------------
-    // 🚨 중요: 여기에 선생님의 파이어베이스 설정값을 꼭 넣어주세요! 🚨
+    // 🚨 중요: 여기에 선생님의 파이어베이스 키를 꼭 넣어주세요! 🚨
     // --------------------------------------------------------
-   const firebaseConfig = {
+  const firebaseConfig = {
     apiKey: "AIzaSyCbhFq8vcLem8DoMdlsXpC-ZRYELhJSFHU",
     authDomain: "championship-8f923.firebaseapp.com",
     projectId: "championship-8f923",
@@ -289,48 +252,56 @@
     measurementId: "G-KLHCC95R2C"
   };
 
-    // Firebase 초기화 (중복 방지)
     if (!firebase.apps.length) {
         firebase.initializeApp(firebaseConfig);
     }
     const db = firebase.database();
-    const userId = localStorage.getItem('loginId'); // 로그인된 아이디
+    
+    // 🌟 로그인 아이디를 안전하게 가져옵니다.
+    const myName = localStorage.getItem('userName') || "사용자";
+    const userId = localStorage.getItem('loginId') || ("guest_" + myName);
 
-    // 데이터를 담을 바구니 (전역 변수)
-    let gems = 0;
-    let coins = 0;
-    let fireballs = 0;
+    // 🌟 화면이 0으로 보이는 것을 막기 위해, 즉시 기기에 저장된 값으로 화면 채우기!
+    let gems = parseInt(localStorage.getItem('userGems')) || 0;
+    let coins = parseInt(localStorage.getItem('userCoins')) || 0;
+    let fireballs = 0; 
     let purchased = ["dog.png"];
-    let myBadges = [];
+    let myBadges = JSON.parse(localStorage.getItem('myBadges') || "[]");
 
-   // 페이지 로드 시 실시간 데이터 연결
+    // 화면이 켜지자마자 즉시 실행 (서버 로딩 기다리지 않음!)
     window.onload = function() {
-        if (!userId) {
-            alert("로그인 정보가 없습니다. 다시 로그인 해주세요.");
-            location.href = "index.html";
-            return;
-        }
-
-        // 🌟 [핵심 수정] 화면이 열리자마자 로그인된 내 이름부터 즉시 표시!
-        const myName = localStorage.getItem('userName') || "사용자";
         document.getElementById('user-display-name').innerText = myName;
+        document.getElementById('current-gems').innerText = gems;
+        document.getElementById('current-coins').innerText = coins;
+        
+        loadLook(); // 장착템 부르기
+        refreshBadges(); // 뱃지 색칠하기
 
+        // 서버에서 최신 데이터를 가져와서 조용히 덮어씌웁니다.
         db.ref('approvedUsers/' + userId).on('value', (snapshot) => {
             const userData = snapshot.val();
             if (userData) {
-                gems = userData.gems || 0;
-                coins = userData.coins || 0;
+                gems = userData.gems || gems;
+                coins = userData.coins || coins;
                 fireballs = userData.fireballCount || 0;
-                purchased = userData.purchasedItems || ["dog.png"];
-                myBadges = userData.myBadges || [];
+                
+                if (userData.purchasedItems) purchased = userData.purchasedItems;
+                if (userData.myBadges) myBadges = userData.myBadges;
+
+                // 로컬 저장소에 최신값 동기화
+                localStorage.setItem('userGems', gems);
+                localStorage.setItem('userCoins', coins);
+                localStorage.setItem('myBadges', JSON.stringify(myBadges));
 
                 updateUI();
                 loadLook();
+                refreshBadges(userData.practiceLogs);
                 renderLogs(userData.practiceLogs); 
-                refreshBadges(userData.practiceLogs); 
                 
-                // DB에 이름이 저장되어 있다면 DB 기준으로 한 번 더 확실하게 업데이트
                 document.getElementById('user-display-name').innerText = userData.name || myName;
+            } else {
+                // 데이터가 없는 최초 로그인 상태라면
+                renderLogs(null);
             }
         });
     };
@@ -341,7 +312,6 @@
         document.getElementById('current-coins').innerText = coins;
         document.getElementById('fireball-count').innerText = fireballs;
 
-        // 아이템 버튼 상태 업데이트 (구매한 것은 ❓ 제거)
         document.querySelectorAll('.item-btn').forEach(btn => {
             const attr = btn.getAttribute('onclick');
             if (attr) {
@@ -398,69 +368,46 @@
     function exchangeFireball() {
         if (fireballs <= 0) return alert("교환할 파이어볼이 없어요! 🔥");
         if (confirm("파이어볼 1개를 보석 30개로 교환할까요?")) {
-            
             const logData = {
                 date: new Date().toLocaleDateString(),
-                subject: "상점: 파이어볼 ↔ 보석 교환",
+                subject: "상점: 파이어볼 교환",
                 score: "-",
                 earnedGems: 30,
                 earnedCoins: 0
             };
-
-            db.ref('approvedUsers/' + userId).update({
-                fireballCount: fireballs - 1,
-                gems: gems + 30
-            }).then(() => {
-                db.ref('approvedUsers/' + userId + '/practiceLogs').push(logData).then(() => {
-                    alert("교환 완료! 보석 30개를 얻었습니다. 💎");
-                });
+            db.ref('approvedUsers/' + userId).update({ fireballCount: fireballs - 1, gems: gems + 30 }).then(() => {
+                db.ref('approvedUsers/' + userId + '/practiceLogs').push(logData).then(() => alert("교환 완료! 보석 30개를 얻었습니다. 💎"));
             });
         }
     }
 
-    // 🌟 추가됨: 30일 황금달력 교환
+    // 황금달력 교환
     function exchangeCalendar() {
-        if (!myBadges.includes('badge-calendar')) {
-            return alert("30일 황금달력 뱃지를 아직 보유하고 있지 않아요! 🗓️");
-        }
+        if (!myBadges.includes('badge-calendar')) return alert("30일 황금달력 뱃지를 아직 획득하지 못했어요! 🗓️");
         if (confirm("황금달력 뱃지를 보석 100개로 교환할까요?\n(주의: 교환 시 뱃지는 인벤토리에서 사라집니다!)")) {
-            
             const logData = {
                 date: new Date().toLocaleDateString(),
-                subject: "상점: 황금달력 ↔ 보석 교환",
+                subject: "상점: 황금달력 교환",
                 score: "-",
                 earnedGems: 100,
                 earnedCoins: 0
             };
-
-            // 뱃지 목록에서 달력 뱃지 제거
             const newBadges = myBadges.filter(b => b !== 'badge-calendar');
-
-            db.ref('approvedUsers/' + userId).update({
-                myBadges: newBadges,
-                gems: gems + 100
-            }).then(() => {
-                db.ref('approvedUsers/' + userId + '/practiceLogs').push(logData).then(() => {
-                    alert("교환 완료! 보석 100개를 얻었습니다. 💎");
-                });
+            db.ref('approvedUsers/' + userId).update({ myBadges: newBadges, gems: gems + 100 }).then(() => {
+                db.ref('approvedUsers/' + userId + '/practiceLogs').push(logData).then(() => alert("교환 완료! 보석 100개를 얻었습니다. 💎"));
             });
         }
     }
 
-    // 저장된 외형 불러오기
+    // 외형 불러오기
     function loadLook() {
         ['Character','Wing','Cape','Shield','Staff','Pet'].forEach(t => {
             const saved = localStorage.getItem('my' + t);
             if (saved) {
                 const el = document.getElementById(t.toLowerCase());
-                if(el) {
-                    el.src = saved; 
-                    el.style.display = 'block';
-                }
+                if(el) { el.src = saved; el.style.display = 'block'; }
                 document.querySelectorAll('.item-btn').forEach(btn => {
-                    if (btn.getAttribute('onclick') && btn.getAttribute('onclick').includes(`'${saved}'`)) {
-                        btn.classList.add('active');
-                    }
+                    if (btn.getAttribute('onclick') && btn.getAttribute('onclick').includes(`'${saved}'`)) btn.classList.add('active');
                 });
             }
         });
@@ -476,55 +423,53 @@
         
         const logs = Object.values(logsObj).reverse();
         body.innerHTML = logs.map(log => {
-            if (log.subject && log.subject.includes("선물")) {
-                return `
-                    <tr class="admin-gift-row">
-                        <td style="font-size:10px; color:#aaa;">${log.date || '-'}</td>
-                        <td colspan="2" style="color:#d8b4fe; font-weight:900;">🎁 ${log.subject}</td>
-                        <td style="color:#22d3ee; font-weight:900;">${log.earnedGems ? '+' + log.earnedGems : ''}</td>
-                        <td style="color:#fbbf24; font-weight:900;">${log.earnedCoins ? '+' + log.earnedCoins : ''}</td>
-                    </tr>
-                `;
+            if (log.subject && log.subject.includes("상점")) {
+                return `<tr class="admin-gift-row">
+                            <td style="font-size:10px; color:#aaa;">${log.date || '-'}</td>
+                            <td colspan="2" style="color:#d8b4fe; font-weight:900;">🛒 ${log.subject}</td>
+                            <td style="color:#22d3ee; font-weight:900;">${log.earnedGems > 0 ? '+' + log.earnedGems : log.earnedGems}</td>
+                            <td style="color:#fbbf24; font-weight:900;">-</td>
+                        </tr>`;
             }
-
-            return `
-                <tr>
-                    <td style="font-size:10px; color:#aaa;">${log.date || '-'}</td>
-                    <td>${log.subject || '-'}</td>
-                    <td style="color:#fff;">${log.score || 0}점</td>
-                    <td style="color:#22d3ee">+${log.earnedGems || 0}</td>
-                    <td style="color:#fbbf24">${log.earnedCoins > 0 ? '+'+log.earnedCoins : '-'}</td>
-                </tr>
-            `;
+            if (log.subject && log.subject.includes("선물")) {
+                return `<tr class="admin-gift-row">
+                            <td style="font-size:10px; color:#aaa;">${log.date || '-'}</td>
+                            <td colspan="2" style="color:#d8b4fe; font-weight:900;">🎁 ${log.subject}</td>
+                            <td style="color:#22d3ee; font-weight:900;">${log.earnedGems ? '+' + log.earnedGems : ''}</td>
+                            <td style="color:#fbbf24; font-weight:900;">${log.earnedCoins ? '+' + log.earnedCoins : ''}</td>
+                        </tr>`;
+            }
+            return `<tr>
+                        <td style="font-size:10px; color:#aaa;">${log.date || '-'}</td>
+                        <td>${log.subject || '-'}</td>
+                        <td style="color:#fff;">${log.score || 0}점</td>
+                        <td style="color:#22d3ee">+${log.earnedGems || 0}</td>
+                        <td style="color:#fbbf24">${log.earnedCoins > 0 ? '+'+log.earnedCoins : '-'}</td>
+                    </tr>`;
         }).join('');
     }
 
     // 뱃지 상태 업데이트
     function refreshBadges(logsObj) {
-        // 기존 뱃지 스타일 초기화 (달력 교환 시 불을 끄기 위함)
         document.querySelectorAll('.badge-item').forEach(el => {
-            el.classList.remove('owned');
-            el.removeAttribute('data-date');
+            el.classList.remove('owned'); el.removeAttribute('data-date');
         });
 
         let latestDate = "✨ 획득 완료 ✨";
         if (logsObj) {
             const logsArray = Object.values(logsObj);
-            if(logsArray.length > 0) {
+            if(logsArray.length > 0 && logsArray[logsArray.length - 1].date) {
                 latestDate = "최근 접속: " + logsArray[logsArray.length - 1].date.split(' ')[0];
             }
         }
 
         myBadges.forEach(id => {
             const el = document.getElementById(id);
-            if (el) {
-                el.classList.add('owned');
-                el.setAttribute('data-date', latestDate);
-            }
+            if (el) { el.classList.add('owned'); el.setAttribute('data-date', latestDate); }
         });
     }
 
-    // 탭 전환 함수
+    // 탭 전환
     function openTab(evt, tabName) {
         document.querySelectorAll(".content-section").forEach(s => s.style.display = "none");
         document.querySelectorAll(".tab-btn").forEach(t => t.classList.remove("active"));
