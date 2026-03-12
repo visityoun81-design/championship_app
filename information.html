@@ -239,9 +239,7 @@
     </div>
 
     <script>
-    // --------------------------------------------------------
-    // 🚨 중요: 여기에 선생님의 파이어베이스 키를 꼭 넣어주세요! 🚨
-    // --------------------------------------------------------
+    // 🚨 파이어베이스 키를 꼭 넣어주세요!
   const firebaseConfig = {
     apiKey: "AIzaSyCbhFq8vcLem8DoMdlsXpC-ZRYELhJSFHU",
     authDomain: "championship-8f923.firebaseapp.com",
@@ -257,27 +255,37 @@
     }
     const db = firebase.database();
     
-    // 🌟 로그인 아이디를 안전하게 가져옵니다.
-    const myName = localStorage.getItem('userName') || "사용자";
-    const userId = localStorage.getItem('loginId') || ("guest_" + myName);
-
-    // 🌟 화면이 0으로 보이는 것을 막기 위해, 즉시 기기에 저장된 값으로 화면 채우기!
-    let gems = parseInt(localStorage.getItem('userGems')) || 0;
-    let coins = parseInt(localStorage.getItem('userCoins')) || 0;
-    let fireballs = 0; 
+    // 데이터를 담을 바구니
+    let gems = 0;
+    let coins = 0;
+    let fireballs = 0;
     let purchased = ["dog.png"];
-    let myBadges = JSON.parse(localStorage.getItem('myBadges') || "[]");
+    let myBadges = [];
 
-    // 화면이 켜지자마자 즉시 실행 (서버 로딩 기다리지 않음!)
     window.onload = function() {
+        let myName = localStorage.getItem('userName') || "사용자";
+        let userId = localStorage.getItem('loginId');
+        
+        // 🌟 마법의 동기화 코드 (빈 창고 방지!)
+        if (!userId || userId === "null" || userId.trim() === "") {
+            userId = "guest_" + myName;
+        }
+
         document.getElementById('user-display-name').innerText = myName;
+
+        // 서버 로딩 전 기기 저장값으로 0.1초만에 화면 채우기
+        gems = parseInt(localStorage.getItem('userGems')) || 0;
+        coins = parseInt(localStorage.getItem('userCoins')) || 0;
         document.getElementById('current-gems').innerText = gems;
         document.getElementById('current-coins').innerText = coins;
         
-        loadLook(); // 장착템 부르기
-        refreshBadges(); // 뱃지 색칠하기
+        loadLook();
+        try {
+            myBadges = JSON.parse(localStorage.getItem('myBadges') || "[]");
+            refreshBadges(null);
+        } catch(e) {}
 
-        // 서버에서 최신 데이터를 가져와서 조용히 덮어씌웁니다.
+        // 서버에서 내 진짜 기록 싹 다 긁어오기!
         db.ref('approvedUsers/' + userId).on('value', (snapshot) => {
             const userData = snapshot.val();
             if (userData) {
@@ -288,7 +296,6 @@
                 if (userData.purchasedItems) purchased = userData.purchasedItems;
                 if (userData.myBadges) myBadges = userData.myBadges;
 
-                // 로컬 저장소에 최신값 동기화
                 localStorage.setItem('userGems', gems);
                 localStorage.setItem('userCoins', coins);
                 localStorage.setItem('myBadges', JSON.stringify(myBadges));
@@ -300,13 +307,11 @@
                 
                 document.getElementById('user-display-name').innerText = userData.name || myName;
             } else {
-                // 데이터가 없는 최초 로그인 상태라면
-                renderLogs(null);
+                renderLogs(null); // 진짜 최초 접속 시에만 빈 기록 표시
             }
         });
     };
 
-    // UI 숫자 업데이트
     function updateUI() {
         document.getElementById('current-gems').innerText = gems;
         document.getElementById('current-coins').innerText = coins;
@@ -324,7 +329,6 @@
         });
     }
 
-    // 아이템 구매 또는 착용
     function buyOrApply(type, file, price, btn) {
         if (!purchased.includes(file)) {
             if (gems < price) return alert("보석이 부족해요! 💎");
@@ -338,6 +342,8 @@
                     earnedGems: -price, 
                     earnedCoins: 0
                 };
+
+                let userId = localStorage.getItem('loginId') || "guest_" + (localStorage.getItem('userName') || "사용자");
 
                 db.ref('approvedUsers/' + userId).update({
                     gems: gems - price,
@@ -364,7 +370,6 @@
         }
     }
 
-    // 파이어볼 교환
     function exchangeFireball() {
         if (fireballs <= 0) return alert("교환할 파이어볼이 없어요! 🔥");
         if (confirm("파이어볼 1개를 보석 30개로 교환할까요?")) {
@@ -375,13 +380,13 @@
                 earnedGems: 30,
                 earnedCoins: 0
             };
+            let userId = localStorage.getItem('loginId') || "guest_" + (localStorage.getItem('userName') || "사용자");
             db.ref('approvedUsers/' + userId).update({ fireballCount: fireballs - 1, gems: gems + 30 }).then(() => {
                 db.ref('approvedUsers/' + userId + '/practiceLogs').push(logData).then(() => alert("교환 완료! 보석 30개를 얻었습니다. 💎"));
             });
         }
     }
 
-    // 황금달력 교환
     function exchangeCalendar() {
         if (!myBadges.includes('badge-calendar')) return alert("30일 황금달력 뱃지를 아직 획득하지 못했어요! 🗓️");
         if (confirm("황금달력 뱃지를 보석 100개로 교환할까요?\n(주의: 교환 시 뱃지는 인벤토리에서 사라집니다!)")) {
@@ -393,13 +398,13 @@
                 earnedCoins: 0
             };
             const newBadges = myBadges.filter(b => b !== 'badge-calendar');
+            let userId = localStorage.getItem('loginId') || "guest_" + (localStorage.getItem('userName') || "사용자");
             db.ref('approvedUsers/' + userId).update({ myBadges: newBadges, gems: gems + 100 }).then(() => {
                 db.ref('approvedUsers/' + userId + '/practiceLogs').push(logData).then(() => alert("교환 완료! 보석 100개를 얻었습니다. 💎"));
             });
         }
     }
 
-    // 외형 불러오기
     function loadLook() {
         ['Character','Wing','Cape','Shield','Staff','Pet'].forEach(t => {
             const saved = localStorage.getItem('my' + t);
@@ -413,7 +418,6 @@
         });
     }
 
-    // 공부 기록 렌더링
     function renderLogs(logsObj) {
         const body = document.getElementById('study-logs-body');
         if (!logsObj) {
@@ -449,7 +453,6 @@
         }).join('');
     }
 
-    // 뱃지 상태 업데이트
     function refreshBadges(logsObj) {
         document.querySelectorAll('.badge-item').forEach(el => {
             el.classList.remove('owned'); el.removeAttribute('data-date');
@@ -469,7 +472,6 @@
         });
     }
 
-    // 탭 전환
     function openTab(evt, tabName) {
         document.querySelectorAll(".content-section").forEach(s => s.style.display = "none");
         document.querySelectorAll(".tab-btn").forEach(t => t.classList.remove("active"));
