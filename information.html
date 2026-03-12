@@ -2,56 +2,27 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CHAMPIONSHIP - MY INFO</title>
 
-    <link rel="manifest" href="manifest.json">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="apple-touch-icon" href="dog.png">
 
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+
 
     <style>
-        body { 
-            background: radial-gradient(circle at top, #1e1b4b, #020617); 
-            color: white; font-family: 'Pretendard', 'Noto Sans KR', sans-serif; 
-            display: flex; flex-direction: column; align-items: center; padding: 20px; margin: 0; min-height: 100vh;
-        }
-        
-        .info-card { 
-            width: 100%; max-width: 700px; 
-            background: rgba(30, 30, 63, 0.7); backdrop-filter: blur(20px);
-            border: 2px solid rgba(168, 85, 247, 0.3); border-radius: 24px; 
-            padding: 20px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); 
-            text-align: center; box-sizing: border-box; 
-        }
+        body { background-color: #12122b; color: white; font-family: 'Pretendard', sans-serif; display: flex; flex-direction: column; align-items: center; padding: 20px; margin: 0; }
+        .info-card { width: 100%; max-width: 420px; background: #1e1e3f; border-radius: 30px; padding: 25px; box-shadow: 0 20px 40px rgba(0,0,0,0.3); text-align: center; box-sizing: border-box; }
 
-        .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        
-        .back-btn { 
-            background: rgba(168, 85, 247, 0.15); border: 1.5px solid #a855f7; 
-            color: #d8b4fe; padding: 8px 16px; border-radius: 12px; cursor: pointer; 
-            font-size: 13px; font-weight: 900; transition: 0.2s;
-        }
-        .back-btn:hover { background: #a855f7; color: white; }
-
-        .asset-info { font-size: 16px; color: #fbbf24; font-weight: 900; background: rgba(0,0,0,0.5); padding: 8px 20px; border-radius: 20px; border: 1px solid rgba(251, 191, 36, 0.3); }
-        .asset-info span { color: white; }
-
-        .tab-menu { display: flex; justify-content: space-between; gap: 10px; margin-bottom: 20px; }
-        .tab-btn { 
-            flex: 1; padding: 14px 5px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.05); 
-            background: rgba(255,255,255,0.05); color: #aaa; font-size: 14px; font-weight: 900; cursor: pointer; transition: 0.3s; 
-        }
-        .tab-btn.active { background: linear-gradient(135deg, #a855f7, #6366f1); color: white; border-color: #d8b4fe; box-shadow: 0 5px 15px rgba(168, 85, 247, 0.4); }
+        .tab-menu { display: flex; justify-content: space-between; gap: 8px; margin-bottom: 20px; }
+        .tab-btn { flex: 1; padding: 12px 2px; border-radius: 15px; border: none; background: #2d2d5a; color: #aaa; font-size: 13px; font-weight: bold; cursor: pointer; }
+        .tab-btn.active { background: #a855f7; color: white; }
 
         .char-display-area { width: 100%; transition: 0.3s; }
         .char-display { 
-            width: 100%; height: 280px; background: radial-gradient(circle at center, #3730a3, #1e1e3f); 
-            border-radius: 20px; position: relative; overflow: hidden; border: 2px solid #6366f1; margin-bottom: 15px; box-shadow: inset 0 0 30px rgba(0,0,0,0.6);
+            width: 100%; height: 260px; background: radial-gradient(circle, #2a2a5a, #1e1e3f); 
+            border-radius: 20px; position: relative; overflow: hidden; border: 1.5px solid #a855f7; margin-bottom: 10px;
         }
         .char-display img { position: absolute; transform: translate(-50%, -50%); object-fit: contain; display: none; }
         
@@ -62,83 +33,88 @@
         #staff { width: 75%; height: 75%; z-index: 5; top: 50%; left: 80%; }
         #pet { width: 32%; height: 32%; z-index: 6; top: 80%; left: 80%; }
 
-        .name-tag { font-size: 24px; font-weight: 900; margin-bottom: 15px; color: #fff; text-shadow: 0 0 10px #a855f7; }
+        .name-tag { font-size: 20px; font-weight: bold; margin-bottom: 15px; color: #d8b4fe; }
+        .asset-info { font-size: 14px; color: #fbbf24; margin-bottom: 15px; background: rgba(0,0,0,0.3); padding: 8px 15px; border-radius: 20px; display: inline-block; }
 
-        .section-card { background: rgba(0, 0, 0, 0.4); border-radius: 20px; padding: 20px; min-height: 400px; text-align: left; border: 1px solid rgba(255,255,255,0.05); }
-        .tab-title { font-size: 15px; color: #d8b4fe; font-weight: 900; margin: 20px 0 12px; border-bottom: 2px solid rgba(168, 85, 247, 0.3); padding-bottom: 8px; }
-        .tab-title:first-child { margin-top: 0; }
+        .section-card { background: #25254d; border-radius: 20px; padding: 15px; min-height: 400px; text-align: left; }
+        .tab-title { font-size: 13px; color: #a855f7; font-weight: bold; margin: 15px 0 8px; border-bottom: 1px solid #3d3d7a; padding-bottom: 5px; }
         
-        .item-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(65px, 1fr)); gap: 10px; }
-        .item-btn { 
-            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #ddd; 
-            padding: 12px 2px; border-radius: 12px; cursor: pointer; font-size: 11px; font-weight: bold; text-align: center; transition: 0.2s; 
+        .item-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+        .item-btn { background: #1e1e3f; border: 1px solid #3d3d7a; color: #ccc; padding: 10px 2px; border-radius: 12px; cursor: pointer; font-size: 10px; text-align: center; }
+        .item-btn.active { background: #a855f7; color: white; border-color: white; box-shadow: 0 0 8px #a855f7; }
+        .item-btn.locked { color: #555; background: rgba(0,0,0,0.2); }
+
+        .history-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+        .history-table th { color: #888; border-bottom: 1px solid #3d3d7a; padding: 8px 0; text-align: center; }
+        .history-table td { padding: 10px 0; border-bottom: 1px solid #1e1e3f; text-align: center; }
+
+        .badge-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 15px; }
+        .badge-item { background: #1e1e3f; padding: 10px 5px; border-radius: 15px; text-align: center; border: 1px solid #333; opacity: 0.15; transition: 0.3s; }
+        .badge-item.owned { opacity: 1; border: 1.5px solid #fbbf24; background: rgba(251, 191, 36, 0.1); }
+        .badge-icon { font-size: 26px; display: block; margin-bottom: 4px; }
+        .badge-name { font-size: 9px; color: #eee; font-weight: bold; white-space: nowrap; }
+
+        .special-badge.owned { border-color: #ef4444; box-shadow: 0 0 15px rgba(239, 68, 68, 0.4); }
+
+        .fire-exchange-box { 
+            background: linear-gradient(135deg, #ef4444, #991b1b); 
+            color: white; padding: 12px; border-radius: 15px; 
+            display: flex; justify-content: space-between; align-items: center; margin-top: 15px;
         }
-        .item-btn:hover { background: rgba(255,255,255,0.1); }
-        .item-btn.active { background: #a855f7; color: white; border-color: white; box-shadow: 0 0 10px #a855f7; }
-        .item-btn.locked { color: #666; background: rgba(0,0,0,0.5); border-color: transparent; }
-
-        .history-table { width: 100%; border-collapse: collapse; font-size: 12px; }
-        .history-table th { color: #a855f7; border-bottom: 2px solid rgba(168, 85, 247, 0.3); padding: 12px 0; text-align: center; font-size: 12px; font-weight: 900; }
-        .history-table th:nth-child(1) { width: 28%; } 
-        .history-table td { padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.05); text-align: center; font-weight: bold; }
-
-        .badge-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 12px; margin-bottom: 15px; }
-        .badge-item { background: rgba(0,0,0,0.5); padding: 15px 5px; border-radius: 15px; text-align: center; border: 1px solid #333; opacity: 0.2; transition: 0.3s; }
-        .badge-item.owned { opacity: 1; border: 2px solid #fbbf24; background: rgba(251, 191, 36, 0.15); box-shadow: inset 0 0 15px rgba(251, 191, 36, 0.1); }
-        .badge-icon { font-size: 32px; display: block; margin-bottom: 6px; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.5)); }
-        .badge-name { font-size: 11px; color: #eee; font-weight: 900; white-space: nowrap; }
-
-        .special-badge.owned { border-color: #ef4444; background: rgba(239, 68, 68, 0.15); box-shadow: 0 0 15px rgba(239, 68, 68, 0.4); }
-
-        .fire-exchange-box, .calendar-exchange-box { 
-            padding: 15px 20px; border-radius: 16px; 
-            display: flex; justify-content: space-between; align-items: center; margin-top: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        .fire-exchange-box span { font-size: 13px; font-weight: bold; }
+        .fire-exchange-box button { 
+            background: white; color: #ef4444; border: none; padding: 5px 12px; 
+            border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 11px;
         }
-        .fire-exchange-box { background: linear-gradient(135deg, #ef4444, #991b1b); border: 1px solid #fca5a5; }
-        .calendar-exchange-box { background: linear-gradient(135deg, #d97706, #b45309); border: 1px solid #fcd34d; margin-bottom: 25px; }
-        
-        .fire-exchange-box span, .calendar-exchange-box span { font-size: 14px; font-weight: 900; color: white; }
-        .exchange-btn { 
-            background: white; color: #000; border: none; padding: 8px 15px; 
-            border-radius: 10px; font-weight: 900; cursor: pointer; font-size: 12px; transition: 0.2s;
-        }
-        .exchange-btn:hover { transform: scale(1.05); }
 
+/* 🌟 추가된 스타일: 공부기록 테이블 코인 폭 조정 */
+        .history-table th:nth-child(1) { width: 30%; } /* 날짜 칸 넓게 */
+        .history-table th { font-size: 10px; }
+
+        /* 🌟 추가된 스타일: 뱃지 말풍선(툴팁) 효과 */
         .badge-item.owned { position: relative; cursor: pointer; }
-        .badge-item.owned:hover::after, .badge-item.owned:active::after {
-            content: attr(data-date); 
-            position: absolute; bottom: 115%; left: 50%; transform: translateX(-50%);
-            background: rgba(0, 0, 0, 0.95); color: #4ade80; padding: 6px 12px; border-radius: 8px;
-            font-size: 11px; font-weight: bold; white-space: nowrap; z-index: 100;
-            border: 1px solid #4ade80; box-shadow: 0 4px 10px rgba(74, 222, 128, 0.3);
-            pointer-events: none; animation: popUp 0.2s ease-out forwards;
+        .badge-item.owned:hover::after,
+        .badge-item.owned:active::after {
+            content: attr(data-date); /* 자바스크립트가 넣어줄 글자 */
+            position: absolute;
+            bottom: 115%; left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.9);
+            color: #4ade80; /* 밝은 초록색 */
+            padding: 6px 10px;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: bold;
+            white-space: nowrap;
+            z-index: 100;
+            border: 1px solid #4ade80;
+            box-shadow: 0 4px 10px rgba(74, 222, 128, 0.3);
+            pointer-events: none; /* 마우스 간섭 방지 */
+            animation: popUp 0.2s ease-out forwards;
         }
-        @keyframes popUp { from { opacity: 0; transform: translate(-50%, 5px); } to { opacity: 1; transform: translate(-50%, 0); } }
-        
-        .admin-gift-row { background: rgba(168, 85, 247, 0.15); border-left: 4px solid #a855f7; }
+        @keyframes popUp {
+            from { opacity: 0; transform: translate(-50%, 5px); }
+            to { opacity: 1; transform: translate(-50%, 0); }
+        }
+        /* 관리자 선물용 하이라이트 행 */
+        .admin-gift-row { background: rgba(168, 85, 247, 0.15); border-left: 3px solid #a855f7; }
 
-        @media (min-width: 600px) {
-            .info-card { padding: 35px; }
-            .char-display { height: 350px; }
-            .item-btn { font-size: 13px; padding: 15px 5px; }
-            .history-table { font-size: 14px; }
-            .history-table th { font-size: 14px; }
-            .badge-name { font-size: 12px; }
-        }
+
     </style>
 </head>
 <body>
 
     <div class="info-card">
-        <div class="header-top">
-            <button class="back-btn" onclick="location.href='mainpage.html'">◀ 메인화면 가기</button>
-            <div class="asset-info">💎 <span id="current-gems">0</span> &nbsp;|&nbsp; 💰 <span id="current-coins">0</span></div>
+        <div style="text-align: left; margin-bottom: 10px;">
+            <button onclick="location.href='mainpage.html'" style="background:none; border: 1px solid #a855f7; color:#a855f7; padding: 5px 15px; border-radius: 10px; cursor: pointer; font-size: 12px; font-weight: bold;">◀ 로비</button>
         </div>
 
+        <div class="asset-info">💎 <span id="current-gems">0</span> | 🪙 <span id="current-coins">0</span></div>
+
         <div class="tab-menu">
-            <button class="tab-btn active" onclick="openTab(event, 'decor')">✨ 꾸미기</button>
-            <button class="tab-btn" onclick="openTab(event, 'study')">📊 공부기록</button>
-            <button class="tab-btn" onclick="openTab(event, 'badge')">🏆 명예뱃지</button>
+            <button class="tab-btn active" onclick="openTab(event, 'decor')">꾸미기</button>
+            <button class="tab-btn" onclick="openTab(event, 'study')">공부기록</button>
+            <button class="tab-btn" onclick="openTab(event, 'badge')">명예뱃지</button>
         </div>
 
         <div id="character-section" class="char-display-area">
@@ -151,18 +127,18 @@
 
         <div id="decor" class="content-section">
             <div class="section-card">
-                <div class="tab-title">🐾 동물 친구들 (200💎)</div>
+                <div class="tab-title">🐾 동물 친구들 (100💎)</div>
                 <div class="item-grid">
                     <button class="item-btn active" onclick="buyOrApply('character', 'dog.png', 0, this)">강아지</button>
-                    <button class="item-btn locked" onclick="buyOrApply('character', 'cat.png', 200, this)">❓ 고양이</button>
-                    <button class="item-btn locked" onclick="buyOrApply('character', 'bear.png', 200, this)">❓ 곰돌이</button>
-                    <button class="item-btn locked" onclick="buyOrApply('character', 'rabbit.png', 200, this)">❓ 토끼</button>
-                    <button class="item-btn locked" onclick="buyOrApply('character', 'penguin.png', 200, this)">❓ 펭귄</button>
-                    <button class="item-btn locked" onclick="buyOrApply('character', 'frog.png', 200, this)">❓ 개구리</button>
-                    <button class="item-btn locked" onclick="buyOrApply('character', 'pig.png', 200, this)">❓ 돼지</button>
-                    <button class="item-btn locked" onclick="buyOrApply('character', 'chick.png', 200, this)">❓ 병아리</button>
-                    <button class="item-btn locked" onclick="buyOrApply('character', 'baby_dragon.png', 200, this)">❓ 아기용</button>
-                    <button class="item-btn locked" onclick="buyOrApply('character', 'elephant.png', 200, this)">❓ 코끼리</button>
+                    <button class="item-btn locked" onclick="buyOrApply('character', 'cat.png', 100, this)">❓ 고양이</button>
+                    <button class="item-btn locked" onclick="buyOrApply('character', 'bear.png', 100, this)">❓ 곰돌이</button>
+                    <button class="item-btn locked" onclick="buyOrApply('character', 'rabbit.png', 100, this)">❓ 토끼</button>
+                    <button class="item-btn locked" onclick="buyOrApply('character', 'penguin.png', 100, this)">❓ 펭귄</button>
+                    <button class="item-btn locked" onclick="buyOrApply('character', 'frog.png', 100, this)">❓ 개구리</button>
+                    <button class="item-btn locked" onclick="buyOrApply('character', 'pig.png', 100, this)">❓ 돼지</button>
+                    <button class="item-btn locked" onclick="buyOrApply('character', 'chick.png', 100, this)">❓ 병아리</button>
+                    <button class="item-btn locked" onclick="buyOrApply('character', 'baby_dragon.png', 100, this)">❓ 아기용</button>
+                    <button class="item-btn locked" onclick="buyOrApply('character', 'elephant.png', 100, this)">❓ 코끼리</button>
                 </div>
 
                 <div class="tab-title">⚔️ 전설의 장비 (100💎)</div>
@@ -173,12 +149,12 @@
                     <button class="item-btn locked" onclick="buyOrApply('wing', 'wing_gold.png', 100, this)">❓ 황금날개</button>
                 </div>
 
-                <div class="tab-title">👾 펫 슬라임 (150💎)</div>
+                <div class="tab-title">👾 펫 슬라임 (100💎)</div>
                 <div class="item-grid">
-                    <button class="item-btn locked" onclick="buyOrApply('pet', 'slime_blue.png', 150, this)">❓ 파란</button>
-                    <button class="item-btn locked" onclick="buyOrApply('pet', 'slime_pink.png', 150, this)">❓ 분홍</button>
-                    <button class="item-btn locked" onclick="buyOrApply('pet', 'slime_yellow.png', 150, this)">❓ 노랑</button>
-                    <button class="item-btn locked" onclick="buyOrApply('pet', 'slime_green.png', 150, this)">❓ 초록</button>
+                    <button class="item-btn locked" onclick="buyOrApply('pet', 'slime_blue.png', 100, this)">❓ 파란</button>
+                    <button class="item-btn locked" onclick="buyOrApply('pet', 'slime_pink.png', 100, this)">❓ 분홍</button>
+                    <button class="item-btn locked" onclick="buyOrApply('pet', 'slime_yellow.png', 100, this)">❓ 노랑</button>
+                    <button class="item-btn locked" onclick="buyOrApply('pet', 'slime_green.png', 100, this)">❓ 초록</button>
                 </div>
             </div>
         </div>
@@ -186,12 +162,12 @@
         <div id="study" class="content-section" style="display:none;">
             <div class="section-card">
                 <div class="tab-title">📊 최근 연습 내역</div>
-                <table class="history-table">
-                    <thead>
-                        <tr><th>날짜</th><th>과목</th><th>점수</th><th>보석</th><th>코인</th></tr>
-                    </thead>
-                    <tbody id="study-logs-body"></tbody>
-                </table>
+               <table class="history-table">
+    <thead>
+        <tr><th>날짜</th><th>과목</th><th>점수</th><th>보석</th><th>코인</th></tr>
+    </thead>
+    <tbody id="study-logs-body"></tbody>
+</table>
             </div>
         </div>
 
@@ -206,12 +182,7 @@
 
                 <div class="fire-exchange-box">
                     <span>🔥 보유 파이어볼: <span id="fireball-count">0</span>개</span>
-                    <button class="exchange-btn" style="color:#ef4444;" onclick="exchangeFireball()">보석 교환 (30💎)</button>
-                </div>
-
-                <div class="calendar-exchange-box">
-                    <span>🗓️ 30일 황금달력 뱃지</span>
-                    <button class="exchange-btn" style="color:#b45309;" onclick="exchangeCalendar()">보석 교환 (100💎)</button>
+                    <button onclick="exchangeFireball()">보석 교환 (1개=30💎)</button>
                 </div>
 
                 <div class="tab-title">➕ 덧셈 정복</div>
@@ -238,11 +209,16 @@
         </div>
     </div>
 
+
+
     <script>
-    // 🚨 파이어베이스 키를 꼭 넣어주세요!
-  const firebaseConfig = {
+
+
+    // Firebase 설정 및 초기화
+    const firebaseConfig = {
     apiKey: "AIzaSyCbhFq8vcLem8DoMdlsXpC-ZRYELhJSFHU",
     authDomain: "championship-8f923.firebaseapp.com",
+    databaseURL: "https://championship-8f923-default-rtdb.asia-southeast1.firebasedatabase.app",
     projectId: "championship-8f923",
     storageBucket: "championship-8f923.firebasestorage.app",
     messagingSenderId: "118704807417",
@@ -250,73 +226,63 @@
     measurementId: "G-KLHCC95R2C"
   };
 
+
+
+
+
+
+// Firebase 초기화 (중복 방지)
     if (!firebase.apps.length) {
         firebase.initializeApp(firebaseConfig);
     }
-    const db = firebase.database();
-    
-    // 데이터를 담을 바구니
+
+
+
+  const db = firebase.database();
+    const userId = localStorage.getItem('loginId'); // 로그인된 아이디
+
+    // 데이터를 담을 바구니 (전역 변수)
     let gems = 0;
     let coins = 0;
     let fireballs = 0;
     let purchased = ["dog.png"];
     let myBadges = [];
 
+    // [핵심] 페이지 로드 시 실시간 데이터 연결
     window.onload = function() {
-        let myName = localStorage.getItem('userName') || "사용자";
-        let userId = localStorage.getItem('loginId');
-        
-        // 🌟 마법의 동기화 코드 (빈 창고 방지!)
-        if (!userId || userId === "null" || userId.trim() === "") {
-            userId = "guest_" + myName;
+        if (!userId) {
+            alert("로그인 정보가 없습니다. 다시 로그인 해주세요.");
+            location.href = "index.html";
+            return;
         }
 
-        document.getElementById('user-display-name').innerText = myName;
-
-        // 서버 로딩 전 기기 저장값으로 0.1초만에 화면 채우기
-        gems = parseInt(localStorage.getItem('userGems')) || 0;
-        coins = parseInt(localStorage.getItem('userCoins')) || 0;
-        document.getElementById('current-gems').innerText = gems;
-        document.getElementById('current-coins').innerText = coins;
-        
-        loadLook();
-        try {
-            myBadges = JSON.parse(localStorage.getItem('myBadges') || "[]");
-            refreshBadges(null);
-        } catch(e) {}
-
-        // 서버에서 내 진짜 기록 싹 다 긁어오기!
+        // 서버에서 내 정보를 실시간으로 감시 (onValue)
         db.ref('approvedUsers/' + userId).on('value', (snapshot) => {
             const userData = snapshot.val();
             if (userData) {
-                gems = userData.gems || gems;
-                coins = userData.coins || coins;
+                gems = userData.gems || 0;
+                coins = userData.coins || 0;
                 fireballs = userData.fireballCount || 0;
-                
-                if (userData.purchasedItems) purchased = userData.purchasedItems;
-                if (userData.myBadges) myBadges = userData.myBadges;
-
-                localStorage.setItem('userGems', gems);
-                localStorage.setItem('userCoins', coins);
-                localStorage.setItem('myBadges', JSON.stringify(myBadges));
+                purchased = userData.purchasedItems || ["dog.png"];
+                myBadges = userData.myBadges || [];
 
                 updateUI();
                 loadLook();
-                refreshBadges(userData.practiceLogs);
-                renderLogs(userData.practiceLogs); 
+                renderLogs(userData.practiceLogs); // 공부 기록 출력 (코인 포함)
+                refreshBadges(userData.practiceLogs); // 뱃지에 날짜 정보 넘겨주기
                 
-                document.getElementById('user-display-name').innerText = userData.name || myName;
-            } else {
-                renderLogs(null); // 진짜 최초 접속 시에만 빈 기록 표시
+                document.getElementById('user-display-name').innerText = userData.name || "마법사";
             }
         });
     };
 
+    // UI 숫자 업데이트
     function updateUI() {
         document.getElementById('current-gems').innerText = gems;
         document.getElementById('current-coins').innerText = coins;
         document.getElementById('fireball-count').innerText = fireballs;
 
+        // 아이템 버튼 상태 업데이트 (구매한 것은 ❓ 제거)
         document.querySelectorAll('.item-btn').forEach(btn => {
             const attr = btn.getAttribute('onclick');
             if (attr) {
@@ -329,32 +295,36 @@
         });
     }
 
+    // 아이템 구매 또는 착용
+   // 🌟 [수정됨] 아이템 구매 또는 착용 (구매 시 기록 남기기)
     function buyOrApply(type, file, price, btn) {
         if (!purchased.includes(file)) {
+            // 미구매 아이템인 경우
             if (gems < price) return alert("보석이 부족해요! 💎");
             if (confirm(`보석 ${price}개를 사용하여 구매할까요?`)) {
                 const newPurchased = [...purchased, file];
                 
+                // 📝 [기록 데이터 생성] 상점 구매 내역
                 const logData = {
                     date: new Date().toLocaleDateString(),
                     subject: "상점: 아이템 구매",
                     score: "-",
-                    earnedGems: -price, 
+                    earnedGems: -price, // 차감은 마이너스 기호!
                     earnedCoins: 0
                 };
-
-                let userId = localStorage.getItem('loginId') || "guest_" + (localStorage.getItem('userName') || "사용자");
 
                 db.ref('approvedUsers/' + userId).update({
                     gems: gems - price,
                     purchasedItems: newPurchased
                 }).then(() => {
+                    // 서버에 기록 한 줄 추가!
                     db.ref('approvedUsers/' + userId + '/practiceLogs').push(logData).then(() => {
                         alert("구매 완료!");
                     });
                 });
             }
         } else {
+            // 이미 구매한 아이템인 경우 착용 로직 (기존과 동일)
             const img = document.getElementById(type);
             if (img.style.display === 'block' && img.src.includes(file) && type !== 'character') {
                 img.style.display = 'none';
@@ -370,108 +340,113 @@
         }
     }
 
+    // 🌟 [수정됨] 파이어볼 교환 (교환 시 기록 남기기)
     function exchangeFireball() {
         if (fireballs <= 0) return alert("교환할 파이어볼이 없어요! 🔥");
         if (confirm("파이어볼 1개를 보석 30개로 교환할까요?")) {
+            
+            // 📝 [기록 데이터 생성] 파이어볼 교환 내역
             const logData = {
                 date: new Date().toLocaleDateString(),
-                subject: "상점: 파이어볼 교환",
+                subject: "상점: 파이어볼 ↔ 보석 교환",
                 score: "-",
-                earnedGems: 30,
+                earnedGems: 30, // 30개 획득!
                 earnedCoins: 0
             };
-            let userId = localStorage.getItem('loginId') || "guest_" + (localStorage.getItem('userName') || "사용자");
-            db.ref('approvedUsers/' + userId).update({ fireballCount: fireballs - 1, gems: gems + 30 }).then(() => {
-                db.ref('approvedUsers/' + userId + '/practiceLogs').push(logData).then(() => alert("교환 완료! 보석 30개를 얻었습니다. 💎"));
+
+            db.ref('approvedUsers/' + userId).update({
+                fireballCount: fireballs - 1,
+                gems: gems + 30
+            }).then(() => {
+                // 서버에 기록 한 줄 추가!
+                db.ref('approvedUsers/' + userId + '/practiceLogs').push(logData).then(() => {
+                    alert("교환 완료!");
+                });
             });
         }
     }
 
-    function exchangeCalendar() {
-        if (!myBadges.includes('badge-calendar')) return alert("30일 황금달력 뱃지를 아직 획득하지 못했어요! 🗓️");
-        if (confirm("황금달력 뱃지를 보석 100개로 교환할까요?\n(주의: 교환 시 뱃지는 인벤토리에서 사라집니다!)")) {
-            const logData = {
-                date: new Date().toLocaleDateString(),
-                subject: "상점: 황금달력 교환",
-                score: "-",
-                earnedGems: 100,
-                earnedCoins: 0
-            };
-            const newBadges = myBadges.filter(b => b !== 'badge-calendar');
-            let userId = localStorage.getItem('loginId') || "guest_" + (localStorage.getItem('userName') || "사용자");
-            db.ref('approvedUsers/' + userId).update({ myBadges: newBadges, gems: gems + 100 }).then(() => {
-                db.ref('approvedUsers/' + userId + '/practiceLogs').push(logData).then(() => alert("교환 완료! 보석 100개를 얻었습니다. 💎"));
-            });
-        }
-    }
-
+    // 저장된 외형 불러오기
     function loadLook() {
         ['Character','Wing','Cape','Shield','Staff','Pet'].forEach(t => {
             const saved = localStorage.getItem('my' + t);
             if (saved) {
                 const el = document.getElementById(t.toLowerCase());
-                if(el) { el.src = saved; el.style.display = 'block'; }
+                if(el) {
+                    el.src = saved; 
+                    el.style.display = 'block';
+                }
+                // 버튼에 불 켜기
                 document.querySelectorAll('.item-btn').forEach(btn => {
-                    if (btn.getAttribute('onclick') && btn.getAttribute('onclick').includes(`'${saved}'`)) btn.classList.add('active');
+                    if (btn.getAttribute('onclick') && btn.getAttribute('onclick').includes(`'${saved}'`)) {
+                        btn.classList.add('active');
+                    }
                 });
             }
         });
     }
 
+    
+
+    // 🌟 [수정] 공부 기록 렌더링 (보석, 코인, 관리자 선물 처리)
     function renderLogs(logsObj) {
         const body = document.getElementById('study-logs-body');
         if (!logsObj) {
-            body.innerHTML = "<tr><td colspan='5' style='padding:20px; color:#888;'>공부 기록이 없습니다.</td></tr>";
+            body.innerHTML = "<tr><td colspan='5' style='padding:20px; color:#666;'>공부 기록이 없습니다.</td></tr>";
             return;
         }
         
         const logs = Object.values(logsObj).reverse();
         body.innerHTML = logs.map(log => {
-            if (log.subject && log.subject.includes("상점")) {
-                return `<tr class="admin-gift-row">
-                            <td style="font-size:10px; color:#aaa;">${log.date || '-'}</td>
-                            <td colspan="2" style="color:#d8b4fe; font-weight:900;">🛒 ${log.subject}</td>
-                            <td style="color:#22d3ee; font-weight:900;">${log.earnedGems > 0 ? '+' + log.earnedGems : log.earnedGems}</td>
-                            <td style="color:#fbbf24; font-weight:900;">-</td>
-                        </tr>`;
-            }
+            // [특별 기능] 관리자가 준 선물이거나 차감 기록일 경우
             if (log.subject && log.subject.includes("선물")) {
-                return `<tr class="admin-gift-row">
-                            <td style="font-size:10px; color:#aaa;">${log.date || '-'}</td>
-                            <td colspan="2" style="color:#d8b4fe; font-weight:900;">🎁 ${log.subject}</td>
-                            <td style="color:#22d3ee; font-weight:900;">${log.earnedGems ? '+' + log.earnedGems : ''}</td>
-                            <td style="color:#fbbf24; font-weight:900;">${log.earnedCoins ? '+' + log.earnedCoins : ''}</td>
-                        </tr>`;
+                return `
+                    <tr class="admin-gift-row">
+                        <td style="font-size:9px; color:#aaa;">${log.date || '-'}</td>
+                        <td colspan="2" style="color:#d8b4fe; font-weight:bold;">🎁 ${log.subject}</td>
+                        <td style="color:#22d3ee; font-weight:bold;">${log.earnedGems ? '+' + log.earnedGems : ''}</td>
+                        <td style="color:#fbbf24; font-weight:bold;">${log.earnedCoins ? '+' + log.earnedCoins : ''}</td>
+                    </tr>
+                `;
             }
-            return `<tr>
-                        <td style="font-size:10px; color:#aaa;">${log.date || '-'}</td>
-                        <td>${log.subject || '-'}</td>
-                        <td style="color:#fff;">${log.score || 0}점</td>
-                        <td style="color:#22d3ee">+${log.earnedGems || 0}</td>
-                        <td style="color:#fbbf24">${log.earnedCoins > 0 ? '+'+log.earnedCoins : '-'}</td>
-                    </tr>`;
+
+            // 일반 공부 기록
+            return `
+                <tr>
+                    <td style="font-size:9px; color:#aaa;">${log.date || '-'}</td>
+                    <td>${log.subject || '-'}</td>
+                    <td>${log.score || 0}점</td>
+                    <td style="color:#22d3ee">+${log.earnedGems || 0}</td>
+                    <td style="color:#fbbf24">${log.earnedCoins > 0 ? '+'+log.earnedCoins : '-'}</td>
+                </tr>
+            `;
         }).join('');
     }
 
+// 🌟 [수정] 뱃지 상태 업데이트 및 마우스 오버(말풍선) 날짜 삽입
     function refreshBadges(logsObj) {
-        document.querySelectorAll('.badge-item').forEach(el => {
-            el.classList.remove('owned'); el.removeAttribute('data-date');
-        });
-
+        // 임시로 가장 마지막 공부한 날짜를 가져옵니다. 
+        // (나중에 DB가 고도화되면 뱃지별 획득 날짜를 정확히 매칭할 수 있습니다)
         let latestDate = "✨ 획득 완료 ✨";
         if (logsObj) {
             const logsArray = Object.values(logsObj);
-            if(logsArray.length > 0 && logsArray[logsArray.length - 1].date) {
-                latestDate = "최근 접속: " + logsArray[logsArray.length - 1].date.split(' ')[0];
+            if(logsArray.length > 0) {
+                // "26.03.10" 처럼 앞부분 날짜만 자르기
+                latestDate = "획득일: " + logsArray[logsArray.length - 1].date.split(' ')[0];
             }
         }
 
         myBadges.forEach(id => {
             const el = document.getElementById(id);
-            if (el) { el.classList.add('owned'); el.setAttribute('data-date', latestDate); }
+            if (el) {
+                el.classList.add('owned');
+                // HTML 요소에 data-date 속성을 넣어주면 CSS의 ::after가 이를 읽어서 말풍선으로 띄워줍니다!
+                el.setAttribute('data-date', latestDate);
+            }
         });
     }
 
+    // 탭 전환 함수
     function openTab(evt, tabName) {
         document.querySelectorAll(".content-section").forEach(s => s.style.display = "none");
         document.querySelectorAll(".tab-btn").forEach(t => t.classList.remove("active"));
@@ -479,6 +454,6 @@
         document.getElementById(tabName).style.display = "block";
         evt.currentTarget.classList.add("active");
     }
-    </script>
+</script>
 </body>
 </html>
