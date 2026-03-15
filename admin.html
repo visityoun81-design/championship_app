@@ -11,7 +11,11 @@
             --bg: #0f172a; --panel: #1e293b; --purple: #c084fc;
             --gold: #facc15; --green: #4ade80; --red: #f87171; --blue: #3b82f6;
         }
-        body { margin: 0; background: var(--bg); color: #fff; font-family: 'Noto Sans KR', sans-serif; padding: 10px; box-sizing: border-box; }
+        
+        /* 🌟 전체 화면 중앙 정렬 및 가로폭 제한 */
+        body { margin: 0; background: var(--bg); color: #fff; font-family: 'Noto Sans KR', sans-serif; display: flex; flex-direction: column; align-items: center; }
+        .app-container { width: 100%; max-width: 1024px; padding: 15px; box-sizing: border-box; }
+        
         header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid var(--purple); padding-bottom: 10px; }
         h1 { font-family: 'Orbitron', sans-serif; margin: 0; color: var(--purple); font-size: 1.1rem; }
         
@@ -19,24 +23,69 @@
         h2 { font-size: 0.95rem; color: var(--purple); margin: 0 0 12px 0; display: flex; justify-content: space-between; align-items: center; border-left: 4px solid var(--purple); padding-left: 8px; }
         
         .btn { border: none; padding: 10px; border-radius: 8px; cursor: pointer; font-weight: bold; color: white; font-size: 0.8rem; transition: 0.2s; }
-        .btn-approve { background: var(--green); color: #000; }
-        .btn-delete { background: var(--red); }
-        .btn-blue { background: var(--blue); }
-        .btn-reset { background: #334155; font-size: 0.7rem; padding: 8px 4px; }
+        .btn-approve { background: var(--green); color: #000; box-shadow: 0 4px 0 #166534; }
+        .btn-approve:active { transform: translateY(4px); box-shadow: 0 0 0 #166534; }
+        .btn-delete { background: var(--red); box-shadow: 0 4px 0 #991b1b; }
+        .btn-delete:active { transform: translateY(4px); box-shadow: 0 0 0 #991b1b; }
+        .btn-blue { background: var(--blue); box-shadow: 0 4px 0 #1e40af; }
+        .btn-blue:active { transform: translateY(4px); box-shadow: 0 0 0 #1e40af; }
+        .btn-reset { background: #334155; font-size: 0.7rem; padding: 8px 4px; border: 1px solid #475569; }
         
-       input, select { 
-    background: #020617; border: 1px solid #334155; color: white; padding: 10px; 
-    border-radius: 8px; font-size: 0.85rem; outline: none; 
-    width: 100%; /* 너비를 100%로 꽉 채우게 함 */
-    box-sizing: border-box; /* 패딩 때문에 삐져나가지 않게 함 */
-}
+        input, select { 
+            background: #020617; border: 1px solid #334155; color: white; padding: 10px; 
+            border-radius: 8px; font-size: 0.85rem; outline: none; 
+            width: 100%; box-sizing: border-box; 
+        }
+
+        .css-coin {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 14px; height: 14px; background: linear-gradient(135deg, #fcd34d, #f59e0b);
+            border-radius: 50%; border: 2px solid #b45309; color: #78350f;
+            font-size: 9px; font-weight: 900; box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            margin-right: 3px; vertical-align: middle;
+        }
+
+        /* 🌟 완벽하게 수정된 반응형 리스트 레이아웃 */
+        .student-list-container { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
+        
+        .student-row {
+            display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+            background: rgba(15, 23, 42, 0.8); border-radius: 12px; padding: 12px 15px; gap: 15px;
+            border-left: 5px solid; box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            border-top: 1px solid rgba(255,255,255,0.05); border-right: 1px solid rgba(255,255,255,0.05); border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        /* PC / 태블릿에서의 가로 배분 */
+        .col-profile { flex: 2; min-width: 220px; display: flex; gap: 12px; align-items: center; }
+        .col-assets { flex: 1.5; min-width: 150px; display: flex; flex-direction: column; gap: 6px; }
+        .col-date { flex: 1.2; min-width: 120px; display: flex; flex-direction: column; gap: 4px; }
+        .col-actions { flex: 0 0 150px; display: flex; gap: 6px; }
+
+        /* 📱 휴대폰 화면 (빈 공간 없이 꽉 차게 재배치) */
+        @media(max-width: 650px) {
+            .col-profile { flex: 1 1 100%; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 8px; }
+            .col-assets { flex: 1 1 45%; }
+            .col-date { flex: 1 1 45%; align-items: flex-end; text-align: right; justify-content: center; }
+            .col-actions { flex: 1 1 100%; margin-top: 5px; }
+            .col-actions button { flex: 1; }
+        }
+
+        .char-circle-sm {
+            width: 48px; height: 48px; min-width: 48px;
+            background: linear-gradient(135deg, #a855f7, #3b82f6);
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            border: 2px solid; overflow: hidden; position: relative;
+        }
+        .char-circle-sm img { width: 80%; height: 80%; object-fit: contain; }
+        .level-badge-sm { padding: 3px 8px; border-radius: 6px; font-size: 0.7rem; color: white; font-weight: bold; margin-left: 5px; }
         
         .table-wrapper { width: 100%; overflow-x: auto; }
         .admin-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; min-width: 400px; }
         .admin-table th { border-bottom: 2px solid var(--purple); padding: 10px 5px; text-align: left; color: #94a3b8; }
         .admin-table td { padding: 10px 5px; border-bottom: 1px solid rgba(255,255,255,0.05); }
 
-        /* 기록 보기 모달 */
+        .champ-box { background: rgba(0,0,0,0.4); padding: 15px; border-radius: 12px; border: 1px solid #c084fc; margin-bottom: 15px; }
+
         #record-modal {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.9); z-index: 1000; justify-content: center; align-items: center; padding: 15px;
@@ -47,171 +96,126 @@
         .report-column { display: flex; flex-direction: column; gap: 5px; }
         .subject-card { background: rgba(255,255,255,0.05); padding: 8px 10px; border-radius: 6px; border-left: 3px solid var(--blue); display: flex; justify-content: space-between; align-items: center; }
         .score-val { color: var(--gold); font-weight: bold; font-size: 0.8rem; }
-
-        .log-list { background: #020617; border-radius: 10px; padding: 10px; max-height: 150px; overflow-y: auto; font-size: 0.7rem; }
         .reset-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
 
-/* 뱃지 전용 스타일 추가 */
-        .m-badge-area { 
-            background: rgba(0,0,0,0.3); 
-            padding: 10px; 
-            border-radius: 12px; 
-            margin-bottom: 15px; 
-            display: flex; 
-            flex-wrap: wrap; 
-            gap: 8px; 
-            border: 1px solid rgba(168, 85, 247, 0.2);
-        }
-        .m-badge-item { font-size: 1.5rem; filter: drop-shadow(0 0 5px rgba(255,255,255,0.2)); }
-
-/* 🌟 뱃지 툴팁 및 관리자 테이블 스타일 */
-        .m-badge-item { position: relative; cursor: pointer; display: inline-block; }
-        .m-badge-item:hover::after {
-            content: attr(data-date);
-            position: absolute; bottom: 120%; left: 50%; transform: translateX(-50%);
-            background: rgba(0,0,0,0.9); color: #4ade80; padding: 5px 8px;
-            border-radius: 6px; font-size: 0.7rem; white-space: nowrap; z-index: 100;
-            border: 1px solid #4ade80; pointer-events: none;
-        }
+        .m-badge-area { background: rgba(0,0,0,0.3); padding: 10px; border-radius: 12px; margin-bottom: 15px; display: flex; flex-wrap: wrap; gap: 8px; border: 1px solid rgba(168, 85, 247, 0.2); }
+        .m-badge-item { position: relative; cursor: pointer; display: inline-block; font-size: 1.5rem; filter: drop-shadow(0 0 5px rgba(255,255,255,0.2)); }
         .admin-gift-row { background: rgba(168, 85, 247, 0.2) !important; border-left: 3px solid #a855f7; }
         #m-log-list td { font-size: 0.75rem; text-align: center; }
-
-
     </style>
 </head>
 <body>
 
-<header>
-    <h1>MASTER CONTROL</h1>
-    <button class="btn btn-blue" style="padding:5px 10px;" onclick="location.href='mainpage.html'">홈</button>
-</header>
+<div class="app-container">
 
-<div id="admin-only-top" style="display: none;">
-    <section style="border: 1px solid var(--red);">
-        <h2 style="color:var(--red)">📩 가입 승인 대기</h2>
-        <div id="request-list" style="font-size: 0.8rem;"></div>
-    </section>
+    <header>
+        <h1>MASTER CONTROL</h1>
+        <button class="btn btn-blue" style="padding:5px 10px; box-shadow:none;" onclick="location.href='mainpage.html'">홈</button>
+    </header>
 
-<div id="admin-only-top" style="display: none;">
-    <section style="border: 1px solid var(--red); padding: 15px; margin-bottom: 20px;">
-        <h2 style="color:var(--red)">📩 가입 승인 대기</h2>
-        <div id="request-list" style="font-size: 0.8rem;"></div>
-    </section>
+    <div id="admin-only-top" style="display: none;">
+        <section style="border: 1px solid var(--red); padding: 15px; margin-bottom: 20px;">
+            <h2 style="color:var(--red)">📩 가입 승인 대기</h2>
+            <div id="request-list" style="font-size: 0.8rem;"></div>
+        </section>
 
-    <section id="admin-record-section" style="padding: 20px; background: rgba(255,255,255,0.05); border-radius: 15px; border: 1px solid #a855f7;">
-        <h2 style="color: #a855f7;">👤 학생별 누적 기록 관리</h2>
-        <button onclick="loadAllStudentRecords()" style="padding: 10px 20px; background: #a855f7; border: none; color: white; border-radius: 8px; cursor: pointer; font-weight: bold; margin-bottom: 15px;">
-            기록 새로고침 🔄
-        </button>
+        <section>
+            <h2>🏆 챔피언십 중앙 컨트롤 타워</h2>
+            <div class="champ-box">
+                <div style="margin-bottom: 10px; font-size: 0.8rem; color: #cbd5e1;">메인 로비의 전광판에 표시될 예고 문구를 적어주세요.</div>
+                <div style="display: flex; gap: 8px; margin-bottom: 15px;">
+                    <input type="text" id="champ-announce-msg" placeholder="예) 3월 16일 19:30 ~ 21:30" style="flex: 2;">
+                    <button class="btn btn-blue" style="flex: 1; font-size: 0.75rem;" onclick="controlChampionship('announce')">예고 전송</button>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <button class="btn btn-approve" onclick="controlChampionship('start')">🔥 대회 강제 시작!</button>
+                    <button class="btn btn-delete" onclick="controlChampionship('stop')">🛑 대회 종료</button>
+                </div>
+            </div>
+            <button class="btn btn-blue" style="width: 100%;" onclick="window.open('monitor.html', '_blank')">🖥️ 실시간 전광판 모드 열기</button>
+        </section>
         
-        <div id="admin-record-list" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 15px;">
-            <p style="color: #94a3b8;">"기록 새로고침" 버튼을 눌러주세요.</p>
         </div>
-    </section>
-</div>
-
 
     <section>
-        <h2>🏆 챔피언십 컨트롤</h2>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-            <button class="btn btn-approve" onclick="alert('대회 시작!')">대회 시작</button>
-            <button class="btn btn-delete" onclick="alert('대회 종료')">대회 종료</button>
-            <button class="btn btn-blue" style="grid-column: span 2;" onclick="window.open('monitor.html', '_blank')">🖥️ 실시간 전광판 모드</button>
+        <h2>➕ 사용자 직접 등록</h2>
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+            <div id="reg-type-select-area" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                <select id="reg-type">
+                    <option value="학생">학생 등록</option>
+                    <option value="선생님">선생님 등록</option>
+                </select>
+                <select id="reg-teacher-select">
+                    <option value="관리자">관리자 직속</option>
+                </select>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; margin-bottom:4px;">
+                <input type="text" id="reg-name" placeholder="성함/이름">
+                <input type="text" id="reg-id" placeholder="아이디">
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                <input type="password" id="reg-pw" placeholder="비밀번호">
+                <input type="password" id="reg-pw2" placeholder="비밀번호 확인">
+            </div>
+            
+            <button class="btn btn-approve" style="margin-top: 5px;" onclick="directRegister()">등록하기</button>
         </div>
     </section>
-</div>
 
-<section>
-    <h2>➕ 사용자 직접 등록</h2>
-    <div style="display: flex; flex-direction: column; gap: 8px;">
-        <div id="reg-type-select-area" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-            <select id="reg-type">
-                <option value="학생">학생 등록</option>
-                <option value="선생님">선생님 등록</option>
-            </select>
-            <select id="reg-teacher-select">
-                <option value="관리자">관리자 직속</option>
-            </select>
+    <section id="teacher-list-section">
+        <h2>👨‍🏫 선생님 명단 <span id="teacher-count" style="font-size:0.8rem; margin-left:10px; color:var(--purple);">0명</span></h2>
+        <div class="table-wrapper">
+            <table class="admin-table">
+                <thead><tr><th>성함(ID)</th><th>비밀번호</th><th>관리</th></tr></thead>
+                <tbody id="teacher-list-body"></tbody>
+            </table>
         </div>
+    </section>
 
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; margin-bottom:4px;">
-            <input type="text" id="reg-name" placeholder="성함/이름">
-            <input type="text" id="reg-id" placeholder="아이디">
-        </div>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-            <input type="password" id="reg-pw" placeholder="비밀번호">
-            <input type="password" id="reg-pw2" placeholder="비밀번호 확인">
+    <section>
+        <h2>👶 학생 명단 <span id="user-count" style="font-size:0.8rem; margin-left:10px; color:var(--purple);">0명</span></h2>
+        
+        <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 15px;">
+            <select id="filter-teacher" onchange="displayUserList()" style="flex: 1; min-width: 120px;">
+                <option value="all">전체보기(전체학생)</option>
+            </select>
+            <select id="sort-type" onchange="displayUserList()" style="flex: 1; min-width: 120px; border-color: #a855f7;">
+                <option value="recent">최근 학습일 순 ▼</option>
+                <option value="name">가나다 이름 순 ▼</option>
+            </select>
+            <input type="text" id="search-input" onkeyup="displayUserList()" placeholder="이름 검색" style="flex: 2; min-width: 150px;">
         </div>
         
-        <button class="btn btn-approve" style="margin-top: 5px;" onclick="directRegister()">등록하기</button>
-    </div>
-</section>
+        <div id="user-list-container" class="student-list-container"></div>
+    </section>
 
-<section id="teacher-list-section">
-    <h2>👨‍🏫 선생님 명단 <span id="teacher-count" style="font-size:0.8rem; margin-left:10px; color:var(--purple);">0명</span></h2>
-    <div class="table-wrapper">
-        <table class="admin-table">
-            <thead>
-                <tr>
-                    <th>성함(ID)</th>
-                    <th>비밀번호</th>
-                    <th>관리</th>
-                </tr>
-            </thead>
-            <tbody id="teacher-list-body"></tbody>
-        </table>
-    </div>
-</section>
-
-<section>
-    <h2>👶 학생 명단 <span id="user-count" style="font-size:0.8rem; margin-left:10px; color:var(--purple);">0명</span></h2>
-    <div style="display: flex; gap: 5px; margin-bottom: 10px;">
-        <select id="filter-teacher" onchange="displayUserList()" style="flex: 1;">
-            <option value="all">전체보기(전체학생)</option>
-        </select>
-        <input type="text" id="search-input" onkeyup="displayUserList()" placeholder="학생 이름 검색" style="flex: 1;">
-    </div>
-    <div class="table-wrapper">
-        <table class="admin-table">
-            <thead>
-                <tr>
-                    <th>성명(ID)</th>
-                    <th>기록</th>
-                    <th>레벨</th>
-                    <th>담당 선생님</th>
-                    <th>관리</th>
-                </tr>
-            </thead>
-            <tbody id="user-list-body"></tbody>
-        </table>
-    </div>
-</section>
-
-<section id="reset-section" style="display: none;">
-    <h2 style="color:var(--red)">🚨 순위판 초기화</h2>
-    <div class="reset-grid">
-        <div class="report-column">
-            <button class="btn btn-reset" onclick="resetRank('암산챔피언')">암산챔피언 리셋</button>
-            <button class="btn btn-reset" onclick="resetRank('덧셈초급')">덧셈초급 리셋</button>
-            <button class="btn btn-reset" onclick="resetRank('덧셈중급')">덧셈중급 리셋</button>
-            <button class="btn btn-reset" onclick="resetRank('덧셈마스터')">덧셈마스터 리셋</button>
-            <button class="btn btn-reset" onclick="resetRank('10만들기')">10만들기 리셋</button>
-            <button class="btn btn-reset" onclick="resetRank('24만들기')">24만들기 리셋</button>
-            <button class="btn btn-reset" onclick="resetRank('슐태표')">슐태표 리셋</button>
+    <section id="reset-section" style="display: none;">
+        <h2 style="color:var(--red)">🚨 순위판 초기화</h2>
+        <div class="reset-grid">
+            <div class="report-column">
+                <button class="btn btn-reset" onclick="resetRank('암산챔피언')">암산챔피언 리셋</button>
+                <button class="btn btn-reset" onclick="resetRank('덧셈초급')">덧셈초급 리셋</button>
+                <button class="btn btn-reset" onclick="resetRank('덧셈중급')">덧셈중급 리셋</button>
+                <button class="btn btn-reset" onclick="resetRank('덧셈마스터')">덧셈마스터 리셋</button>
+                <button class="btn btn-reset" onclick="resetRank('10만들기')">10만들기 리셋</button>
+                <button class="btn btn-reset" onclick="resetRank('24만들기')">24만들기 리셋</button>
+                <button class="btn btn-reset" onclick="resetRank('슐태표')">슐태표 리셋</button>
+            </div>
+            <div class="report-column">
+                <button class="btn btn-reset" onclick="resetRank('곱셈초급')">곱셈초급 리셋</button>
+                <button class="btn btn-reset" onclick="resetRank('곱셈중급')">곱셈중급 리셋</button>
+                <button class="btn btn-reset" onclick="resetRank('곱셈마스터')">곱셈마스터 리셋</button>
+                <button class="btn btn-reset" onclick="resetRank('나눗셈초급')">나눗셈초급 리셋</button>
+                <button class="btn btn-reset" onclick="resetRank('나눗셈중급')">나눗셈중급 리셋</button>
+                <button class="btn btn-reset" onclick="resetRank('나눗셈마스터')">나눗셈마스터 리셋</button>
+                <button class="btn btn-reset" style="background:var(--gold); color:#000;" onclick="resetRank('전체대회')">대회전체 리셋</button>
+            </div>
         </div>
-        <div class="report-column">
-            <button class="btn btn-reset" onclick="resetRank('곱셈초급')">곱셈초급 리셋</button>
-            <button class="btn btn-reset" onclick="resetRank('곱셈중급')">곱셈중급 리셋</button>
-            <button class="btn btn-reset" onclick="resetRank('곱셈마스터')">곱셈마스터 리셋</button>
-            <button class="btn btn-reset" onclick="resetRank('나눗셈초급')">나눗셈초급 리셋</button>
-            <button class="btn btn-reset" onclick="resetRank('나눗셈중급')">나눗셈중급 리셋</button>
-            <button class="btn btn-reset" onclick="resetRank('나눗셈마스터')">나눗셈마스터 리셋</button>
-            <button class="btn btn-reset" style="background:var(--gold); color:#000;" onclick="resetRank('전체대회')">대회전체 리셋</button>
-        </div>
-    </div>
-</section>
+    </section>
 
-<div id="record-modal">
+</div> <div id="record-modal">
     <div class="modal-content">
         <h2 id="modal-user-name" style="font-size:1.1rem; margin-top:0; color:var(--purple);">📊 학생 리포트</h2>
         
@@ -243,9 +247,10 @@
 
             <div style="display: flex; gap: 8px;">
                 <input type="text" id="gift-msg" placeholder="사유 (예: 누락된 100점 뱃지 지급)" style="flex:2;">
-                <button class="btn btn-approve" style="flex:1;" onclick="sendAdminGift()">적용하기</button>
+                <button class="btn btn-approve" style="flex:1; box-shadow:none;" onclick="sendAdminGift()">적용하기</button>
             </div>
         </div>
+        
         <div style="font-size:0.85rem; color:var(--gold); margin-bottom:5px; font-weight:bold;">🏆 획득 명예 뱃지</div>
         <div id="m-badges" class="m-badge-area"></div>
 
@@ -259,31 +264,13 @@
         <div class="table-wrapper" style="max-height: 200px; overflow-y: auto; background: #020617; border-radius:10px; border:1px solid #334155;">
             <table class="admin-table" style="min-width: 100%;">
                 <thead style="position: sticky; top: 0; background: #0f172a;">
-                    <tr><th>날짜</th><th>과목/사유</th><th>점수</th><th>보석</th><th>코인</th></tr>
+                    <tr><th>완료 일시</th><th>과목/사유</th><th>점수</th><th>보석</th><th>코인</th></tr>
                 </thead>
                 <tbody id="m-log-list"></tbody>
             </table>
         </div>
 
-        <button class="btn btn-delete" style="width:100%; margin-top:15px; padding:12px; font-size:1rem;" onclick="closeModal()">닫기</button>
-    </div>
-</div>
-
-
-
-                <span style="color:var(--green)">🎖️ 획득 뱃지:</span> <span id="m-badges" style="color:#fff; margin-left:5px;">없음</span>
-            </div>
-        </div>
-
-        <h4 style="margin: 15px 0 10px 0; font-size:0.9rem; color:var(--gold);">🏆 과목별 최고 기록</h4>
-        <div class="report-grid">
-            <div class="report-column" id="col-1"></div>
-            <div class="report-column" id="col-2"></div>
-        </div>
-
-        <h4 style="margin: 15px 0 10px 0; font-size:0.8rem; color:var(--purple);">📜 최근 연습 내역</h4>
-        <div class="log-list" id="m-log-list"></div>
-        <button class="btn btn-delete" style="width:100%; margin-top:15px;" onclick="closeModal()">닫기</button>
+        <button class="btn btn-delete" style="width:100%; margin-top:15px; padding:12px; font-size:1rem; box-shadow:none;" onclick="closeModal()">닫기</button>
     </div>
 </div>
 
@@ -291,7 +278,7 @@
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
 <script>
-    // [2] Firebase 설정 (내일 설정값을 여기에 넣으세요)
+    // 🚨 선생님의 파이어베이스 설정값을 여기에 꼭 넣어주세요!
   const firebaseConfig = {
     apiKey: "AIzaSyCbhFq8vcLem8DoMdlsXpC-ZRYELhJSFHU",
     authDomain: "championship-8f923.firebaseapp.com",
@@ -303,20 +290,14 @@
     measurementId: "G-KLHCC95R2C"
   }
 
-    // [3] Firebase 연결 시작
     if (!firebase.apps.length) {
         firebase.initializeApp(firebaseConfig);
     }
     var db = firebase.database();
 
-    // [4] 변수 설정
     var loginName = localStorage.getItem('userName');
     var userRole = localStorage.getItem('userRole');
-    var group1 = ['암산챔피언', '덧셈초급', '덧셈중급', '덧셈마스터', '10만들기', '24만들기', '슐태표'];
-    var group2 = ['곱셈초급', '곱셈중급', '곱셈마스터', '나눗셈초급', '나눗셈중급', '나눗셈마스터'];
 
-    // [5] 화면 초기화 (여기서 버튼들이 보이고 숨겨집니다)
-   // 🌟 [수정됨] 화면 초기화 (관리자 vs 선생님 모드 분리)
     window.onload = function() {
         var regArea = document.getElementById('reg-type-select-area');
         var regTeacherSelect = document.getElementById('reg-teacher-select');
@@ -325,24 +306,21 @@
         var teacherSection = document.getElementById('teacher-list-section');
 
         if (userRole === 'admin') {
-            // [관리자 모드] 모든 기능 개방
             if(adminTop) adminTop.style.display = 'block';
             if(resetSec) resetSec.style.display = 'block';
             if(teacherSection) teacherSection.style.display = 'block';
             if(regArea) regArea.style.display = 'grid';
         } else if (userRole === '선생님' || userRole === 'teacher') {
-            // [선생님 모드] 본인 학생만 관리, 초기화/선생님목록 숨김
-            if(adminTop) adminTop.style.display = 'block'; // 가입 승인은 가능
+            if(adminTop) adminTop.style.display = 'block'; 
             if(resetSec) resetSec.style.display = 'none';
             if(teacherSection) teacherSection.style.display = 'none';
-            if(regArea) regArea.style.display = 'none'; // 학생 등록만 가능하게 고정
+            if(regArea) regArea.style.display = 'none'; 
             
             if(regTeacherSelect) {
                 regTeacherSelect.innerHTML = '<option value="' + loginName + '">' + loginName + '</option>';
                 regTeacherSelect.value = loginName;
             }
         } else {
-            // 학생은 이 페이지 접근 불가 처리 (혹시 모르니)
             document.body.innerHTML = "<h2 style='text-align:center; margin-top:50px;'>접근 권한이 없습니다.</h2>";
             return;
         }
@@ -350,7 +328,32 @@
         loadJoinRequests();
     };
 
-    // 🌟 [수정됨] 학생 명단 출력 (최근 날짜 및 Add/Mul/Div 레벨 색상 표시)
+    function controlChampionship(action) {
+        let text = document.getElementById('champ-announce-msg').value;
+        let updateData = {};
+        
+        if (action === 'announce') {
+            if(!text) return alert("예고 시간을 적어주세요!");
+            updateData = { status: "announce", message: "🔜 다음 챔피언쉽: " + text, active: false };
+            alert("메인 페이지에 예고가 전송되었습니다!");
+        } else if (action === 'start') {
+            updateData = { status: "start", message: "🔥 지금은 챔피언쉽 대회 시간입니다! 🔥", active: true };
+            alert("전국 대회 입장문이 열렸습니다!");
+        } else if (action === 'stop') {
+            updateData = { status: "stop", message: "🛑 대회가 종료되었습니다. 다음 대회를 기다려주세요.", active: false };
+            alert("대회 입장이 마감되었습니다.");
+        }
+        db.ref('championshipMaster').set(updateData);
+    }
+
+    function getRecentDateStr(practiceLogs) {
+        if (!practiceLogs) return "";
+        let logs = Object.values(practiceLogs);
+        if(logs.length === 0) return "";
+        return logs[logs.length - 1].date || ""; 
+    }
+
+    // 🌟 가로 한 줄(두 줄 형태) 스마트 리스트 출력
     function displayUserList() {
         db.ref('approvedUsers').on('value', function(snapshot) {
             var usersObj = snapshot.val() || {};
@@ -362,49 +365,33 @@
             }
 
             var filterValue = document.getElementById('filter-teacher') ? document.getElementById('filter-teacher').value : 'all';
+            var sortValue = document.getElementById('sort-type').value;
             var search = document.getElementById('search-input') ? document.getElementById('search-input').value.toLowerCase() : "";
 
-           // 선생님 관리 (관리자만)
             if (userRole === 'admin' && document.getElementById('teacher-list-body')) {
                 var teachers = users.filter(function(u) { return u.type === '선생님' || u.type === 'teacher'; });
                 document.getElementById('teacher-count').innerText = teachers.length + "명";
                 document.getElementById('teacher-list-body').innerHTML = teachers.map(function(t) {
-                    return '<tr><td><strong>' + t.name + '</strong><br>' + t.id + '</td><td>' + t.pw + '</td><td><button class="btn btn-delete btn-sm" onclick="deleteUser(\'' + t.id + '\')">삭제</button></td></tr>';
+                    return '<tr><td><strong>' + t.name + '</strong><br>' + t.id + '</td><td>' + t.pw + '</td><td><button class="btn btn-delete btn-sm" style="padding:5px;" onclick="deleteUser(\'' + t.id + '\')">삭제</button></td></tr>';
                 }).join('');
 
-                // 1. 가입 창의 '담당 선생님' 선택칸 자동 업데이트
                 var teacherSelect = document.getElementById('reg-teacher-select');
                 if (teacherSelect) {
                     var options = '<option value="관리자">관리자 직속</option>';
-                    teachers.forEach(function(t) {
-                        options += '<option value="' + t.name + '">' + t.name + ' 선생님</option>';
-                    });
+                    teachers.forEach(function(t) { options += '<option value="' + t.name + '">' + t.name + ' 선생님</option>'; });
                     teacherSelect.innerHTML = options;
                 }
 
-                // 🌟 2. [추가됨] 학생 명단 위의 '필터(분류)' 선택칸 자동 업데이트
                 var filterSelect = document.getElementById('filter-teacher');
                 if (filterSelect) {
-                    // 화면이 새로고침될 때 기존에 선택해둔 선생님이 풀리지 않도록 기억하기
                     var currentFilter = filterSelect.value;
-
-                    // 필터 목록 만들기
-                    var filterOptions = '<option value="all">전체보기 (모든 학생)</option>';
-                    filterOptions += '<option value="관리자">관리자 직속</option>';
-                    teachers.forEach(function(t) {
-                        filterOptions += '<option value="' + t.name + '">' + t.name + ' 선생님반</option>';
-                    });
-                    
+                    var filterOptions = '<option value="all">전체보기 (모든 학생)</option><option value="관리자">관리자 직속</option>';
+                    teachers.forEach(function(t) { filterOptions += '<option value="' + t.name + '">' + t.name + ' 선생님반</option>'; });
                     filterSelect.innerHTML = filterOptions;
-
-                    // 기억해둔 선택값 다시 적용
-                    if (filterSelect.querySelector('option[value="' + currentFilter + '"]')) {
-                        filterSelect.value = currentFilter;
-                    }
+                    if (filterSelect.querySelector('option[value="' + currentFilter + '"]')) filterSelect.value = currentFilter;
                 }
             }
 
-            // 학생 목록 (선생님은 자기 학생만)
             var students = users.filter(function(u) { return u.type === '학생' || u.type === 'student'; });
             var filtered = students.filter(function(u) {
                 var matchT = (userRole === 'admin') ? (filterValue === 'all' || u.teacher === filterValue) : (u.teacher === loginName);
@@ -412,48 +399,96 @@
                 return matchT && matchS;
             });
 
+            // 🌟 최근 학습일 순 정렬 오류 완벽 수정 (빈 날짜를 맨 아래로)
+            if(sortValue === 'name') {
+                filtered.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+            } else if(sortValue === 'recent') {
+                filtered.sort((a, b) => {
+                    let dateA = getRecentDateStr(a.practiceLogs);
+                    let dateB = getRecentDateStr(b.practiceLogs);
+                    if (!dateA && !dateB) return 0;
+                    if (!dateA) return 1;  // 날짜 없는 학생은 맨 밑으로
+                    if (!dateB) return -1; // 날짜 없는 학생은 맨 밑으로
+                    return dateB.localeCompare(dateA); 
+                });
+            }
+
             document.getElementById('user-count').innerText = filtered.length + "명";
             
-            // 🌟 테이블 헤더 동적 변경 (최근학습날짜 추가)
-            const thead = document.querySelector('#user-list-body').previousElementSibling;
-            thead.innerHTML = '<tr><th>성명(ID)</th><th>기록</th><th>과목별 레벨</th><th>최근학습날짜</th><th>담당 선생님</th><th>관리</th></tr>';
+            const badgeEmojis = {
+                'badge-add-1': '🥇', 'badge-add-2': '🏆', 'badge-add-3': '👑',
+                'badge-mul-1': '🥈', 'badge-mul-2': '💎', 'badge-mul-3': '🔮',
+                'badge-div-1': '🥉', 'badge-div-2': '🔱', 'badge-div-3': '🌌',
+                'badge-fire': '🔥', 'badge-calendar': '🗓️', 'badge-perfect': '💯'
+            };
 
-            document.getElementById('user-list-body').innerHTML = filtered.map(function(user) {
-                // 1. 획득한 뱃지 기반으로 레벨 자동 계산
+            // 🌟 리스트 HTML 그리기 (Flexbox 반응형 구조)
+            document.getElementById('user-list-container').innerHTML = filtered.map(function(user) {
                 let badges = user.myBadges || [];
-                let addLv = (badges.includes('badge-add-3') || badges.includes('badge-add-2')) ? 3 : (badges.includes('badge-add-1') ? 2 : 1);
-                let mulLv = (badges.includes('badge-mul-3') || badges.includes('badge-mul-2')) ? 3 : (badges.includes('badge-mul-1') ? 2 : 1);
-                let divLv = (badges.includes('badge-div-3') || badges.includes('badge-div-2')) ? 3 : (badges.includes('badge-div-1') ? 2 : 1);
+                let gems = user.gems || 0;
+                let coins = user.coins || 0;
+                
+                let hasAddMed = badges.some(b => ['badge-add-1','badge-add-2','badge-add-3'].includes(b));
+                let hasAddMast = badges.some(b => ['badge-add-2','badge-add-3'].includes(b));
+                let hasMulMed = badges.some(b => ['badge-mul-1','badge-mul-2','badge-mul-3'].includes(b));
+                let hasMulMast = badges.some(b => ['badge-mul-2','badge-mul-3'].includes(b));
+                let hasDivMed = badges.some(b => ['badge-div-1','badge-div-2','badge-div-3'].includes(b));
+                let hasDivMast = badges.some(b => ['badge-div-2','badge-div-3'].includes(b));
 
-                // 색상 결정 함수 (Lv1:회색, Lv2:초록, Lv3:보라)
-                let getColor = (lv) => lv === 3 ? '#c084fc' : (lv === 2 ? '#4ade80' : '#94a3b8');
+                let levelNum = 1; let levelName = "LV.1 루키"; let levelColor = "rgba(255,255,255,0.2)"; let levelBgColor = "#475569";
 
-                let levelHtml = `
-                    <span style="color:${getColor(addLv)}; font-weight:bold;">Add: Lv.${addLv}</span><br>
-                    <span style="color:${getColor(mulLv)}; font-weight:bold;">Mul: Lv.${mulLv}</span><br>
-                    <span style="color:${getColor(divLv)}; font-weight:bold;">Div: Lv.${divLv}</span>
-                `;
-
-                // 2. 최근 학습 날짜 추출
-                let recentDate = "-";
-                if (user.practiceLogs) {
-                    let logs = Object.values(user.practiceLogs);
-                    if (logs.length > 0) recentDate = logs[logs.length - 1].date.split(' ')[0];
+                if (hasAddMast && hasMulMast && hasDivMast) {
+                    levelNum = 3; levelName = "LV.3 챔피언"; levelColor = "#f97316"; levelBgColor = "#c2410c";
+                } else if (hasAddMed && hasMulMed && hasDivMed) {
+                    levelNum = 2; levelName = "LV.2 프로"; levelColor = "#22c55e"; levelBgColor = "#15803d";
                 }
 
-                return '<tr>' +
-                    '<td><strong>' + user.name + '</strong><br><span style="font-size:0.7rem; color:#888;">' + user.id + '</span></td>' +
-                    '<td><button class="btn btn-blue btn-sm" onclick="showDetail(\'' + user.id + '\')">보기</button></td>' +
-                    '<td style="line-height:1.4;">' + levelHtml + '</td>' +
-                    '<td style="color:#cbd5e1;">' + recentDate + '</td>' +
-                    '<td style="color:#facc15">' + (user.teacher || '관리자') + '</td>' +
-                    '<td><button class="btn btn-delete btn-sm" onclick="deleteUser(\'' + user.id + '\')">삭제</button></td>' +
-                '</tr>';
+                let recentDate = getRecentDateStr(user.practiceLogs) || "기록 없음";
+                let avatar = user.myCharacter || "dog.png"; 
+
+                let badgeHtml = badges.map(b => `<span style="font-size:1.1rem; margin-right:4px;">${badgeEmojis[b] || ''}</span>`).join('');
+                if(badgeHtml === '') badgeHtml = '<span style="color:#475569; font-size:0.8rem; font-weight:bold;">획득 뱃지 없음</span>';
+
+                return `
+                <div class="student-row" style="border-left-color: ${levelColor};">
+                    
+                    <div class="col-profile">
+                        <div class="char-circle-sm" style="border-color: ${levelColor}; box-shadow: 0 0 10px ${levelColor}60;">
+                            <img src="${avatar}" onerror="this.src='dog.png'">
+                        </div>
+                        <div>
+                            <div style="font-weight: 900; font-size: 1.05rem; color: #f8fafc; margin-bottom: 4px; display:flex; align-items:center;">
+                                ${user.name} <span class="level-badge-sm" style="background:${levelBgColor};">${levelName}</span>
+                            </div>
+                            <div style="font-size: 0.75rem; color: #94a3b8;">${user.id} | 담당: ${user.teacher || '관리자'}</div>
+                        </div>
+                    </div>
+
+                    <div class="col-assets">
+                        <div style="font-weight: bold; font-size: 0.9rem;">
+                            <span style="color:#22d3ee; margin-right: 12px;">💎 ${gems}</span>
+                            <span style="color:#facc15;"><span class="css-coin">C</span>${coins}</span>
+                        </div>
+                        <div style="display: flex; flex-wrap: wrap; align-items: center; min-height: 24px;">
+                            ${badgeHtml}
+                        </div>
+                    </div>
+
+                    <div class="col-date">
+                        <div style="font-size: 0.75rem; color: #94a3b8;">최근학습일시</div>
+                        <div style="font-size: 0.85rem; color: #cbd5e1; font-weight: bold;">${recentDate}</div>
+                    </div>
+
+                    <div class="col-actions">
+                        <button class="btn btn-blue" style="padding: 7px; font-size: 0.75rem; flex:1;" onclick="showDetail('${user.id}')">기록보기</button>
+                        <button class="btn btn-delete" style="padding: 7px; font-size: 0.75rem; flex:1;" onclick="deleteUser('${user.id}')">삭제</button>
+                    </div>
+
+                </div>`;
             }).join('');
         });
     }
 
-    // [7] 가입 승인 로직
     function loadJoinRequests() {
         db.ref('joinRequests').on('value', function(snapshot) {
             var data = snapshot.val();
@@ -464,7 +499,7 @@
             for(var id in data) {
                 html += '<div style="display:flex; justify-content:space-between; padding:8px; background:rgba(255,255,255,0.05); margin-bottom:5px; border-radius:8px;">' +
                         '<span>' + data[id].name + '(' + data[id].type + ')</span>' +
-                        '<button class="btn btn-approve btn-sm" onclick="approveJoin(\'' + id + '\')">승인</button></div>';
+                        '<button class="btn btn-approve btn-sm" style="padding:5px 10px;" onclick="approveJoin(\'' + id + '\')">승인</button></div>';
             }
             list.innerHTML = html;
         });
@@ -482,290 +517,221 @@
         });
     }
 
-    // [8] 초기화 버튼 (수정 버전)
-function resetRank(subject) {
-    if(confirm(subject + "의 실시간 순위판을 초기화하시겠습니까?")) {
-        var keyMap = { 
-            '암산챔피언':'rank_championship', '덧셈초급':'rank_add_base', '덧셈중급':'rank_add_medium', 
-            '덧셈마스터':'rank_add_master', '10만들기':'rank_make10', '24만들기':'rank_make24', '슐태표':'rank_schulte',
-            '곱셈초급':'rank_mul_base', '곱셈중급':'rank_mul_medium', '곱셈마스터':'rank_mul_master',
-            '나눗셈초급':'rank_div_base', '나눗셈중급':'rank_div_medium', '나눗셈마스터':'rank_div_master'
-        };
+    function resetRank(subject) {
+        if(confirm(subject + "의 실시간 순위판을 초기화하시겠습니까?")) {
+            var keyMap = { 
+                '암산챔피언':'rank_championship', '덧셈초급':'rank_add_base', '덧셈중급':'rank_add_medium', 
+                '덧셈마스터':'rank_add_master', '10만들기':'rank_make10', '24만들기':'rank_make24', '슐태표':'rank_schulte',
+                '곱셈초급':'rank_mul_base', '곱셈중급':'rank_mul_medium', '곱셈마스터':'rank_mul_master',
+                '나눗셈초급':'rank_div_base', '나눗셈중급':'rank_div_medium', '나눗셈마스터':'rank_div_master'
+            };
 
-        if(subject === '전체대회') {
-            db.ref('rankings').remove().then(function() { 
-                // 전체 로컬스토리지 청소 (필요시)
-                Object.values(keyMap).forEach(k => localStorage.removeItem(k));
-                alert("전체 서버 및 로컬 초기화 완료"); 
-            });
-        } else if(keyMap[subject]) {
-            const targetKey = keyMap[subject];
-            db.ref('rankings/' + targetKey).remove().then(function() { 
-                // [추가] 내 컴퓨터에 남아있는 해당 과목 순위 데이터도 삭제
-                localStorage.removeItem(targetKey);
-                alert(subject + " 서버 및 로컬 초기화 완료"); 
-            });
+            if(subject === '전체대회') {
+                db.ref('rankings').remove().then(function() { 
+                    Object.values(keyMap).forEach(k => localStorage.removeItem(k));
+                    alert("전체 서버 및 로컬 초기화 완료"); 
+                });
+            } else if(keyMap[subject]) {
+                const targetKey = keyMap[subject];
+                db.ref('rankings/' + targetKey).remove().then(function() { 
+                    localStorage.removeItem(targetKey);
+                    alert(subject + " 서버 및 로컬 초기화 완료"); 
+                });
+            }
         }
     }
-}
 
-   // 🌟 [수정됨] 사용자 직접 등록 (비밀번호 더블 체크 기능)
     function directRegister() {
         var name = document.getElementById('reg-name').value;
         var id = document.getElementById('reg-id').value;
         var pw = document.getElementById('reg-pw').value;
-        var pw2 = document.getElementById('reg-pw2').value; // 새로 추가된 비밀번호 확인
+        var pw2 = document.getElementById('reg-pw2').value; 
         var type = document.getElementById('reg-type').value;
         var teacher = document.getElementById('reg-teacher-select').value;
         
-        // 선생님 모드일 경우 강제 고정
         if (userRole !== 'admin') { type = "학생"; teacher = loginName; }
-        
-        // 빈칸 검사
         if(!name || !id || !pw || !pw2) return alert("정보를 모두 입력해주세요.");
-        
-        // 비밀번호 일치 검사
         if(pw !== pw2) return alert("비밀번호가 서로 일치하지 않습니다. 다시 확인해주세요.");
 
         db.ref('approvedUsers/' + id).set({ 
             name: name, id: id, pw: pw, type: type, teacher: teacher, 
             level: 1, gems: 0, coins: 0, bestScores: {}, badges: "", practiceLogs: [] 
-        })
-        .then(function() { 
+        }).then(function() { 
             alert("성공적으로 등록되었습니다!"); 
-            // 등록 후 깔끔하게 칸 비워주기
-            document.getElementById('reg-name').value = "";
-            document.getElementById('reg-id').value = "";
-            document.getElementById('reg-pw').value = "";
-            document.getElementById('reg-pw2').value = "";
+            document.getElementById('reg-name').value = ""; document.getElementById('reg-id').value = "";
+            document.getElementById('reg-pw').value = ""; document.getElementById('reg-pw2').value = "";
         });
     }
 
     function deleteUser(id) { if(confirm("정말 삭제하시겠습니까?")) db.ref('approvedUsers/' + id).remove(); }
     
-let currentModalUserId = ""; 
+    let currentModalUserId = ""; 
 
-function showDetail(id) {
-    currentModalUserId = id; 
-    
-    db.ref('approvedUsers/' + id).once('value').then((snap) => {
-        const u = snap.val();
-        if (!u) return;
-
-        document.getElementById('modal-user-name').innerText = `📊 ${u.name} 학생 리포트`;
-        document.getElementById('m-gem').innerText = u.gems || 0;
-        document.getElementById('m-coin').innerText = u.coins || 0;
-
-        // 1. 뱃지 데이터 준비
-        const badgeList = u.myBadges || [];
-        const badgeIcons = {
-            'badge-add-1': '🥇', 'badge-add-2': '🏆', 'badge-add-3': '👑',
-            'badge-mul-1': '🥈', 'badge-mul-2': '💎', 'badge-mul-3': '🔮',
-            'badge-div-1': '🥉', 'badge-div-2': '🔱', 'badge-div-3': '🌌',
-            'badge-fire': '🔥', 'badge-calendar': '🗓️', 'badge-perfect': '💯'
-        };
-        const allBadges = {
-            'badge-add-1': '덧셈 메달', 'badge-add-2': '덧셈 트로피', 'badge-add-3': '덧셈 왕관',
-            'badge-mul-1': '곱셈 메달', 'badge-mul-2': '곱셈 트로피', 'badge-mul-3': '곱셈 마스터',
-            'badge-div-1': '나눗셈 메달', 'badge-div-2': '나눗셈 트로피', 'badge-div-3': '나눗셈 마스터',
-            'badge-fire': '7일 파이어볼', 'badge-calendar': '30일 황금달력', 'badge-perfect': '100점 만점'
-        };
+    function showDetail(id) {
+        currentModalUserId = id; 
         
-        // 🌟 아이가 가진 건 '회수' 목록에, 없는 건 '지급' 목록에 넣기!
-        let giveHtml = '<option value="">-- 🎁 뱃지 지급 --</option>';
-        let takeHtml = '<option value="">-- 🗑️ 뱃지 회수 --</option>';
-        
-        for (let bId in allBadges) {
-            if (badgeList.includes(bId)) {
-                takeHtml += `<option value="${bId}">${badgeIcons[bId]} ${allBadges[bId]}</option>`;
-            } else {
-                giveHtml += `<option value="${bId}">${badgeIcons[bId]} ${allBadges[bId]}</option>`;
+        db.ref('approvedUsers/' + id).once('value').then((snap) => {
+            const u = snap.val();
+            if (!u) return;
+
+            document.getElementById('modal-user-name').innerText = `📊 ${u.name} 학생 리포트`;
+            document.getElementById('m-gem').innerText = u.gems || 0;
+            document.getElementById('m-coin').innerText = u.coins || 0;
+
+            const badgeList = u.myBadges || [];
+            const badgeIcons = {
+                'badge-add-1': '🥇', 'badge-add-2': '🏆', 'badge-add-3': '👑',
+                'badge-mul-1': '🥈', 'badge-mul-2': '💎', 'badge-mul-3': '🔮',
+                'badge-div-1': '🥉', 'badge-div-2': '🔱', 'badge-div-3': '🌌',
+                'badge-fire': '🔥', 'badge-calendar': '🗓️', 'badge-perfect': '💯'
+            };
+            const allBadges = {
+                'badge-add-1': '덧셈 메달', 'badge-add-2': '덧셈 트로피', 'badge-add-3': '덧셈 왕관',
+                'badge-mul-1': '곱셈 메달', 'badge-mul-2': '곱셈 트로피', 'badge-mul-3': '곱셈 마스터',
+                'badge-div-1': '나눗셈 메달', 'badge-div-2': '나눗셈 트로피', 'badge-div-3': '나눗셈 마스터',
+                'badge-fire': '7일 파이어볼', 'badge-calendar': '30일 황금달력', 'badge-perfect': '100점 만점'
+            };
+            
+            let giveHtml = '<option value="">-- 🎁 뱃지 지급 --</option>';
+            let takeHtml = '<option value="">-- 🗑️ 뱃지 회수 --</option>';
+            
+            for (let bId in allBadges) {
+                if (badgeList.includes(bId)) {
+                    takeHtml += `<option value="${bId}">${badgeIcons[bId]} ${allBadges[bId]}</option>`;
+                } else {
+                    giveHtml += `<option value="${bId}">${badgeIcons[bId]} ${allBadges[bId]}</option>`;
+                }
             }
-        }
-        document.getElementById('gift-give-badge').innerHTML = giveHtml;
-        document.getElementById('gift-take-badge').innerHTML = takeHtml;
+            document.getElementById('gift-give-badge').innerHTML = giveHtml;
+            document.getElementById('gift-take-badge').innerHTML = takeHtml;
 
-        let latestDate = "정보 없음";
-        if (u.practiceLogs) {
-            const logsArray = Object.values(u.practiceLogs);
-            if(logsArray.length > 0) latestDate = "최근 획득: " + logsArray[logsArray.length - 1].date.split(' ')[0];
-        }
+            let latestDate = "정보 없음";
+            if (u.practiceLogs) {
+                const logsArray = Object.values(u.practiceLogs);
+                if(logsArray.length > 0) latestDate = "최근 획득: " + logsArray[logsArray.length - 1].date;
+            }
 
-        let badgeHtml = badgeList.map(bId => `
-            <span class="m-badge-item" title="${bId}" data-date="${latestDate}" style="font-size:30px;">
-                ${badgeIcons[bId] || '⭐'}
-            </span>
-        `).join('');
-        document.getElementById('m-badges').innerHTML = badgeHtml || "<span style='color:#666; font-size:0.8rem;'>획득한 뱃지가 없습니다.</span>";
+            let badgeHtml = badgeList.map(bId => `
+                <span class="m-badge-item" title="${bId}" data-date="${latestDate}">
+                    ${badgeIcons[bId] || '⭐'}
+                </span>
+            `).join('');
+            document.getElementById('m-badges').innerHTML = badgeHtml || "<span style='color:#666; font-size:0.8rem;'>획득한 뱃지가 없습니다.</span>";
 
-        // 2. 최고 점수 표시
-        const subs = [
-            '덧셈초급', '덧셈중급', '덧셈마스터', '곱셈초급', '곱셈중급', '곱셈마스터', 
-            '나눗셈초급', '나눗셈중급', '나눗셈마스터', '암산챔피언', '10만들기', '24만들기', '슐태표'
-        ];
-        const best = u.bestScores || {};
-        let col1Html = "", col2Html = "";
-        subs.forEach((s, idx) => {
-            let card = `
-                <div class="subject-card">
-                    <span>${s}</span><span class="score-val">${best[s] !== undefined ? best[s] : '-'}</span>
-                </div>`;
-            if(idx < 7) col1Html += card; else col2Html += card;
-        });
-        document.getElementById('col-1').innerHTML = col1Html;
-        document.getElementById('col-2').innerHTML = col2Html;
+            const subs = [
+                '덧셈초급', '덧셈중급', '덧셈마스터', '곱셈초급', '곱셈중급', '곱셈마스터', 
+                '나눗셈초급', '나눗셈중급', '나눗셈마스터', '암산챔피언', '10만들기', '24만들기', '슐태표'
+            ];
+            const best = u.bestScores || {};
+            let col1Html = "", col2Html = "";
+            subs.forEach((s, idx) => {
+                let card = `
+                    <div class="subject-card">
+                        <span>${s}</span><span class="score-val">${best[s] !== undefined ? best[s] : '-'}</span>
+                    </div>`;
+                if(idx < 7) col1Html += card; else col2Html += card;
+            });
+            document.getElementById('col-1').innerHTML = col1Html;
+            document.getElementById('col-2').innerHTML = col2Html;
 
-        // 3. 기록 표시
-        const logBody = document.getElementById('m-log-list');
-        if(!u.practiceLogs) {
-            logBody.innerHTML = "<tr><td colspan='5'>기록이 없습니다.</td></tr>";
-        } else {
-            const logArray = Object.values(u.practiceLogs).reverse(); 
-            logBody.innerHTML = logArray.map(log => {
-                if (log.subject && (log.subject.includes("관리자") || log.subject.includes("교환"))) {
+            const logBody = document.getElementById('m-log-list');
+            if(!u.practiceLogs) {
+                logBody.innerHTML = "<tr><td colspan='5'>기록이 없습니다.</td></tr>";
+            } else {
+                const logArray = Object.values(u.practiceLogs).reverse(); 
+                logBody.innerHTML = logArray.map(log => {
+                    if (log.subject && (log.subject.includes("관리자") || log.subject.includes("교환") || log.subject.includes("구매"))) {
+                        return `
+                            <tr class="admin-gift-row">
+                                <td style="color:#aaa;">${log.date || '-'}</td>
+                                <td colspan="2" style="color:#d8b4fe; font-weight:bold;">🎁 ${log.subject}</td>
+                                <td style="color:#22d3ee; font-weight:bold;">${log.earnedGems ? (log.earnedGems > 0 ? '+'+log.earnedGems : log.earnedGems) : ''}</td>
+                                <td style="color:#fbbf24; font-weight:bold;">${log.earnedCoins ? (log.earnedCoins > 0 ? '+'+log.earnedCoins : log.earnedCoins) : ''}</td>
+                            </tr>
+                        `;
+                    }
                     return `
-                        <tr class="admin-gift-row">
-                            <td style="color:#aaa;">${log.date ? log.date.split(' ')[0].slice(5) : '-'}</td>
-                            <td colspan="2" style="color:#d8b4fe; font-weight:bold;">🎁 ${log.subject}</td>
-                            <td style="color:#22d3ee; font-weight:bold;">${log.earnedGems ? (log.earnedGems > 0 ? '+'+log.earnedGems : log.earnedGems) : ''}</td>
-                            <td style="color:#fbbf24; font-weight:bold;">${log.earnedCoins ? (log.earnedCoins > 0 ? '+'+log.earnedCoins : log.earnedCoins) : ''}</td>
+                        <tr>
+                            <td style="color:#aaa;">${log.date || '-'}</td>
+                            <td>${log.subject || '-'}</td>
+                            <td>${log.score || 0}점</td>
+                            <td style="color:#22d3ee">+${log.earnedGems || 0}</td>
+                            <td style="color:#fbbf24">${log.earnedCoins > 0 ? '+'+log.earnedCoins : '-'}</td>
                         </tr>
                     `;
-                }
-                return `
-                    <tr>
-                        <td style="color:#aaa;">${log.date ? log.date.split(' ')[0].slice(5) : '-'}</td>
-                        <td>${log.subject || '-'}</td>
-                        <td>${log.score || 0}점</td>
-                        <td style="color:#22d3ee">+${log.earnedGems || 0}</td>
-                        <td style="color:#fbbf24">${log.earnedCoins > 0 ? '+'+log.earnedCoins : '-'}</td>
-                    </tr>
-                `;
-            }).join('');
-        }
-        document.getElementById('record-modal').style.display = 'flex';
-    });
-}
-
-// 🌟 뱃지 지급 및 회수 기능 통합!
-function sendAdminGift() {
-    if(!currentModalUserId) return;
-    
-    const gemInput = parseInt(document.getElementById('gift-gems').value) || 0;
-    const coinInput = parseInt(document.getElementById('gift-coins').value) || 0;
-    const msgInput = document.getElementById('gift-msg').value.trim();
-    
-    // 지급할 뱃지와 회수할 뱃지 값 가져오기
-    const giveSelect = document.getElementById('gift-give-badge');
-    const takeSelect = document.getElementById('gift-take-badge');
-    
-    const badgeToGiveId = giveSelect.value;
-    const badgeToTakeId = takeSelect.value;
-    
-    const badgeToGiveName = badgeToGiveId ? giveSelect.options[giveSelect.selectedIndex].text : "";
-    const badgeToTakeName = badgeToTakeId ? takeSelect.options[takeSelect.selectedIndex].text : "";
-
-    if (gemInput === 0 && coinInput === 0 && !badgeToGiveId && !badgeToTakeId) {
-        return alert("보석/코인 수량을 적거나, 지급/회수할 뱃지를 선택하세요.");
-    }
-    if (msgInput === "") {
-        return alert("사유를 입력해주세요. (예: 시스템 누락 보상 지급)");
-    }
-
-    if(confirm(`적용하시겠습니까?`)) {
-        db.ref('approvedUsers/' + currentModalUserId).once('value').then((snap) => {
-            const u = snap.val();
-            const newGems = (u.gems || 0) + gemInput;
-            const newCoins = (u.coins || 0) + coinInput;
-            let currentBadges = u.myBadges || [];
-
-            // 1. 뱃지 회수 (목록에서 삭제)
-            if (badgeToTakeId) {
-                currentBadges = currentBadges.filter(b => b !== badgeToTakeId);
+                }).join('');
             }
-            // 2. 뱃지 지급 (목록에 추가)
-            if (badgeToGiveId && !currentBadges.includes(badgeToGiveId)) {
-                currentBadges.push(badgeToGiveId);
-            }
-
-            // 기록 작성용 문구 만들기
-            let badgeMsg = "";
-            if (badgeToGiveId) badgeMsg += ` [${badgeToGiveName} 지급]`;
-            if (badgeToTakeId) badgeMsg += ` [${badgeToTakeName} 회수]`;
-
-            const recordSubject = "관리자: " + msgInput + badgeMsg;
-            
-            const logData = {
-                date: new Date().toLocaleDateString(),
-                subject: recordSubject,
-                score: "-",
-                earnedGems: gemInput,
-                earnedCoins: coinInput
-            };
-
-            db.ref('approvedUsers/' + currentModalUserId).update({
-                gems: Math.max(0, newGems),
-                coins: Math.max(0, newCoins),
-                myBadges: currentBadges
-            }).then(() => {
-                db.ref('approvedUsers/' + currentModalUserId + '/practiceLogs').push(logData).then(() => {
-                    alert("성공적으로 처리되었습니다!");
-                    document.getElementById('gift-gems').value = "";
-                    document.getElementById('gift-coins').value = "";
-                    document.getElementById('gift-msg').value = "";
-                    document.getElementById('gift-give-badge').value = ""; 
-                    document.getElementById('gift-take-badge').value = ""; 
-                    showDetail(currentModalUserId); 
-                });
-            });
+            document.getElementById('record-modal').style.display = 'flex';
         });
     }
-}
+
+    function sendAdminGift() {
+        if(!currentModalUserId) return;
+        
+        const gemInput = parseInt(document.getElementById('gift-gems').value) || 0;
+        const coinInput = parseInt(document.getElementById('gift-coins').value) || 0;
+        const msgInput = document.getElementById('gift-msg').value.trim();
+        
+        const giveSelect = document.getElementById('gift-give-badge');
+        const takeSelect = document.getElementById('gift-take-badge');
+        
+        const badgeToGiveId = giveSelect.value;
+        const badgeToTakeId = takeSelect.value;
+        
+        const badgeToGiveName = badgeToGiveId ? giveSelect.options[giveSelect.selectedIndex].text : "";
+        const badgeToTakeName = badgeToTakeId ? takeSelect.options[takeSelect.selectedIndex].text : "";
+
+        if (gemInput === 0 && coinInput === 0 && !badgeToGiveId && !badgeToTakeId) {
+            return alert("보석/코인 수량을 적거나, 지급/회수할 뱃지를 선택하세요.");
+        }
+        if (msgInput === "") {
+            return alert("사유를 입력해주세요. (예: 시스템 누락 보상 지급)");
+        }
+
+        if(confirm(`적용하시겠습니까?`)) {
+            db.ref('approvedUsers/' + currentModalUserId).once('value').then((snap) => {
+                const u = snap.val();
+                const newGems = (u.gems || 0) + gemInput;
+                const newCoins = (u.coins || 0) + coinInput;
+                let currentBadges = u.myBadges || [];
+
+                if (badgeToTakeId) currentBadges = currentBadges.filter(b => b !== badgeToTakeId);
+                if (badgeToGiveId && !currentBadges.includes(badgeToGiveId)) currentBadges.push(badgeToGiveId);
+
+                let badgeMsg = "";
+                if (badgeToGiveId) badgeMsg += ` [${badgeToGiveName} 지급]`;
+                if (badgeToTakeId) badgeMsg += ` [${badgeToTakeName} 회수]`;
+
+                const recordSubject = "관리자: " + msgInput + badgeMsg;
+                
+                const logData = {
+                    date: new Date().toLocaleDateString() + ' ' + new Date().toLocaleTimeString('ko-KR', {hour: '2-digit', minute:'2-digit', hour12: false}),
+                    subject: recordSubject,
+                    score: "-",
+                    earnedGems: gemInput,
+                    earnedCoins: coinInput
+                };
+
+                db.ref('approvedUsers/' + currentModalUserId).update({
+                    gems: Math.max(0, newGems),
+                    coins: Math.max(0, newCoins),
+                    myBadges: currentBadges
+                }).then(() => {
+                    db.ref('approvedUsers/' + currentModalUserId + '/practiceLogs').push(logData).then(() => {
+                        alert("성공적으로 처리되었습니다!");
+                        document.getElementById('gift-gems').value = "";
+                        document.getElementById('gift-coins').value = "";
+                        document.getElementById('gift-msg').value = "";
+                        document.getElementById('gift-give-badge').value = ""; 
+                        document.getElementById('gift-take-badge').value = ""; 
+                        showDetail(currentModalUserId); 
+                    });
+                });
+            });
+        }
+    }
     function closeModal() { document.getElementById('record-modal').style.display = 'none'; }
     window.onclick = function(e) { if (e.target == document.getElementById('record-modal')) closeModal(); }
-
-
-function loadAllStudentRecords() {
-    const displayArea = document.getElementById('admin-record-list');
-    // 로딩 중일 때 디자인이 깨지지 않게 안내 문구만 살짝 띄웁니다.
-    displayArea.innerHTML = "<p style='color:#a855f7; grid-column: 1/-1;'>기록을 불러오는 중입니다...</p>";
-
-    // 서버의 'users' 방을 읽어옵니다.
-    firebase.database().ref('users').once('value', function(snapshot) {
-        const users = snapshot.val();
-        
-        if (!users) {
-            displayArea.innerHTML = "<p style='color:#94a3b8; grid-column: 1/-1;'>아직 쌓인 기록이 없습니다. 아이들이 게임을 끝까지 완료해야 기록이 생깁니다.</p>";
-            return;
-        }
-
-        let html = "";
-        // 데이터를 하나씩 꺼내서 선생님의 디자인 바구니에 담습니다.
-        for (let id in users) {
-            const u = users[id];
-            
-            // 선생님이 만드신 디자인 그대로 유지 (수정 금지 영역)
-            html += `
-                <div class="student-record-card" style="background: rgba(0,0,0,0.3); border: 1px solid #a855f7; padding: 15px; border-radius: 12px; text-align: left;">
-                    <div style="border-bottom: 1px solid rgba(168, 85, 247, 0.3); padding-bottom: 8px; margin-bottom: 10px;">
-                        <strong style="font-size: 1.1rem; color: #d8b4fe;">${u.name || '이름없음'}</strong> 
-                        <span style="font-size: 0.8rem; color: #94a3b8;">(${id})</span>
-                    </div>
-                    <div style="font-size: 0.9rem; color: #eee; line-height: 1.6;">
-                        <div>💎 보석: <strong>${u.gems || 0}개</strong></div>
-                        <div>🪙 코인: <strong>${u.coins || 0}원</strong></div>
-                        <div>🏆 최고점: <strong>${u.bestScore || 0}점</strong></div>
-                        <div style="color: #94a3b8; font-size: 0.8rem; margin-top: 5px;">📅 최근: ${u.lastDate || '-'}</div>
-                    </div>
-                </div>`;
-        }
-        displayArea.innerHTML = html;
-    });
-}
-
-
-
-
 </script>
 </body>
 </html>
